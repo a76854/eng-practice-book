@@ -1,0 +1,7 @@
+# Jupyter Book build chain — pinned to JB 1.x line (2.x uses myst.yml and is incompatible)
+# Decision ⑨: Python >=3.12, Node 20, jupyter-book/myst-parser/nbclient version table pinned here
+jupyter-book==1.0.4
+myst-parser==3.0.1
+nbclient==0.10.1
+ipykernel==6.29.5
+PyYAML==6.0.2

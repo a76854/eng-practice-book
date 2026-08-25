@@ -1,0 +1,19 @@
+format: jb-book
+root: intro
+chapters:
+  - file: week01_环境与项目骨架
+  - file: week02_Shell与脚本自动化
+  - file: week03_Git与协作工作流
+  - file: week04_代码质量类型与静态检查
+  - file: week05_测试的思维与工程
+  - file: week06_m1
+  - file: week07_HTTP与REST_API
+  - file: week08_数据持久化与SQL
+  - file: week09_调试与性能剖析
+  - file: week10_并发与异步
+  - file: week11_m2
+  - file: week12_前端基础Vue3
+  - file: week13_外部服务集成ASR与LLM
+  - file: week14_打包部署与CI
+  - file: week15_健壮性与安全基础
+  - file: week16_m3
