@@ -1,6 +1,6 @@
 # 《算法编程与工程实践》
 
-本仓库是《算法编程与工程实践》教科书的源文件，以 MeetingToText 为贯穿演示项目、用真实代码展示各项工程实践，基于 Jupyter Book 构建，全书 16 章螺旋课纲（13 个教学单元 + 3 个里程碑）配套可执行代码与 hermetic 习题。
+本仓库是《算法编程与工程实践》教科书的源文件，以 MeetingToText 为贯穿演示项目、用真实代码展示各项工程实践，基于 MyST (Jupyter Book 2 / `mystmd`) 构建，全书 16 章螺旋课纲（13 个教学单元 + 3 个里程碑）配套可执行代码与 hermetic 习题。
 
 ---
 
@@ -14,9 +14,9 @@
 
 ```
 eng-practice-book/
-├── book/                          # 教材正文（Jupyter Book + MyST）
-│   ├── _config.yml                # Jupyter Book 配置（execute: force, myst 扩展等）
-│   ├── _toc.yml                   # 目录（intro + chapter01..16）
+├── book/                          # 教材正文（MyST Markdown + {code-cell}）
+│   ├── intro.md                   # 封面/简介（site root）
+│   ├── chapter01_环境与项目骨架.md … chapter16 (16 章正文)
 │   ├── intro.md                   # 简介（以 MeetingToText 为贯穿演示项目）
 │   ├── STYLE.md                   # 全书写作契约（章骨架、代码约定、构建校验）
 │   ├── ai_policy.md               # AI 工具使用政策（鼓励使用 AI，须读懂每一行）
@@ -53,7 +53,7 @@ eng-practice-book/
 
 ## 环境准备
 
-**要求**：Python 3.12 + Node 20（前端章节与里程碑 M3 涉及）。
+**要求**：Python 3.12 + Node 24（前端章节与里程碑 M3 涉及；`mystmd` 需 Node 18+，CI 用 Node 24）。
 
 ```bash
 # 1) 克隆
@@ -82,22 +82,30 @@ cd frontend 2>/dev/null && npm install && cd .. || echo "no frontend dir, skip"
 
 ## 构建书籍
 
-全书可执行代码以 `{code-cell} ipython3` 围栏标记，`jupyter-book build --execute` 会真实运行并校验。
+全书可执行代码以 ````{code-cell} ipython3` 围栏标记，`myst build --html --execute` 会真实运行并校验（hermetic，失败即非零退出）。
 
 ```bash
-# 增量/缓存构建（日常写作）
-.venv/bin/jupyter-book build book
+# 1) 安装 MyST CLI（Node 24 已装好）
+npm install -g mystmd
+myst --version
 
-# 全量执行构建（CI/交稿前必跑，--execute 强制重跑所有 code-cell）
-.venv/bin/jupyter-book build book --execute
+# 2) 注册执行内核（让 myst 找到 venv 中的 fastapi/httpx）
+.venv/bin/python -m ipykernel install --user --name python3 --display-name "Python 3 (book-venv)"
+.venv/bin/python -m ipykernel install --user --name book-venv
 
-# 仅校验某章（快速）
-.venv/bin/jupyter-book build book --execute --toc book/_toc.yml
+# 3) 增量构建（日常写作，不重跑 code-cell）
+myst build --html
+
+# 4) 全量执行构建（CI/交稿前必跑，--execute 强制重跑所有 code-cell）
+myst clean --execute && myst build --html --execute
+
+# 5) 严格模式（执行错误即失败，CI 默认行为）
+myst build --html --execute --strict
 ```
 
-- 配置见 `book/_config.yml`：`execute.execute_notebooks: force`、`timeout: 120`、`myst_enable_extensions: [colon_fence, dollarmath, linkify, substitution, tasklist]`。
-- 目录见 `book/_toc.yml`：`root: intro` + 16 章，无 orphan。
-- 输出在 `book/_build/html/`，`book/_build/jupyter_execute/` 为执行缓存。
+- 配置见 `myst.yml` (version: 1)：`project.title: 算法编程与工程实践`、`site.toc`/`project.toc` 列 `book/intro.md` + 16 章（`chapter01..16`），`exclude` 排除 `STYLE.md`/`ai_policy.md`/`forum_topics.md` 等非正文。
+- 扩展：`colon_fence` / `dollarmath` / `linkify` / `tasklist` 在 mystmd 中默认启用（`substitution` 已移除，Vue `{{ }}` 位于 code fences 内无需处理）。
+- 输出在 `_build/html/`（site 数据在 `_build/site/`），执行缓存由 `myst clean --execute` 清理；CI 每轮强制重跑。
 
 ---
 
@@ -194,18 +202,18 @@ bash milestones/grader_selfcheck.sh
 
 ### 作为学生
 
-1. **读教材**：按 `book/_toc.yml` 顺序阅读 `intro → chapter01..16`，每章先看动机与学习目标，再运行正文中的 `{code-cell}`。
+1. **读教材**：按 `myst.yml` 的 `site.toc`/`project.toc` 顺序阅读 `book/intro.md → chapter01..16`，每章先看动机与学习目标，再运行正文中的 `{code-cell}`。
 2. **做改动并预测**：每章 ≥3 个实验，按“改什么 → 预测 → 解释”三段式手写预测再运行验证（可用 AI 辅助生成改动，但必须先读懂并先预测，见 `book/ai_policy.md`）。
 3. **做习题**：在 `answers/chapterNN/` 中实现 `solution.py`，本地 `pytest answers/chapterNN -q` 绿后再对照参考解。
 4. **做里程碑**：阅读 `milestones/mX/README.md`，在 `student_solution/` 中实现，通过 `python -m milestones.grader milestones/mX` 自检，最后跑 `verify_reverse.sh` 确认测试有效。
-5. **构建验证**：交稿前 `jupyter-book build book --execute` 与 `pytest answers/ -q` 双绿，`git -C /home/huiguo/tools/MeetingToText status --porcelain | wc -l` 保持 0（演示项目只读）。
+5. **构建验证**：交稿前 `myst build --html --execute` 与 `pytest answers/ -q` 双绿，`git -C /home/huiguo/tools/MeetingToText status --porcelain | wc -l` 保持 0（演示项目只读）。
 
 ### 作为教师
 
 1. **备课**：以 `book/STYLE.md` 为写作契约，以 `book/intro.md` 的“以 MeetingToText 为贯穿演示项目”为主线串联 16 章；演示项目 MeetingToText 仅作演示背景，不以其内部路径为教材主体。
 2. **出题与批改**：习题以 `answers/` 的 hermetic 测试为判分依据；里程碑以 `milestones/grader.py` 黑盒测试为唯一判分引擎，`reference_solution` 为满分对照，`verify_reverse.sh` 保障测试质量。
 3. **课堂与答辩**：用 `book/forum_topics.md` 组织讨论；M3 答辩关注链路完整性、hermetic 自洽与 trade-off 诚实表述，配合 `book/ai_policy.md`（鼓励使用 AI、以读懂/能解释/能预测为底线）进行 AI 辅助声明核查。
-4. **CI 门控**：`jupyter-book build book --execute`、`pytest answers/ -q`、`ruff check`、`mypy` 与 `milestones/grader_selfcheck.sh` 构成提交门控；`book/_build` 不入库。
+4. **CI 门控**：`myst clean --execute && myst build --html --execute`、`pytest answers/ -q`、`ruff check`、`mypy` 与 `milestones/grader_selfcheck.sh` 构成提交门控；`_build/` 不入库。
 
 ---
 
@@ -214,7 +222,7 @@ bash milestones/grader_selfcheck.sh
 | 目的 | 命令 |
 |------|------|
 | 安装 | `pip install -e ".[dev]"` |
-| 构建 | `.venv/bin/jupyter-book build book --execute` |
+| 构建 | `myst build --html --execute` |
 | 习题 | `.venv/bin/pytest answers/ -q` |
 | 单章习题 | `.venv/bin/pytest answers/chapter01 -q` |
 | 里程碑 | `python -m milestones.grader milestones/m1_cli` |
