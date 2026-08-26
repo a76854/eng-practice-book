@@ -11,9 +11,9 @@ kernelspec:
   name: python3
 ---
 
-# 周10 并发与异步
+# 第10章 并发与异步
 
-> 为什么要在此时学并发（concurrency）与异步（async）？前几周你已能启动 FastAPI 服务、持久化任务、调用 ASR——但 MeetingToText 的转写流水线（`backend/app/services/pipeline.py`）并不是“请求进来就同步算完再返回”，而是把 `run_pipeline(task_id)` 提交到 `ThreadPoolExecutor(max_workers=1)` 后台执行，前端通过轮询进度获得反馈；取消转写时也不是“强制杀线程”，而是 `Future.cancel()` + `Event` 协作检查。你若只会同步写法，就无法理解“单工人队列为何能排队、为何排队的能取消而运行中的不能、以及协作取消如何避免资源泄漏”。本章以 pipeline 的单工人 Future 注册与协作取消为锚，补全线程池、Future、锁与竞态、`asyncio` 原语三块拼图，并用可运行代码让你亲手验证“并行求和 vs 串行”“排队取消 vs 运行中取消”。
+> 为什么要在此时学并发（concurrency）与异步（async）？前几章你已能启动 FastAPI 服务、持久化任务、调用 ASR——但 MeetingToText 的转写流水线（`backend/app/services/pipeline.py`）并不是“请求进来就同步算完再返回”，而是把 `run_pipeline(task_id)` 提交到 `ThreadPoolExecutor(max_workers=1)` 后台执行，前端通过轮询进度获得反馈；取消转写时也不是“强制杀线程”，而是 `Future.cancel()` + `Event` 协作检查。你若只会同步写法，就无法理解“单工人队列为何能排队、为何排队的能取消而运行中的不能、以及协作取消如何避免资源泄漏”。本章以 pipeline 的单工人 Future 注册与协作取消为锚，补全线程池、Future、锁与竞态、`asyncio` 原语三块拼图，并用可运行代码让你亲手验证“并行求和 vs 串行”“排队取消 vs 运行中取消”。
 
 ## 学习目标
 
@@ -26,7 +26,7 @@ kernelspec:
 
 ## 先修要求
 
-- 完成 [周5 测试的思维与工程](week05_测试的思维与工程.md)与 [周9 调试与性能剖析](week09_调试与性能剖析.md)（会在 `.venv` 中 `pytest`，并理解 `tempfile/join/Event` 的确定性等待）。
+- 完成 [第5章 测试的思维与工程](chapter05_测试的思维与工程.md)与 [第9章 调试与性能剖析](chapter09_调试与性能剖析.md)（会在 `.venv` 中 `pytest`，并理解 `tempfile/join/Event` 的确定性等待）。
 - 会读 MeetingToText `backend/app/services/pipeline.py` 的 `pipeline_executor / _pipeline_futures / submit_pipeline / cancel_pipeline / _check_cancelled`（只读参考，不需运行 ASR 模型）。
 - Python 基础：函数、列表分块、`with` 上下文、`async def / await` 语法已在前章或官方文档中见过。
 
@@ -329,7 +329,7 @@ def _worker_with_lock():
 
 ## 习题
 
-> 参考答案与测试在 `answers/week10/`，运行 `.venv/bin/pytest answers/week10/ -q` 验证。题目均为 hermetic（不依赖网络/外部服务/真实模型），并发断言均用 `join / Future.result / Event` 确定性等待，不用 `sleep` 猜时序。以下题干与 `answers/week10/solution.py` 的函数签名一一对应，改签名即测试失败。
+> 参考答案与测试在 `answers/chapter10/`，运行 `.venv/bin/pytest answers/chapter10/ -q` 验证。题目均为 hermetic（不依赖网络/外部服务/真实模型），并发断言均用 `join / Future.result / Event` 确定性等待，不用 `sleep` 猜时序。以下题干与 `answers/chapter10/solution.py` 的函数签名一一对应，改签名即测试失败。
 
 1. **线程池分块求和**：实现 `parallel_sum(nums: list[int], max_workers: int = 4) -> int`，将 `nums` 均分分块后用 `ThreadPoolExecutor(max_workers=max_workers)` 并发求各块之和，再汇总。要求 `parallel_sum([], max_workers=2) == 0`；`parallel_sum([42], max_workers=4) == 42`；`parallel_sum(list(range(1,101)), max_workers=4) == sum(range(1,101))` 且 `max_workers=1` 时亦相等。
 
@@ -346,7 +346,5 @@ def _worker_with_lock():
 ## 延伸挑战
 
 1. **单工人队列的背压**：在 `parallel_sum` 基础上，把 `max_workers` 固定为 `1`，提交 100 个 `sleep(0.01)` 任务，用 `Future.add_done_callback` 统计完成顺序，验证单工人下完成顺序恒等于提交顺序；再改为 `max_workers=4` 观察完成顺序不再保证，思考 pipeline 为何选 `1` 而非 `4`。
-2. **协作取消的真实线程版**：基于 `cooperative_run_threaded(steps, cancel_after)`（`answers/week10/solution.py` 已提供跨线程变体），让 `canceller` 线程轮询 `len(executed)` 达到阈值后 `Event.set()`，对比单线程自置位版的时序差异，思考“轮询间隔 0.001s 对取消延迟的影响”。
+2. **协作取消的真实线程版**：基于 `cooperative_run_threaded(steps, cancel_after)`（`answers/chapter10/solution.py` 已提供跨线程变体），让 `canceller` 线程轮询 `len(executed)` 达到阈值后 `Event.set()`，对比单线程自置位版的时序差异，思考“轮询间隔 0.001s 对取消延迟的影响”。
 3. **asyncio 取消与超时**：用 `asyncio.wait_for(gather_double([1,2,3]), timeout=0.001)` 包裹本章 `gather_double`，捕获 `TimeoutError` 后改用 `asyncio.wait` 的 `FIRST_COMPLETED` 模式，体会协程取消（`task.cancel()`）与线程 `Future.cancel()` 在语义上的异同。
-
-> 本章内容原创，概念对应 MeetingToText 的 `backend/app/services/pipeline.py`（`ThreadPoolExecutor(max_workers=1)` + `Future` 注册与 `add_done_callback` + `_cancelled` 协作取消），`asyncio` 与竞态示例为教学原创，表述与代码均为原创。

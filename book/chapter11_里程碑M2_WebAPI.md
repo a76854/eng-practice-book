@@ -11,9 +11,9 @@ kernelspec:
   name: python3
 ---
 
-# 里程碑 M2：Web API
+# 第11章 里程碑 M2：Web API
 
-> 把 CLI 的能力用 HTTP 暴露——本周把 `m2t` 的转写与导出、SQLite 的持久化、单工人 Future 的并发模型收敛为一个可用 Web API。客户端以 `POST /transcribe → GET /status → GET /export` 完成异步转写，服务全程 hermetic（不实现 ASR 本体，走 mock/fake）且状态机与 MeetingToText 只读参考对齐。
+> 把 CLI 的能力用 HTTP 暴露——本章把 `m2t` 的转写与导出、SQLite 的持久化、单工人 Future 的并发模型收敛为一个可用 Web API。客户端以 `POST /transcribe → GET /status → GET /export` 完成异步转写，服务全程 hermetic（不实现 ASR 本体，走 mock/fake）且状态机与 MeetingToText 只读参考对齐。
 
 ## 学习目标
 
@@ -27,7 +27,7 @@ kernelspec:
 
 ## 先修要求
 
-- 已完成周 7–10（HTTP/REST、SQLite、调试/性能、并发与 `ThreadPoolExecutor`）。
+- 已完成第7–10章（HTTP/REST、SQLite、调试/性能、并发与 `ThreadPoolExecutor`）。
 - 会执行 `.venv/bin/pytest milestones/m2_webapi/tests -q` 与 `jupyter-book build --execute`。
 - 已阅读 `milestones/m2_webapi/README.md` 与 `milestones/grader.py` 的目录与双反向约定；对 `MeetingToText/backend/app/routers/{transcribe,generate,upload}.py` 与 `deps.py` 的路由分层仅作只读参考。
 
@@ -102,7 +102,7 @@ python -m milestones.grader milestones/m2_webapi --solution reference_solution
 
 ## 5. 评分 rubric 要点
 
-周 11 教师指南 rubric：功能正确性 40%（黑盒全绿）、路由设计 20%（分层清晰、404 收敛一处）、测试覆盖 20%（≥5 条 TestClient，覆盖 200/400/404）、OpenAPI 文档 10%（`response_model` 齐全，`/docs` 可交互）、双反向验证 10%（三分支通过）。评审时重点看：是否收敛 404 到 `deps.py` 风格的唯一出口、状态机是否可观测 `pending→processing→done`、导出是否经 `m2t.export` 而非手拼。
+第11章 教师指南 rubric：功能正确性 40%（黑盒全绿）、路由设计 20%（分层清晰、404 收敛一处）、测试覆盖 20%（≥5 条 TestClient，覆盖 200/400/404）、OpenAPI 文档 10%（`response_model` 齐全，`/docs` 可交互）、双反向验证 10%（三分支通过）。评审时重点看：是否收敛 404 到 `deps.py` 风格的唯一出口、状态机是否可观测 `pending→processing→done`、导出是否经 `m2t.export` 而非手拼。
 
 ## 6. 答辩提示
 
@@ -158,5 +158,3 @@ print("M2 hermetic 冒烟通过 — txt/srt/md 三格式导出与状态机契约
 1. 为 `GET /status` 增加 SSE 推流（`text/event-stream`），让前端无需轮询即可订阅 `pending→done`。
 2. 把 `TaskStore` 换为 Postgres + `asyncpg`，对比 WAL 模式在并发读写与崩溃恢复上的差异。
 3. 为 `POST /transcribe` 增加 `X-Request-Id` 追踪与结构化日志，演示分布式追踪的最小闭环。
-
-> 本章内容原创，概念对应 MeetingToText 的 `backend/app/routers/{transcribe,upload,generate}.py` 与 `deps.py` 的路由分层、单工人 Future 与 `m2t` 复用链路，任务结构与 grader 约定对应 `milestones/m2_webapi/README.md` 与 `milestones/grader.py`，习题与表述均为原创。

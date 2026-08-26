@@ -11,9 +11,9 @@ kernelspec:
   name: python3
 ---
 
-# 里程碑 M1：CLI 转写工具
+# 第6章 里程碑 M1：CLI 转写工具
 
-> 从零散脚本到可交付工具的跨越——本周把前 5 周的 Shell、Git、类型与测试能力收敛为一个可被黑盒评测的命令行转写工具。工具不实现 ASR 本体，而是复用 `m2t` 子包并以确定性 fake 模型离线完成转写与导出，完整链路可在 `pytest` 与 `jupyter-book --execute` 下复现。
+> 从零散脚本到可交付工具的跨越——本章把前 5 章的 Shell、Git、类型与测试能力收敛为一个可被黑盒评测的命令行转写工具。工具不实现 ASR 本体，而是复用 `m2t` 子包并以确定性 fake 模型离线完成转写与导出，完整链路可在 `pytest` 与 `jupyter-book --execute` 下复现。
 
 ## 学习目标
 
@@ -27,7 +27,7 @@ kernelspec:
 
 ## 先修要求
 
-- 已完成周 1–5（环境、Shell、Git、类型检查、pytest hermetic 测试）。
+- 已完成第1–5章（环境、Shell、Git、类型检查、pytest hermetic 测试）。
 - 会执行 `.venv/bin/pytest -q` 与 `jupyter-book build --execute`，理解 `m2t` 为只读教学包。
 - 已阅读 `milestones/m1_cli/README.md` 与 `milestones/grader.py` 的目录约定。
 
@@ -113,7 +113,7 @@ python -m milestones.grader milestones/m1_cli --solution reference_solution
 
 ## 5. 评分 rubric 要点
 
-周 6 教师指南 rubric（见 `teacher_guide.md` 周 6）：功能正确性 40%（`pytest tests/ -q` 全绿，grader 通过）、代码质量 20%（`ruff check` 0 告警）、测试覆盖 20%（≥5 用例，覆盖正常/异常/边界）、可读性 10%（函数级 docstring）、双反向验证 10%（`grader_selfcheck.sh` 三分支通过）。评审时重点看：是否通过 `m2t` 复用而非直调 FunASR、错误分支是否中文且 `stderr` 可断言、输出文件是否 UTF-8 与目录自动创建。
+第6章 教师指南 rubric（见 `teacher_guide.md` 第6章）：功能正确性 40%（`pytest tests/ -q` 全绿，grader 通过）、代码质量 20%（`ruff check` 0 告警）、测试覆盖 20%（≥5 用例，覆盖正常/异常/边界）、可读性 10%（函数级 docstring）、双反向验证 10%（`grader_selfcheck.sh` 三分支通过）。评审时重点看：是否通过 `m2t` 复用而非直调 FunASR、错误分支是否中文且 `stderr` 可断言、输出文件是否 UTF-8 与目录自动创建。
 
 ## 6. 答辩提示
 
@@ -152,7 +152,7 @@ print("M1 hermetic 冒烟通过 — fake sentence_info 已归一，m2t.export �
 
 ## 习题
 
-> 参考答案与测试在 `answers/` 各周目录；里程碑习题即 `milestones/m1_cli/tests/` 的黑盒用例，需保证 hermetic。
+> 参考答案与测试在 `answers/` 各章目录；里程碑习题即 `milestones/m1_cli/tests/` 的黑盒用例，需保证 hermetic。
 
 1. 为 `build_parser` 补一个 `test_build_parser_has_transcribe_subcommand`，断言 `transcribe` 子命令存在且含 `--format/--out/--stub`。
 2. 写一个边界测试：`audio` 为目录路径 `tmp_path / "a.wav".mkdir()` 时是否非零退出且含 `错误`？
@@ -165,5 +165,3 @@ print("M1 hermetic 冒烟通过 — fake sentence_info 已归一，m2t.export �
 1. 支持多文件批量：`python -m cli transcribe a.wav b.wav --format srt --out out_dir/` 时批量导出并保持 `pending→done` 的串行语义。
 2. 为 CLI 增加 `--json` 结构化输出（`{"task_id","status","output_path"}`），便于被 `jq` 消费。
 3. 用 `pytest` + `subprocess` 写一条系统级测试，真实启动子进程 `python -m cli` 并断言文件落盘（体会单元与系统测试的边界）。
-
-> 本章内容原创，概念对应 MeetingToText 的 `cli.py:_cmd_transcribe` 与 `m2t.asr`/`m2t.export` 的复用链路，任务结构与 grader 约定对应 `milestones/m1_cli/README.md` 与 `milestones/grader.py`，习题与表述均为原创。

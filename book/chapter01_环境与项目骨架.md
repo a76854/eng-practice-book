@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 周1 工程环境与项目骨架
+# 第1章 工程环境与项目骨架
 
 > 为什么先搞环境？因为「能在自己机器上把项目跑起来」是所有后续工作的前提。没有可复现的环境，再好的算法也无法交付、无法协作、无法测试。本章先把工程化的地基打牢：学会用合适的工具隔离 Python 环境、理解前端为什么需要 Node、管理依赖的唯一真相来源 `pyproject.toml`，并掌握「拿到任意一个项目都能跑起来」的通用三步。学完本章，你拿到 MeetingToText（或任何一个规范的 Python 项目）都能在 10 分钟内跑通。
 
@@ -254,7 +254,7 @@ print("parsed requires-python:", info["project"]["requires-python"])
 
 ## 习题
 
-> 参考答案与测试在 `answers/week01/`，运行 `pytest answers/week01/ -q` 验证。题目均为 hermetic 纯函数，不依赖网络或外部服务。
+> 参考答案与测试在 `answers/chapter01/`，运行 `pytest answers/chapter01/ -q` 验证。题目均为 hermetic 纯函数，不依赖网络或外部服务。
 
 1. **解析 `requires-python`**：实现 `parse_requires_python(pyproject_text: str) -> str`，从 `pyproject.toml` 文本中解析 `project.requires-python`，不存在则返回 `""`。
 2. **必填字段检查**：实现 `required_fields_present(pyproject_text: str) -> list[str]`，检查 `project.name` / `project.version` / `project.requires-python` / `project.dependencies` 四项是否齐全，返回缺失字段名列表（空列表表示齐全）。
@@ -269,6 +269,4 @@ print("parsed requires-python:", info["project"]["requires-python"])
 2. 给本书仓库的 `pyproject.toml` 新增一个 `[project.scripts]` 入口 `m2t-hello = "m2t:__version__"`（或自定义函数），安装后验证 `m2t-hello` 是否可执行，思考「脚本入口 vs `python -m`」的适用场景。
 3. 研究 `frontend/package.json` 的 `scripts` 与 `dependencies`，对比 Python 的 `project.scripts` 与 `project.dependencies`，用表格总结两套生态的对应关系。
 4. 尝试用 `miniforge` 创建 Python 3.11 与 3.12 两个环境，分别安装本书项目，观察 `requires-python = ">=3.12"` 在 3.11 环境中的行为。
-
-本章内容原创，概念对应 MeetingToText 的 pyproject.toml / README。
 

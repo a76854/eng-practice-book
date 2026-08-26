@@ -11,9 +11,9 @@ kernelspec:
   name: python3
 ---
 
-# 周4 代码质量：类型与静态检查
+# 第4章 代码质量：类型与静态检查
 
-> 为什么这一章值得单列一周？前三周你已经能把项目跑起来、会用脚本批量处理、用 Git 协作。接下来最容易踩的坑是「代码看着能跑，一改就崩」——参数传错、返回值为 `None`、重构时漏改一处调用。类型注解与静态检查就是在「运行之前」把这类错误拦住的防线。本章用 Python 的渐进类型与 TypeScript 的 `strict` 模式作对比，带你读懂真实项目的 `ruff` / `mypy` / `eslint` 配置，并动手给 `m2t` 的一个模块补全类型，体会「无类型 → 加类型 → 工具变绿」的完整闭环。学完后，你能在任何 Python/TS 项目中自信地加类型、读报错、配检查。
+> 为什么这一章值得单列一章？前三章你已经能把项目跑起来、会用脚本批量处理、用 Git 协作。接下来最容易踩的坑是「代码看着能跑，一改就崩」——参数传错、返回值为 `None`、重构时漏改一处调用。类型注解与静态检查就是在「运行之前」把这类错误拦住的防线。本章用 Python 的渐进类型与 TypeScript 的 `strict` 模式作对比，带你读懂真实项目的 `ruff` / `mypy` / `eslint` 配置，并动手给 `m2t` 的一个模块补全类型，体会「无类型 → 加类型 → 工具变绿」的完整闭环。学完后，你能在任何 Python/TS 项目中自信地加类型、读报错、配检查。
 
 ## 学习目标
 
@@ -27,7 +27,7 @@ kernelspec:
 
 ## 先修要求
 
-- 完成 [周1 环境与项目骨架](week01_环境与项目骨架.md)，能在本地 `pip install -e ".[dev]"` 并运行 `pytest`。
+- 完成 [第1章 环境与项目骨架](chapter01_环境与项目骨架.md)，能在本地 `pip install -e ".[dev]"` 并运行 `pytest`。
 - 会读 `pyproject.toml` 的基本段落（`project` / `tool.ruff` / `tool.mypy`），会用命令行运行 `ruff` / `mypy`。
 - 无需 TypeScript 基础，本章从零对比。
 
@@ -336,13 +336,13 @@ Found 1 error in 1 file (checked 1 source file)
 
 ## 习题
 
-> 参考答案与测试在 `answers/week04/`，运行 `.venv/bin/pytest answers/week04/ -q` 验证。题目均为 hermetic 纯函数，不依赖网络或外部服务。工具版本可用 `ruff --version` / `mypy --version` 验证（本章 `pyproject.toml` 中 `ruff>=0.9` / `mypy>=1.10`）。
+> 参考答案与测试在 `answers/chapter04/`，运行 `.venv/bin/pytest answers/chapter04/ -q` 验证。题目均为 hermetic 纯函数，不依赖网络或外部服务。工具版本可用 `ruff --version` / `mypy --version` 验证（本章 `pyproject.toml` 中 `ruff>=0.9` / `mypy>=1.10`）。
 
 1. **带类型的加法**：实现 `annotated_add(a: int, b: int) -> int`，返回 `a + b`。
 2. **声道标志判别**：实现 `io_channels(flag: str) -> bool`，当 `flag == "stereo"` 返回 `True`，`flag == "mono"` 返回 `False`，其余抛 `ValueError`。
 3. **时长格式化**：实现 `format_duration(seconds: int) -> str`，将秒数转为 `H:MM:SS`（如 `3661 -> "1:01:01"`，`61 -> "0:01:01"`）。
 4. **导出格式校验**：实现 `pick_export_format(fmt: str) -> str`，若 `fmt` 在 `{"txt","srt","md"}` 中返回其小写去空格后的值，否则抛 `ValueError`。
-5. **为给定函数补类型使 mypy 通过**：给定未注解函数 `def greet(name): return f"Hello, {name}"`，请在 `answers/week04/solution.py` 中提供已补全注解的版本 `def greet_typed(name: str) -> str`（用注释约定：原函数上方写 `# TODO: 补类型使 mypy 通过，原签名 def greet(name)`，答案需使 `mypy --ignore-missing-imports solution.py` 无 `no-untyped-def` 报错，且 `__annotations__` 包含 `name` 与 `return`）。
+5. **为给定函数补类型使 mypy 通过**：给定未注解函数 `def greet(name): return f"Hello, {name}"`，请在 `answers/chapter04/solution.py` 中提供已补全注解的版本 `def greet_typed(name: str) -> str`（用注释约定：原函数上方写 `# TODO: 补类型使 mypy 通过，原签名 def greet(name)`，答案需使 `mypy --ignore-missing-imports solution.py` 无 `no-untyped-def` 报错，且 `__annotations__` 包含 `name` 与 `return`）。
 6. *（附加）* 实现 `describe_channels(n: int) -> str`，`1 -> "mono"`，`2 -> "stereo"`，其余抛 `ValueError`，并确保 `mypy` 对错误传参如 `describe_channels("2")` 报 `arg-type`。
 
 ## 延伸挑战
@@ -350,5 +350,3 @@ Found 1 error in 1 file (checked 1 source file)
 1. 选 `m2t` 中任意一个未完全注解的模块（如 `m2t/store.py` 的 `TaskStore`），为其所有公共方法补类型，使 `mypy m2t/store.py` 变绿，记录你补了几个 `Any` 与几个 `| None`。
 2. 在 `frontend/src` 中故意写一个 `const x: any = 1;` 与一个未用变量 `const unused = 2;`，分别观察 `tsc --noEmit` 与 `npm run lint` 的输出差异，思考「类型检查 vs 风格检查」的分工。
 3. 尝试把 `pyproject.toml` 的 `[tool.ruff.lint] select` 去掉 `"F"`，再跑 `ruff check` 观察 `F401` 是否消失；还原后思考「为什么 CI 要显式声明 select 而非用默认」。
-
-本章内容原创，概念对应 MeetingToText 的 pyproject.toml [tool.ruff]/[tool.mypy] 与 frontend/eslint.config.js / tsconfig.json，代码与表述均为原创。

@@ -11,9 +11,9 @@ kernelspec:
   name: python3
 ---
 
-# 周8 数据持久化与 SQL
+# 第8章 数据持久化与 SQL
 
-> 上一周你把「转写」封装成了 HTTP 接口，但重启服务后任务就丢了——因为 `FAKE_DB = {}` 只活在内存里。真实的 MeetingToText 需要把会议、转写结果、用户设置落盘，即使进程重启也能找回。本章把「内存字典」换成 SQLite（SQLite）：用 `sqlite3` 标准库建表、做 CRUD、用事务（transaction）保证原子性、用 WAL（Write-Ahead Logging，预写日志）与 `busy_timeout` 解决并发写入冲突。学完本章，你能为 `m2t.store` 写出带事务与 WAL 的持久层，并解释为什么「显示名可改而文件名不可改」只需改一列。
+> 上一章你把「转写」封装成了 HTTP 接口，但重启服务后任务就丢了——因为 `FAKE_DB = {}` 只活在内存里。真实的 MeetingToText 需要把会议、转写结果、用户设置落盘，即使进程重启也能找回。本章把「内存字典」换成 SQLite（SQLite）：用 `sqlite3` 标准库建表、做 CRUD、用事务（transaction）保证原子性、用 WAL（Write-Ahead Logging，预写日志）与 `busy_timeout` 解决并发写入冲突。学完本章，你能为 `m2t.store` 写出带事务与 WAL 的持久层，并解释为什么「显示名可改而文件名不可改」只需改一列。
 
 ## 学习目标
 
@@ -26,7 +26,7 @@ kernelspec:
 
 ## 先修要求
 
-- 完成 [周1 环境与项目骨架](week01_环境与项目骨架.md)与 [周7 HTTP 与 REST API](week07_HTTP与REST_API.md)（会用 `pytest` 与 `TestClient`）。
+- 完成 [第1章 环境与项目骨架](chapter01_环境与项目骨架.md)与 [第7章 HTTP 与 REST API](chapter07_HTTP与REST_API.md)（会用 `pytest` 与 `TestClient`）。
 - 会 `import m2t.store` 并阅读其 `TaskStore` 轮廓（本章只读参考，不改其源码）。
 - 无需 SQL 基础，本章从 `CREATE TABLE` 讲起。
 
@@ -306,7 +306,7 @@ with tempfile.TemporaryDirectory() as tmp:
 
 ## 习题
 
-> 参考答案与测试在 `answers/week08/`，运行 `.venv/bin/pytest answers/week08/ -q` 验证。题目均为 hermetic 纯函数，不依赖网络或外部服务，所有 sqlite 操作均在 `:memory:` 或 `tmp_path` 临时库中完成。
+> 参考答案与测试在 `answers/chapter08/`，运行 `.venv/bin/pytest answers/chapter08/ -q` 验证。题目均为 hermetic 纯函数，不依赖网络或外部服务，所有 sqlite 操作均在 `:memory:` 或 `tmp_path` 临时库中完成。
 
 1. **建表**：实现 `init_db(conn: sqlite3.Connection) -> None`，执行 `CREATE TABLE IF NOT EXISTS tasks ...` 与索引，测试断言 `sqlite_master` 中表与索引存在。
 2. **插入与查询**：实现 `create_task(conn, task_id, filename, status, full_text)` 与 `get_task(conn, task_id)`，测试断言插入后按 `id` 可查回且字段一致，不存在返回 `None`。
@@ -320,5 +320,3 @@ with tempfile.TemporaryDirectory() as tmp:
 1. 给 `tasks` 增加 `name TEXT DEFAULT ''` 列并实现 `rename_task(conn, task_id, name)`，验证 `UPDATE tasks SET name = ? WHERE id = ?` 且 `filename` 不变；思考为什么生产要区分「显示名」与「文件名」。
 2. 为 `app_settings` 建表并实现 `get_setting/set_setting`（`INSERT ... ON CONFLICT DO UPDATE`），用 `tmp_path` 验证重启后设置仍可读。
 3. 用 `threading.Thread` 各持独立连接并发 `INSERT` 100 条，观察 `WAL + busy_timeout=5000 + threading.Lock` 与「去掉锁且 `busy_timeout=0`」的失败率差异。
-
-> 本章内容原创，表结构与 WAL/事务/busy_timeout/懒迁移/锁设计对应 MeetingToText 的 backend/app/services/store.py，示例代码与表述均为原创。

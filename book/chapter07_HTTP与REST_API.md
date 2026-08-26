@@ -11,9 +11,9 @@ kernelspec:
   name: python3
 ---
 
-# 周7 HTTP 与 REST API
+# 第7章 HTTP 与 REST API
 
-> 为什么这一章要放在后端篇的起点？前几周你已经会用 `m2t` 在本地把音频转成文字、导出为 `txt`/`srt`/`md`。但这些能力还锁在「命令行里」——别人要调用，必须在同一台机器上 `import m2t`。HTTP（HyperText Transfer Protocol，超文本传输协议）是把「本地函数」变成「网络服务」的通用约定；REST（Representational State Transfer，表述性状态转移）是在 HTTP 之上组织资源与动词的一套设计风格。学会它，你就能把「转写一段音频」暴露为 `GET /transcribe/{task_id}?fmt=txt` 这样的网络接口，让前端、脚本、其他服务都能通过 URL 调用。本章以 FastAPI（Python 的现代 Web 框架）为载体，完成从「函数」到「服务」的跨越；真实项目中的路由分层与 `get_task_or_404` 模式将在 7.6 节对照讲解。
+> 为什么这一章要放在后端篇的起点？前几章你已经会用 `m2t` 在本地把音频转成文字、导出为 `txt`/`srt`/`md`。但这些能力还锁在「命令行里」——别人要调用，必须在同一台机器上 `import m2t`。HTTP（HyperText Transfer Protocol，超文本传输协议）是把「本地函数」变成「网络服务」的通用约定；REST（Representational State Transfer，表述性状态转移）是在 HTTP 之上组织资源与动词的一套设计风格。学会它，你就能把「转写一段音频」暴露为 `GET /transcribe/{task_id}?fmt=txt` 这样的网络接口，让前端、脚本、其他服务都能通过 URL 调用。本章以 FastAPI（Python 的现代 Web 框架）为载体，完成从「函数」到「服务」的跨越；真实项目中的路由分层与 `get_task_or_404` 模式将在 7.6 节对照讲解。
 
 ## 学习目标
 
@@ -26,7 +26,7 @@ kernelspec:
 
 ## 先修要求
 
-- 完成 [周1 环境与项目骨架](week01_环境与项目骨架.md)与 [周5 测试的思维与工程](week05_测试的思维与工程.md)（会用 `pytest` 与虚拟环境）。
+- 完成 [第1章 环境与项目骨架](chapter01_环境与项目骨架.md)与 [第5章 测试的思维与工程](chapter05_测试的思维与工程.md)（会用 `pytest` 与虚拟环境）。
 - 会 `import m2t.export` 并调用 `export(task, fmt)`（见 `m2t/export.py`）。
 - 无需前端基础；本章所有验证均用 `fastapi.testclient.TestClient` 在进程内完成，不依赖浏览器。
 
@@ -99,7 +99,7 @@ from m2t.export import export
 def _mock_segments():
     return [
         {"speaker": "说话人1", "text": "大家好，今天讨论排期", "start": 0.0, "end": 3.2},
-        {"speaker": "说话人2", "text": "我这边周三可以", "start": 3.2, "end": 5.8},
+        {"speaker": "说话人2", "text": "我这边星期三可以", "start": 3.2, "end": 5.8},
     ]
 
 FAKE_DB = {
@@ -271,7 +271,7 @@ print("无 response_model 的 schema:", naked_schema)
 
 ## 习题
 
-> 参考答案与测试在 `answers/week07/`，运行 `.venv/bin/pytest answers/week07/ -q` 验证。题目均为 hermetic 纯函数/进程内 TestClient，不依赖网络或外部服务。
+> 参考答案与测试在 `answers/chapter07/`，运行 `.venv/bin/pytest answers/chapter07/ -q` 验证。题目均为 hermetic 纯函数/进程内 TestClient，不依赖网络或外部服务。
 
 1. **最小 ping 端点**：实现 `make_ping_app() -> FastAPI`，返回一个含 `GET /ping -> {"msg": "pong"}` 的应用。测试用 `TestClient` 断言 200。
 2. **fmt 校验 400**：在 `GET /transcribe/{task_id}?fmt={fmt}` 中，对非法 `fmt` 返回 400，且 `detail` 包含「支持」或「可选」字样；合法 `txt/srt/md` 返回 200。
@@ -286,6 +286,4 @@ print("无 response_model 的 schema:", naked_schema)
 2. 将内存 `FAKE_DB` 替换为 `m2t.store.TaskStore` 的临时库（`tempfile.mkstemp` + `TaskStore`），实现「创建→查询→导出」的端到端链路，体会「存储层与 HTTP 层解耦」。
 3. 为 `POST /transcribe` 设计请求体 `class CreateReq(BaseModel): filename: str; fmt: str`，对比「查询参数 vs 请求体」在语义与 OpenAPI 呈现上的差异。
 4. （预告）实时转写进度推送（SSE/WS）将放在后续章节的延伸挑战中实现，本章聚焦「请求-响应」式 REST，不引入长连接。
-
-> 本章内容原创，路由分层与 `get_task_or_404` 概念对应 MeetingToText 的 `backend/app/routers/{transcribe.py,upload.py,deps.py}`，示例代码与表述均为原创。
 

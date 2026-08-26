@@ -11,9 +11,9 @@ kernelspec:
   name: python3
 ---
 
-# 周3 Git 与协作工作流
+# 第3章 Git 与协作工作流
 
-> 为什么学 Git？因为从本周起，你不再是「单人写脚本」，而是「多人改同一仓库」。没有分支与提交规范，两个人同时改一个文件就会互相覆盖；没有 PR（Pull Request）流程，代码质量全靠自觉。本章以本书仓库 `eng-practice-book` 为演练场，完成你的首次特性分支（feature branch）协作闭环：从提交、分支、推送到 PR 与冲突解决。学完本章，你能用分支隔离改动、用 PR 发起协作、用正确姿势解决冲突——并理解 MeetingToText 的协作约定为何这样设计。
+> 为什么学 Git？因为从本章起，你不再是「单人写脚本」，而是「多人改同一仓库」。没有分支与提交规范，两个人同时改一个文件就会互相覆盖；没有 PR（Pull Request）流程，代码质量全靠自觉。本章以本书仓库 `eng-practice-book` 为演练场，完成你的首次特性分支（feature branch）协作闭环：从提交、分支、推送到 PR 与冲突解决。学完本章，你能用分支隔离改动、用 PR 发起协作、用正确姿势解决冲突——并理解 MeetingToText 的协作约定为何这样设计。
 
 ## 学习目标
 
@@ -27,7 +27,7 @@ kernelspec:
 
 ## 先修要求
 
-- 已完成周1「工程环境与项目骨架」，能在本机克隆并 `jupyter-book build`。
+- 已完成第1章「工程环境与项目骨架」，能在本机克隆并 `jupyter-book build`。
 - 会用命令行执行 `git status` / `git log` / `git diff` 基础查看命令。
 - 已配置 `git config --global user.name` 与 `user.email`（PR 会显示此身份）。
 
@@ -44,11 +44,11 @@ git status                          # 看工作区与暂存区状态
 git diff                            # 工作区 vs 暂存区差异
 git diff --cached                   # 暂存区 vs HEAD 差异
 git add {文件路径}                  # 将改动加入暂存区（stage）
-git commit -m "docs(week03): add feature branch demo"
+git commit -m "docs(chapter03): add feature branch demo"
 git log --oneline --graph --all -n 10
 ```
 
-提交信息遵循 Conventional Commits（与本书 Commit strategy 一致）：`type(scope): subject`，如 `docs(week03): ...` / `feat(m2t): ...`。一个提交只做一件事、只改一个关注点，是「最小可审查单元」——评审者可以逐提交理解意图，回滚时也能精确撤销。
+提交信息遵循 Conventional Commits（与本书 Commit strategy 一致）：`type(scope): subject`，如 `docs(chapter03): ...` / `feat(m2t): ...`。一个提交只做一件事、只改一个关注点，是「最小可审查单元」——评审者可以逐提交理解意图，回滚时也能精确撤销。
 
 用 Python 解析 `git log --oneline` 文本，提取提交信息结构（可运行）：
 
@@ -56,8 +56,8 @@ git log --oneline --graph --all -n 10
 import re
 
 sample_log = """\
-a1b2c3d docs(week03): add feature branch demo
-e4f5a6b docs(week01): full environment-and-skeleton chapter as style anchor
+a1b2c3d docs(chapter03): add feature branch demo
+e4f5a6b docs(chapter01): full environment-and-skeleton chapter as style anchor
 c7d8e9f chore: initialize book repository skeleton
 """
 
@@ -89,7 +89,7 @@ for rec in parse_git_log(sample_log.splitlines()):
 
 ```bash
 git branch                          # 列出本地分支，* 标记当前分支
-git switch -c feature/week03-demo  # 创建并切换到特性分支（等价于 git checkout -b）
+git switch -c feature/chapter03-demo  # 创建并切换到特性分支（等价于 git checkout -b）
 git branch -v                       # 看每个分支指向的提交
 git log --oneline --graph --all    # 看分支分叉与合并的图结构
 ```
@@ -100,12 +100,12 @@ git log --oneline --graph --all    # 看分支分叉与合并的图结构
 # 极简提交图：每个提交存 parent 指针，分支存指向提交的 id
 commits = {
     "c0": {"parents": [], "msg": "chore: init"},
-    "c1": {"parents": ["c0"], "msg": "docs(week01): style anchor"},
-    "c2": {"parents": ["c1"], "msg": "feat: add week03 demo on main"},
-    "c3": {"parents": ["c1"], "msg": "feat: add week03 demo on feature/week03-demo"},
-    "c4": {"parents": ["c2", "c3"], "msg": "Merge feature/week03-demo into main"},
+    "c1": {"parents": ["c0"], "msg": "docs(chapter01): style anchor"},
+    "c2": {"parents": ["c1"], "msg": "feat: add chapter03 demo on main"},
+    "c3": {"parents": ["c1"], "msg": "feat: add chapter03 demo on feature/chapter03-demo"},
+    "c4": {"parents": ["c2", "c3"], "msg": "Merge feature/chapter03-demo into main"},
 }
-branches = {"main": "c2", "feature/week03-demo": "c3"}
+branches = {"main": "c2", "feature/chapter03-demo": "c3"}
 
 def ancestors(commit_id: str) -> set[str]:
     seen, stack = set(), [commit_id]
@@ -123,7 +123,7 @@ def is_ancestor(anc: str, desc: str) -> bool:
 print("c1 是 c2 的祖先？", is_ancestor("c1", "c2"))
 print("c2 是 c3 的祖先？", is_ancestor("c2", "c3"))
 print("c1 是 c4 的祖先？", is_ancestor("c1", "c4"))
-print("分支 main 指向", branches["main"], "feature 指向", branches["feature/week03-demo"])
+print("分支 main 指向", branches["main"], "feature 指向", branches["feature/chapter03-demo"])
 # 合并后 main 会前移到 c4（merge commit 有两个 parent）
 branches_after_merge = {"main": "c4"}
 print("合并后 main 指向", branches_after_merge["main"], "parents:", commits["c4"]["parents"])
@@ -132,7 +132,7 @@ print("合并后 main 指向", branches_after_merge["main"], "parents:", commits
 **规则**：
 
 - `main` 分支保持可构建（`jupyter-book build --execute` 绿）；所有改动先在 `feature/*` 分支上验证。
-- 分支命名用 `feature/` / `fix/` / `docs/` 前缀，如 `feature/week03-demo`、`docs/week03`，见名知意。
+- 分支命名用 `feature/` / `fix/` / `docs/` 前缀，如 `feature/chapter03-demo`、`docs/chapter03`，见名知意。
 - 已推送的 `main` 历史不改写（不用 `git push --force` 重写公共历史），撤销用 `revert` 而非 `reset`。
 
 ### 3.3 协作：PR 流程——在本书仓库做首次特性分支演练
@@ -146,30 +146,30 @@ git status --porcelain | wc -l   # 期望 0
 # 1) 从最新 main 切特性分支
 git switch main
 git pull --ff-only
-git switch -c feature/week03-demo
+git switch -c feature/chapter03-demo
 
-# 2) 做改动并提交（示例：在 book/week03_*.md 中加一行注释）
-echo "<!-- week03 demo -->" >> book/week03_Git与协作工作流.md
-git add book/week03_Git与协作工作流.md
-git commit -m "docs(week03): demo feature branch commit"
+# 2) 做改动并提交（示例：在 book/chapter03_*.md 中加一行注释）
+echo "<!-- chapter03 demo -->" >> book/chapter03_Git与协作工作流.md
+git add book/chapter03_Git与协作工作流.md
+git commit -m "docs(chapter03): demo feature branch commit"
 
 # 3) 推送特性分支
-git push -u origin feature/week03-demo
+git push -u origin feature/chapter03-demo
 
-# 4) 在 GitHub 发起 PR：feature/week03-demo -> main，填写标题与描述，请求评审
+# 4) 在 GitHub 发起 PR：feature/chapter03-demo -> main，填写标题与描述，请求评审
 #    评审通过后 Squash 或 Merge 合并，删除特性分支
 
 # 5) 回到 main 并同步
 git switch main
 git pull --ff-only
-git branch -d feature/week03-demo
+git branch -d feature/chapter03-demo
 git log --oneline --graph --all -n 8
 ```
 
 **PR（Pull Request）的协作价值**：
 
 - **异步评审**：改动在合并前可被他人阅读、评论、要求修改，避免「直接推 main」绕过质量门。
-- **CI 门控**：PR 可关联 `jupyter-book build --execute` 与 `pytest answers/week03/ -q` 等检查，未绿不合入。
+- **CI 门控**：PR 可关联 `jupyter-book build --execute` 与 `pytest answers/chapter03/ -q` 等检查，未绿不合入。
 - **可追溯**：PR 标题与描述成为变更的上下文，比单行 commit message 更易理解「为什么」。
 
 > 提示：本书仓库当前为本地私有、未设远端推送（见计划决策⑦），课堂演练可用本机多克隆或在个人 fork 上完成上述流程，命令与协作语义完全一致。
@@ -284,13 +284,13 @@ git log --oneline -n 5   # 多了一次 revert 提交，原错误提交仍在历
 
 #### 改动并预测 实验 3：工作区有未暂存改动时执行 git restore / git checkout -- → 预测文件内容
 
-- **改什么**：修改某已跟踪文件（如在 `book/week03_Git与协作工作流.md` 末尾加一行 `TEMP`），不 `git add`，分别试验 `git diff` 能看到改动，然后执行 `git restore --source=HEAD -- {文件}`（或 `git checkout -- {文件}`），再看文件内容与 `git status`。
+- **改什么**：修改某已跟踪文件（如在 `book/chapter03_Git与协作工作流.md` 末尾加一行 `TEMP`），不 `git add`，分别试验 `git diff` 能看到改动，然后执行 `git restore --source=HEAD -- {文件}`（或 `git checkout -- {文件}`），再看文件内容与 `git status`。
 - **预测**：`git restore` 后文件内容回到 `HEAD` 版本，`TEMP` 行消失，`git status` 变干净（`working tree clean`），且 `git log` 完全不变（历史未动）；若改动已 `git add` 但未 commit，则需 `git restore --staged {文件}` 先取消暂存，再 `git restore --worktree {文件}` 丢弃工作区改动。
 - **解释**：Git 有三棵树：`HEAD`（已提交快照）、index/暂存区、`worktree`（工作区）。`restore --source=HEAD --worktree` 是用 `HEAD` 的快照覆盖工作区，未提交的改动被丢弃且不可恢复（除非有编辑器备份）。这验证了「未提交的改动不属于历史、无安全网」的协作纪律——重要改动及时 `commit`，丢弃前先 `git diff` 确认。
 
 ## 习题
 
-> 参考答案与测试在 `answers/week03/`，运行 `pytest answers/week03/ -q` 验证。题目优先用 `tmp_path` + `subprocess` 真 `git` 做断言；若环境 `git` 不可靠，退化为 hermetic Python 题（`parse_git_log` 等）。
+> 参考答案与测试在 `answers/chapter03/`，运行 `pytest answers/chapter03/ -q` 验证。题目优先用 `tmp_path` + `subprocess` 真 `git` 做断言；若环境 `git` 不可靠，退化为 hermetic Python 题（`parse_git_log` 等）。
 
 1. **解析 git log**：实现 `parse_git_log(lines: list[str]) -> list[dict]`，解析 `git log --oneline` 文本（每行 `"{hash} {type}({scope}): {subject}"` 或 `"{hash} {subject}"`），返回结构化记录，未匹配的行仍保留 `hash` 与 `subject`。
 2. **分支名前缀校验**：实现 `is_valid_branch_name(name: str) -> bool`，校验分支名符合 `feature/` / `fix/` / `docs/` / `chore/` 前缀且后缀非空、仅含小写字母数字与 `-` `_` `/`。
@@ -301,7 +301,7 @@ git log --oneline -n 5   # 多了一次 revert 提交，原错误提交仍在历
 
 ## 延伸挑战
 
-1. 在本书仓库内按 3.3 节做一次真实特性分支演练：切 `feature/week03-{学号}` 分支，改动任意一章的错别字，推送并在 GitHub 上发起 PR，观察 CI（`jupyter-book build --execute`）的门控效果。
+1. 在本书仓库内按 3.3 节做一次真实特性分支演练：切 `feature/chapter03-{学号}` 分支，改动任意一章的错别字，推送并在 GitHub 上发起 PR，观察 CI（`jupyter-book build --execute`）的门控效果。
 2. 对比 `git merge --no-ff` 与 `git merge --ff-only`：分别在两种模式下合并同一特性分支，用 `git log --oneline --graph` 记录历史图差异，解释何时需要保留 merge commit。
 3. 用 `git rebase -i HEAD~3` 整理本地未推送的 3 次提交（合并 fixup、重写 message），对比 `rebase` 与 `merge` 对历史线性度的影响，并说明为何已推送历史禁用 rebase。
 4. 阅读 MeetingToText `CONTRIBUTING.md` 的「已知例外」表格，尝试为本书仓库的 `book/STYLE.md` 设计一张类似的「协作例外登记表」，列出你认为需要例外的场景与理由。
@@ -321,8 +321,8 @@ cat > .git/hooks/pre-commit <<'HOOK'
 set -e
 echo "[hook] running ruff check ..."
 ruff check .
-echo "[hook] running pytest answers/week03 -q ..."
-pytest answers/week03 -q
+echo "[hook] running pytest answers/chapter03 -q ..."
+pytest answers/chapter03 -q
 HOOK
 chmod +x .git/hooks/pre-commit
 
@@ -330,5 +330,3 @@ chmod +x .git/hooks/pre-commit
 ```
 
 进阶可选 `pre-commit` 框架（`pip install pre-commit` + `.pre-commit-config.yaml`）或前端 `husky`，但均属选学工具链——本章不预置、不强制，未安装时协作流程完全可用；启用后也可用 `--no-verify` 按需绕过，避免阻塞紧急提交。
-
-本章内容原创，协作流程参考 MeetingToText 的 `CONTRIBUTING.md`，案例与习题均为原创。

@@ -11,9 +11,9 @@ kernelspec:
   name: python3
 ---
 
-# 周14 打包部署与CI
+# 第14章 打包部署与CI
 
-> 为什么要单列一周讲“打包部署与 CI（Continuous Integration，持续集成）”？前几周你已经能在本机用 `meetingtotext serve --reload` + `npm run dev` 调通 M2 的 Web API，但这些命令强依赖“你的机器装对了 Python 3.12、装对了 funasr、前端装对了 Node 20”。换一台机器、换一位同学，往往就跑不起来。打包（image）解决“环境可复制”，编排（compose）解决“多服务一键启动”，CI（推送即测）解决“每次提交都自动验证是否可构建、可测试”。本章以“把 M2 一键部署（`docker compose up --build`）”为目标，带你打通 Docker 多阶段构建、容器网络、Compose 编排与 GitHub Actions 流水线，并厘清本项目最新拓扑：nginx 纯静态托管 + 前端通过 `VITE_API_BASE_URL` 直连后端（跨源（CORS，Cross-Origin Resource Sharing）直连）。
+> 为什么要单列一章讲“打包部署与 CI（Continuous Integration，持续集成）”？前几章你已经能在本机用 `meetingtotext serve --reload` + `npm run dev` 调通 M2 的 Web API，但这些命令强依赖“你的机器装对了 Python 3.12、装对了 funasr、前端装对了 Node 20”。换一台机器、换一位同学，往往就跑不起来。打包（image）解决“环境可复制”，编排（compose）解决“多服务一键启动”，CI（推送即测）解决“每次提交都自动验证是否可构建、可测试”。本章以“把 M2 一键部署（`docker compose up --build`）”为目标，带你打通 Docker 多阶段构建、容器网络、Compose 编排与 GitHub Actions 流水线，并厘清本项目最新拓扑：nginx 纯静态托管 + 前端通过 `VITE_API_BASE_URL` 直连后端（跨源（CORS，Cross-Origin Resource Sharing）直连）。
 
 ## 学习目标
 
@@ -26,7 +26,7 @@ kernelspec:
 
 ## 先修要求
 
-- 完成 [周7 HTTP 与 REST API](week07_HTTP与REST_API.md) 与 [周8 数据持久化与SQL](week08_数据持久化与SQL.md)（会用 `m2t` 包与 `pytest`）。
+- 完成 [第7章 HTTP 与 REST API](chapter07_HTTP与REST_API.md) 与 [第8章 数据持久化与SQL](chapter08_数据持久化与SQL.md)（会用 `m2t` 包与 `pytest`）。
 - 会用命令行运行 `docker --version` 与 `docker compose version`（本章不要求真实构建大镜像，校验用 `config -q` 即可）。
 - 已阅读 MeetingToText 的 `docker/{Dockerfile.backend,Dockerfile.frontend,nginx.conf,docker-compose.yml}` 与 `.github/workflows/ci.yml` 的 HEAD 版本（只读参考，不复制大段生产配置）。
 
@@ -186,7 +186,7 @@ print("—— 断言通过：URL 拼接在两种拓扑下均正确 ——")
 - `backend`: `build: { context: .., dockerfile: docker/Dockerfile.backend }`、`volumes: ["../data:/data"]`、`environment: { MTT_DATA_DIR, MODELSCOPE_CACHE }`、`healthcheck: { test: urlopen http://127.0.0.1:8000/api/health, start_period: 300s }`、`ports: ["8000:8000"]`。
 - `frontend`: `build: { context: .., dockerfile: docker/Dockerfile.frontend, args: { VITE_API_BASE_URL } }`、`ports: ["80:80"]`、`depends_on: { backend: { condition: service_healthy } }`。
 
-`healthcheck` 与 `depends_on: service_healthy` 的协同：`healthcheck` 周期性在容器内 `urlopen` 探活，仅当连续成功才标记 `healthy`；`depends_on` 确保前端容器在后端 `healthy` 之前不启动，避免浏览器先拿到前端页面却因后端未就绪而请求失败。`start_period: 300s` 覆盖首次启动需下载 FunASR 模型（~1-2 GB）的窗口期。
+`healthcheck` 与 `depends_on: service_healthy` 的协同：`healthcheck` 章期性在容器内 `urlopen` 探活，仅当连续成功才标记 `healthy`；`depends_on` 确保前端容器在后端 `healthy` 之前不启动，避免浏览器先拿到前端页面却因后端未就绪而请求失败。`start_period: 300s` 覆盖首次启动需下载 FunASR 模型（~1-2 GB）的窗口期。
 
 `deploy-demo/docker-compose.yml` 为教学最小版（字段与生产一致，卷路径简化）：
 
@@ -316,7 +316,7 @@ jobs:
 
 ## 习题
 
-> 参考答案与测试在 `answers/week14/`，运行 `.venv/bin/pytest answers/week14/ -q` 验证。题目均为 hermetic（不依赖 Docker 守护进程、网络或真实模型），仅解析 YAML、构造 URL 与纯函数校验。
+> 参考答案与测试在 `answers/chapter14/`，运行 `.venv/bin/pytest answers/chapter14/ -q` 验证。题目均为 hermetic（不依赖 Docker 守护进程、网络或真实模型），仅解析 YAML、构造 URL 与纯函数校验。
 
 1. **Compose 解析**：实现 `parse_compose(text: str) -> dict`，用 `yaml.safe_load` 解析 `docker-compose.yml` 文本，返回字典。测试断言 `parse_compose` 对 `deploy-demo/docker-compose.yml` 的解析结果含 `services.backend` 与 `services.frontend`。
 2. **API_BASE 回退**：实现 `resolve_api_base(env: dict) -> str`，当 `env["VITE_API_BASE_URL"]` 非空时返回其去尾斜杠后的值，否则返回 `"/api"`。测试断言缺失/空串/空白均回退 `"/api"`，`http://localhost:8000/api/` 去尾后为 `http://localhost:8000/api`。
@@ -327,9 +327,7 @@ jobs:
 
 ## 延伸挑战
 
-1. 为 `deploy-demo/docker-compose.yml` 增加 `volumes: ["./data:/data"]` 持久化卷，对比 `docker compose down` 后 `data/` 是否保留，体会“卷的生命周期独立于容器”。
+1. 为 `deploy-demo/docker-compose.yml` 增加 `volumes: ["./data:/data"]` 持久化卷，对比 `docker compose down` 后 `data/` 是否保留，体会“卷的生命章期独立于容器”。
 2. 在 `deploy-demo/ci.yml` 中增加 `docker compose -f deploy-demo/docker-compose.yml config -q` 步骤，故意把 `depends_on.condition` 拼错为 `service_healthy_typo`，观察 CI 的阻断效果（本地 `config -q` 同理）。
 3. 把 `frontend` 的 `VITE_API_BASE_URL` 改为 `http://backend:8000/api`（容器网络内的服务名），预测浏览器访问 `http://localhost` 时 `fetch` 是否成功（提示：`backend` 仅在 Compose 网络内可解析，浏览器不在该网络内）。
-
-> 本章内容原创，Docker 多阶段/层缓存/Compose 健康依赖/CORS 跨源直连与纯静态托管概念对应 MeetingToText 的 `docker/{Dockerfile.backend,Dockerfile.frontend,nginx.conf,docker-compose.yml}` 与 `.github/workflows/ci.yml`，`VITE_API_BASE_URL` 构建时注入与 `client.ts` 的回退逻辑为教学原创示例。
 

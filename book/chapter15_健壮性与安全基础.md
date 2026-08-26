@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 周15 健壮性与安全基础
+# 第15章 健壮性与安全基础
 
 > 为什么在收尾阶段讲安全？M2 已能对外提供 `/api/upload`、`/api/health` 等端点，但“能跑”不等于“能扛住真实流量”。一个带后缀 `.wav` 的伪造文件就能绕过扩展名检查、一个循环脚本就能把单进程打满、前端跨域请求在浏览器里被静默阻断——这些都是上线前必须堵住的口子。本章以后端加固为主线：先学会在边界做**输入校验**（魔数、Content-Length 预检），再用**限流**给 API 加“闸门”、用**密钥管理**守住配置、并讲清“**纯静态跨源直连为何需要 CORS**”（`http://localhost` 的 nginx 静态页调 `http://localhost:8000` 的 API，哪怕同主机也算跨源），最后用转义守住 **XSS**。学完你能给 M2 加上最小可用、且可被测试证明的健壮性与安全层，并把“认证”留作作业自行补齐。
 
@@ -26,7 +26,7 @@ kernelspec:
 
 ## 先修要求
 
-- 完成 [周7 HTTP 与 REST API](week07_HTTP与REST_API.md)（理解状态码 400/413/429 语义与 FastAPI 依赖）与 [周11 M2 可用 Web API](week11_m2.md)（已有一个可上传/查询的 Web API）。
+- 完成 [第7章 HTTP 与 REST API](chapter07_HTTP与REST_API.md)（理解状态码 400/413/429 语义与 FastAPI 依赖）与 [第11章 M2 可用 Web API](chapter11_里程碑M2_WebAPI.md)（已有一个可上传/查询的 Web API）。
 - 会读 MeetingToText 只读参考：`backend/app/middleware/ratelimit.py`（固定窗口实现）、`backend/app/routers/upload.py`（魔数与 `Content-Length` 双重校验）、`backend/app/routers/health.py`（只读探针）、`backend/app/config.py` 的 `cors_origins_from_env()`。
 - Python 基础：`bytes.startswith`、`os.path.splitext`、`threading.Lock`。
 
@@ -271,11 +271,11 @@ print("—— 断言通过：白名单缺 origin 则跨源请求被浏览器阻�
 4. 前端所有动态文本用插值而非 `v-html`；若为导出拼接 HTML，则在拼接前做 `escape_html` 练习（当前 `export.py` 的 TXT/SRT/MD 导出不涉及 HTML，故为假设性练习）。
 5. CORS 白名单通过 `MTT_CORS_ORIGINS` 环境变量配置，默认即含 `http://localhost` 以支持纯静态跨源直连。
 
-认证（Bearer token 中间件）留作本章作业（见 `answers/week15/auth_exercise.md`），正文不实现。
+认证（Bearer token 中间件）留作本章作业（见 `answers/chapter15/auth_exercise.md`），正文不实现。
 
 ### 改动并预测
 
-以下 3 个实验均可在本章 `{code-cell}` 或本地 `.venv` 中复现，按“改什么 → 预测 → 解释”三段式。每个实验均对应 `answers/week15/solution.py` 的一个纯函数，便于用 pytest 复证。
+以下 3 个实验均可在本章 `{code-cell}` 或本地 `.venv` 中复现，按“改什么 → 预测 → 解释”三段式。每个实验均对应 `answers/chapter15/solution.py` 的一个纯函数，便于用 pytest 复证。
 
 #### 改动并预测 实验 1：去掉魔数校验 → 预测伪文件过检
 
@@ -297,19 +297,17 @@ print("—— 断言通过：白名单缺 origin 则跨源请求被浏览器阻�
 
 ## 习题
 
-> 参考答案与测试在 `answers/week15/`，运行 `.venv/bin/pytest answers/week15/ -q` 验证。题目均为 hermetic 纯函数，不依赖网络或外部服务；认证作业为独立子目录 `auth_solution/`，同样由 pytest 驱动（`TestClient` 进程内断言 401）。
+> 参考答案与测试在 `answers/chapter15/`，运行 `.venv/bin/pytest answers/chapter15/ -q` 验证。题目均为 hermetic 纯函数，不依赖网络或外部服务；认证作业为独立子目录 `auth_solution/`，同样由 pytest 驱动（`TestClient` 进程内断言 401）。
 
 1. **魔数校验**：实现 `is_valid_magic(ext: str, header: bytes) -> bool`，按容器签名判定头是否匹配扩展名（`.wav→RIFF`、`.flac→fLaC`、`.ogg→OggS`、`.mp3→ID3` 或 frame sync、` .m4a→ftyp`、` .webm→EBML` 等），空头返回 `True`（由空文件分支另行处理）。
 2. **Content-Length 预检**：实现 `check_content_length(content_length: str | None, max_size: int) -> tuple[bool, str | None]`，`None`/非法值视为跳过，超 `max_size` 返回 `(False, msg)`，否则 `(True, None)`。
 3. **限流计数**：实现 `InMemoryRateLimiter`（或等价纯函数 `is_allowed`），固定窗口 60s、每 key 限 `rpm` 次、可注入时钟 `_now`，超限返回 `(False, retry_after)` 且 `retry_after>=1`，窗口滚动后重置，`reset()` 清空。
 4. **CORS 源判定**：实现 `is_origin_allowed(origin: str, allowlist: list[str]) -> bool`，`"*"` 通配任意源，否则精确匹配；并实现 `cors_origins_from_env(raw: str) -> list[str]` 的纯函数版（空串返回默认三项，逗号分隔、去空、trim）。
 5. **XSS 转义**：实现 `escape_html(s: str) -> str`，对 `& < > " '` 五字符转义，满足 `escape_html('<script>') == '&lt;script&gt;'` 等。
-6. **认证（作业，见 `auth_exercise.md`）**：按规约给 M2 的 FastAPI 应用加 Bearer token 中间件，未带 `Authorization: Bearer {token}` 时对 `/api/*` 返回 `401`，带正确 token 放行；静态/健康探针等非 `/api/*` 不鉴权（或按作业规约实现）。参考解与断言在 `answers/week15/auth_solution/`。
+6. **认证（作业，见 `auth_exercise.md`）**：按规约给 M2 的 FastAPI 应用加 Bearer token 中间件，未带 `Authorization: Bearer {token}` 时对 `/api/*` 返回 `401`，带正确 token 放行；静态/健康探针等非 `/api/*` 不鉴权（或按作业规约实现）。参考解与断言在 `answers/chapter15/auth_solution/`。
 
 ## 延伸挑战
 
 1. 为限流加“令牌桶（token bucket）”变体，对比固定窗口的边界突刺（burst at window edge），用可注入时钟证明两者差异。
 2. 给 `POST /api/upload` 补“文件名规范化”：`../`、`\x00`、超长名（>200）等边界，写 hermetic 用例并与 `upload.py` 的 `safe_name = uuid + ext` 对照。
 3. 把 `escape_html` 扩展为 Markdown 上下文转义（反引号、链接语法），并说明为何“输出时转义”优于“输入时转义”。
-
-> 本章内容原创，概念对应 MeetingToText 的 `backend/app/middleware/ratelimit.py`、`backend/app/routers/upload.py`、`backend/app/routers/health.py`、`backend/app/config.py` 的 CORS 配置，教学示例与习题均为原创。

@@ -11,9 +11,9 @@ kernelspec:
   name: python3
 ---
 
-# 里程碑 M3：全栈应用与答辩复盘
+# 第16章 里程碑 M3：全栈应用与答辩复盘
 
-> 从 API 到可用产品——本周把上传/转写/列表/纪要/导出串成一条最小全栈链路，完成可本地运行、可被 `TestClient` 冒烟的会议转写应用，并以复盘论文完成答辩。本里程碑仍全 hermetic（不实现 ASR 本体，走 m2t mock/fake），并与 `review_template.md` 的论文模板对齐。
+> 从 API 到可用产品——本章把上传/转写/列表/纪要/导出串成一条最小全栈链路，完成可本地运行、可被 `TestClient` 冒烟的会议转写应用，并以复盘论文完成答辩。本里程碑仍全 hermetic（不实现 ASR 本体，走 m2t mock/fake），并与 `review_template.md` 的论文模板对齐。
 
 ## 学习目标
 
@@ -151,7 +151,7 @@ task = {
         {"speaker": "说话人2", "text": "好的，我先汇报一下进度。", "start": 1.5, "end": 3.0},
     ],
     "full_text": "大家好，我们开始开会。\n好的，我先汇报一下进度。",
-    "minutes": "# 会议纪要\n\n## 待办\n- 下周完成原型",
+    "minutes": "# 会议纪要\n\n## 待办\n- 下一章完成原型",
 }
 md = export(task, "md")
 assert "# 会议转录" in md and "会议纪要" in md and "待办" in md
@@ -171,5 +171,3 @@ print("M3 hermetic 冒烟通过 — transcribe→generate→export(md 含纪要)
 1. 实时录音 WebSocket + SSE 推流进度条，让 `GET /status` 的轮询改为推送。
 2. 完整 Vue 列表页（`fetch(/tasks)`→任务卡片→导出/纪要按钮）与 `VITE_API_BASE_URL` 打通，保持 `GET /` 的 hermetic 回退。
 3. 容器化（多阶段 Dockerfile + `compose` healthcheck）与 CI 冒烟（`pytest` + `linkcheck` + `ruff` 全绿）的一键演示。
-
-> 本章内容原创，概念对应 MeetingToText 的 `backend/app/routers/*` 与 `backend/app/services/{pipeline,store,llm}` 的全栈链路，任务结构与 grader 约定对应 `milestones/m3_fullapp/README.md`、`milestones/m3_fullapp/review_template.md` 与 `milestones/grader.py`，习题与表述均为原创。

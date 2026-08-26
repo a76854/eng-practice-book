@@ -1,6 +1,6 @@
-# 里程碑 M1：CLI 转写工具（周 6）
+# 里程碑 M1：CLI 转写工具（第6章）
 
-> 对应章节：`week06_m1.md`（CLI 与工程化周）  
+> 对应章节：`chapter06_里程碑M1_CLI转写工具.md`（CLI 与工程化章）  
 > 前置能力：Shell、argparse、文件 I/O、`import m2t` 基础
 
 ## 1. 任务说明

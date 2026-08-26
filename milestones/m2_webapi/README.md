@@ -1,6 +1,6 @@
-# 里程碑 M2：可用 Web API（周 11）
+# 里程碑 M2：可用 Web API（第11章）
 
-> 对应章节：`week07 HTTP 与 REST` / `week08 数据持久化` / `week09 调试与性能` / `week10 并发与异步`  
+> 对应章节：`chapter07 HTTP 与 REST` / `chapter08 数据持久化` / `chapter09 调试与性能` / `chapter10 并发与异步`  
 > 前置能力：FastAPI 基础、`m2t.store` / `m2t.export` 基础、并发与状态机思维  
 > 复用 MeetingToText 只读参考：`backend/app/routers/{transcribe.py,generate.py,upload.py}` + `deps.py`（路由分层 + `get_task_or_404` + 状态机）
 

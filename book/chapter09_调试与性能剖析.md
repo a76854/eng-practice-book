@@ -11,9 +11,9 @@ kernelspec:
   name: python3
 ---
 
-# 周9 调试与性能剖析
+# 第9章 调试与性能剖析
 
-> 为什么要把调试与性能剖析放在一起？前几周你已经能写 HTTP 服务、持久化任务、调用 ASR/LLM——但当转写变慢、日志刷屏看不出问题、接口返回 500 却不知哪一行触发时，仅靠“多打几个 print”会越调越乱。日志（logging）是“事后可查的现场记录”，断点（breakpoint）是“暂停现场的显微镜”，而性能剖析（profiling）是“给程序计时的秒表”。本章先把日志的分级、落盘与轮转配好，再用断点定位逻辑错误，最后用 `cProfile` 找到转写流水线的真正热点——三者配合，才能从“能跑”迈向“可维护、可变快”。
+> 为什么要把调试与性能剖析放在一起？前几章你已经能写 HTTP 服务、持久化任务、调用 ASR/LLM——但当转写变慢、日志刷屏看不出问题、接口返回 500 却不知哪一行触发时，仅靠“多打几个 print”会越调越乱。日志（logging）是“事后可查的现场记录”，断点（breakpoint）是“暂停现场的显微镜”，而性能剖析（profiling）是“给程序计时的秒表”。本章先把日志的分级、落盘与轮转配好，再用断点定位逻辑错误，最后用 `cProfile` 找到转写流水线的真正热点——三者配合，才能从“能跑”迈向“可维护、可变快”。
 
 ## 学习目标
 
@@ -26,7 +26,7 @@ kernelspec:
 
 ## 先修要求
 
-- 完成 [周1 环境与项目骨架](week01_环境与项目骨架.md)与 [周5 测试的思维与工程](week05_测试的思维与工程.md)（会在 `.venv` 中 `pytest` 与 `tempfile`）。
+- 完成 [第1章 环境与项目骨架](chapter01_环境与项目骨架.md)与 [第5章 测试的思维与工程](chapter05_测试的思维与工程.md)（会在 `.venv` 中 `pytest` 与 `tempfile`）。
 - 会用 `m2t.export` / `m2t.store` 的基本调用（本章热点示例用 mock 流水线模拟，不依赖真实 ASR 模型）。
 - 已阅读 MeetingToText `cli.py` 的 `--log-level/--log-file` 两个选项的帮助信息（只读参考，不需运行模型）。
 
@@ -53,7 +53,7 @@ import logging
 
 # 演示：basicConfig 一行配好控制台日志（真实项目用 dictConfig，见 9.2）
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s", force=True)
-logger = logging.getLogger("week09.demo")
+logger = logging.getLogger("chapter09.demo")
 logger.setLevel(logging.INFO)
 
 logger.debug("这条 DEBUG 不可见（低于 INFO）")
@@ -126,7 +126,7 @@ tmpdir = tempfile.mkdtemp()
 demo_log = os.path.join(tmpdir, "demo.log")
 config = build_demo_config("INFO", demo_log)
 logging.config.dictConfig(config)
-log = logging.getLogger("week09.dict_demo")
+log = logging.getLogger("chapter09.dict_demo")
 log.info("dictConfig 生效：这条会同时去控制台与文件")
 log.debug("这条 DEBUG 仍被 INFO 阈值过滤")
 # 验证文件已落盘
@@ -159,7 +159,7 @@ log_path = os.path.join(tmpdir2, "rotate.log")
 # 小阈值演示轮转：maxBytes=400 字节，backupCount=2，写 30 条约 50 字节/条
 handler = logging.handlers.RotatingFileHandler(log_path, maxBytes=400, backupCount=2, encoding="utf-8")
 handler.setFormatter(logging.Formatter("%(message)s"))
-rot_logger = logging.getLogger("week09.rotate")
+rot_logger = logging.getLogger("chapter09.rotate")
 rot_logger.handlers.clear()
 rot_logger.setLevel(logging.INFO)
 rot_logger.addHandler(handler)
@@ -328,13 +328,13 @@ print("—— 断言通过：ncalls 表头与热点函数名均存在 ——")
 
 #### 改动并预测 实验 4：`dictConfig(disable_existing_loggers=False)` → `True` → 预测已有 logger 行为
 
-- **改什么**：把 `build_demo_config` 返回字典中的 `"disable_existing_loggers": False` 改为 `True`，在 `dictConfig` 之前先 `logging.getLogger("week09.pre_existing").addHandler(...)` 创建一个已有 logger，再 `dictConfig` 后尝试 `getLogger("week09.pre_existing").info("test")`。
+- **改什么**：把 `build_demo_config` 返回字典中的 `"disable_existing_loggers": False` 改为 `True`，在 `dictConfig` 之前先 `logging.getLogger("chapter09.pre_existing").addHandler(...)` 创建一个已有 logger，再 `dictConfig` 后尝试 `getLogger("chapter09.pre_existing").info("test")`。
 - **预测**：`False` 时已有 logger 保留、仍可输出；改为 `True` 后该 logger 被禁用（`disabled=True`），其 `info` 不再输出，除非在新配置的 `loggers` 字典中显式声明它。
 - **解释**：`disable_existing_loggers` 控制“未在新配置中出现的旧 logger 是否禁用”。`False`（MeetingToText 的选择）适合增量配置——不因一次 `dictConfig` 而静默已有模块的日志；`True` 则为“全量接管”，适合启动时一次性重建。
 
 ## 习题
 
-> 参考答案与测试在 `answers/week09/`，运行 `.venv/bin/pytest answers/week09/ -q` 验证。题目均为 hermetic（不依赖网络/真实模型/外部服务），仅用 `tempfile` 与内存。
+> 参考答案与测试在 `answers/chapter09/`，运行 `.venv/bin/pytest answers/chapter09/ -q` 验证。题目均为 hermetic（不依赖网络/真实模型/外部服务），仅用 `tempfile` 与内存。
 
 1. **日志级别过滤**：实现 `create_memory_logger(level: str) -> tuple[Logger, ListHandler]`，返回绑定了内存 `ListHandler` 的 `logger`（`propagate=False`）。对同一 `logger` 分别 `debug/info/warning/error` 四条，断言 `level="INFO"` 时 `records` 含 `INFO` 及以上、`level="ERROR"` 时仅含 `ERROR`。
 2. **RotatingFileHandler 轮转计数**：实现 `write_with_rotation(tmp_dir: str, max_bytes: int, backup_count: int, n: int) -> list[str]`，在 `tmp_dir` 下创建 `RotatingFileHandler(app.log, maxBytes=max_bytes, backupCount=backup_count)` 并写入 `n` 条定长日志，返回 `glob("app.log*")` 的文件名列表。断言 `backup_count=2` 时文件数 `==3`，`backup_count=1` 时 `==2`。
@@ -345,8 +345,6 @@ print("—— 断言通过：ncalls 表头与热点函数名均存在 ——")
 
 ## 延伸挑战
 
-1. 用 `python -m cProfile -s cumulative` 对 `answers/week09/solution.py` 的 `slow_compute(50000)` 单独跑一次（`python -m cProfile -s cumulative -c "import answers.week09.solution; answers.week09.solution.slow_compute(50000)"`），对比 `tottime` 与 `cumtime`，记录热点是否仍为 `slow_compute`。
+1. 用 `python -m cProfile -s cumulative` 对 `answers/chapter09/solution.py` 的 `slow_compute(50000)` 单独跑一次（`python -m cProfile -s cumulative -c "import answers.chapter09.solution; answers.chapter09.solution.slow_compute(50000)"`），对比 `tottime` 与 `cumtime`，记录热点是否仍为 `slow_compute`。
 2. 给 `write_with_rotation` 增加 `maxBytes` 边界测试：设 `maxBytes=1` 极小值，观察每次写入即轮转时文件数的稳定性，思考“过小 `maxBytes` 对 I/O 的代价”。
 3. 为 `m2t.store` 的 `create_task` 前后加 `logger.debug("create start/end")`，用 `level=DEBUG` 与 `level=INFO` 各跑一次，对比日志量与 `cProfile` 中 `create_task` 的 `tottime` 占比，体会“日志级别对性能的间接影响”（`DEBUG` 在热路径上需谨慎）。
-
-> 本章内容原创，日志落盘与轮转概念对应 MeetingToText 的 `backend/app/logging_config.py` 与 `cli.py --log-level/--log-file`，cProfile 剖析思路对应转写流水线热点定位，示例代码与表述均为原创。

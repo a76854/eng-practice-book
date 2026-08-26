@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 周13 外部服务集成：ASR与LLM
+# 第13章 外部服务集成：ASR与LLM
 
 > 前几章你已能在本地用 `m2t.store` 持久化任务、用 `FastAPI` 暴露接口、用 `ThreadPoolExecutor` 跑后台转写——但 MeetingToText 的“纪要生成”并不在本地算完：它把 `task.result.full_text` 与模板提示词一起发给外部 LLM（OpenAI 兼容 API，如 DeepSeek / OpenAI / Ollama），再把返回的 Markdown 存回数据库。外部服务（external service）意味着三件本地函数没有的事：密钥（Key）不能硬编码、网络会超时（timeout）与限流（rate limit）、失败信息必须脱敏（sanitize）后才展示。本章以 `m2t.llm` 的 `LLMClient(timeout=60, max_retries=2)` 与 `map_llm_error` 为锚，配合 `backend/app/templates/presets.py` 的模板选择与 `routers/generate.py` 的装配链路，用 mock（模拟）方式在教学环境中完整演示“超时→重试→脱敏中文错误”的闭环——全程不跑真 LLM。
 
@@ -26,7 +26,7 @@ kernelspec:
 
 ## 先修要求
 
-- 完成 [周7 HTTP 与 REST API](week07_HTTP与REST_API.md)与 [周8 数据持久化与 SQL](week08_数据持久化与SQL.md)（会用 `FastAPI`、`TestClient` 与 `sqlite3`；理解 `store.save_minutes`）。
+- 完成 [第7章 HTTP 与 REST API](chapter07_HTTP与REST_API.md)与 [第8章 数据持久化与 SQL](chapter08_数据持久化与SQL.md)（会用 `FastAPI`、`TestClient` 与 `sqlite3`；理解 `store.save_minutes`）。
 - 会 `import m2t.llm` 并阅读 `m2t/llm.py` 的 `LLMClient` 与 `map_llm_error`（`openai` 已列为 `m2t` dev 依赖，需 `pip install -e ".[dev]"` 后即可跑本章 mock 示例；模块本身对 `openai` 懒导入，`import m2t.llm` 仍可在未安装时成功）。
 - 无需真实 LLM Key；本章所有网络调用均为 mock（模拟），教学环境不跑真 LLM（真 Key 手动可选，仅在个人机器上按需开启）。
 
@@ -225,7 +225,7 @@ def build_minutes_messages(template_prompt: str, transcript_text: str, custom_in
     return [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_message}]
 
 # ---- 演示：选择模板并 mock 调用 LLM ----
-transcript = "说话人1：我们周三上线。\n说话人2：我负责前端联调。"
+transcript = "说话人1：我们星期三上线。\n说话人2：我负责前端联调。"
 template = get_template("meeting_minutes")
 assert template is not None
 messages = build_minutes_messages(template["system_prompt"], transcript, custom_instructions="请用中文", output_format_hint=template["output_format"])
@@ -236,7 +236,7 @@ print("user 含额外要求:", "额外要求" in messages[1]["content"])
 # mock LLM：不跑网络，直接返回固定纪要
 llm = LLMClient(base_url="https://api.example.com", api_key="{API_KEY}", model="mock-model")
 fake_resp = MagicMock()
-fake_resp.choices = [MagicMock(message=MagicMock(content="# 会议纪要\n## 一、主题\n周三上线\n"))]
+fake_resp.choices = [MagicMock(message=MagicMock(content="# 会议纪要\n## 一、主题\n星期三上线\n"))]
 fake_client = MagicMock()
 fake_client.chat.completions.create.return_value = fake_resp
 llm._client = fake_client
@@ -248,7 +248,7 @@ call_kwargs = fake_client.chat.completions.create.call_args.kwargs
 assert call_kwargs["model"] == "mock-model"
 assert call_kwargs["messages"][0]["role"] == "system"
 assert call_kwargs["messages"][1]["role"] == "user"
-assert "周三上线" in call_kwargs["messages"][1]["content"]
+assert "星期三上线" in call_kwargs["messages"][1]["content"]
 print("—— 模板选择与装配+mock 调用均通过 ——")
 
 # 未知模板分支
@@ -319,7 +319,7 @@ assert llm.generate(...) == "..."
 
 ## 习题
 
-> 参考答案与测试在 `answers/week13/`，运行 `.venv/bin/pytest answers/week13/ -q` 验证。题目均为 hermetic（不依赖网络/真实 Key/文件系统），通过 mock LLM 客户端与内存模板库完成。
+> 参考答案与测试在 `answers/chapter13/`，运行 `.venv/bin/pytest answers/chapter13/ -q` 验证。题目均为 hermetic（不依赖网络/真实 Key/文件系统），通过 mock LLM 客户端与内存模板库完成。
 
 1. **构造参数透传**：实现 `make_client(timeout, max_retries) -> LLMClient`，并用 `patch("openai.OpenAI")` 断言 `OpenAI(..., timeout=..., max_retries=...)` 收到相同值（覆盖 `60/2` 与自定义 `5/0` 两组）。
 2. **脱敏四类映射**：实现 `sanitize_error(exc) -> str`（封装 `map_llm_error`），对 `APITimeoutError / APIConnectionError / AuthenticationError / RateLimitError / ValueError("sk-...")` 五类输入，断言返回四类固定中文文案，且均不含 `sk-` 或 URL。
@@ -334,5 +334,3 @@ assert llm.generate(...) == "..."
 1. **重试的指数退避**：用计数型 `side_effect = [APIConnectionError, APIConnectionError, success]` 模拟 SDK 重试，记录 `max_retries=2` 时第几次成功、`max_retries=0` 时是否直接失败，思考幂等性对重试的必要性。
 2. **Key 的多源注入**：分别从环境变量、SQLite `app_settings`、函数参数三处构造 `LLMClient`，对比“谁覆盖谁”的优先级，并用 `tmp_path` 的临时库验证 `set_setting("llm_api_key", "{API_KEY}")` 后 `get_llm()` 能读到。
 3. **流式真链路**：在本地用 `httpx` MockTransport 模拟 `stream=True` 的 chunked 响应，将 `fake_stream_generate` 换成对 `client.chat.completions.create(stream=True)` 的迭代，验证聚合结果一致且首 chunk 超时即全链脱敏。
-
-> 本章内容原创，客户端构造与错误脱敏对应 MeetingToText 的 `backend/app/services/llm.py`（`timeout=60` / `max_retries=2` / `map_llm_error` 四类中文映射），模板与装配对应 `backend/app/templates/presets.py` 与 `backend/app/templates/prompts.py` 的 `get_template / get_templates / build_minutes_messages`，路由链路对应 `backend/app/routers/generate.py` 的 `get_template → build_minutes_messages → llm.generate → map_llm_error`；示例代码、mock 演示与表述均为原创。

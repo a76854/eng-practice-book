@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 周2 Shell 与脚本自动化
+# 第2章 Shell 与脚本自动化
 
 > 为什么要学 Shell？因为「把重复操作变成一行命令」是工程师的第一层自动化。装环境、批量转写、跑测试、查日志——这些日常工作若每次都靠手点，慢且易错。本章以 MeetingToText 的批量音频处理为落点（`for f in *.wav; do meetingtotext transcribe "$f"; done`），串起 Shell 的核心工具：管道与重定向、文件查找与文本过滤（`find`/`grep`）、结构化处理（`awk`/`jq`）。学完本章，你能把「对一堆文件做同一件事」写成可复用的脚本，并用 Makefile 把常用命令固化为团队共识——正如 MeetingToText 根 `Makefile` 把 `install`/`test`/`lint` 等目标收敛为单一入口。
 
@@ -26,7 +26,7 @@ kernelspec:
 
 ## 先修要求
 
-- 完成 [周1 环境与项目骨架](week01_环境与项目骨架.md)，已建好虚拟环境并能 `pip install -e .`。
+- 完成 [第1章 环境与项目骨架](chapter01_环境与项目骨架.md)，已建好虚拟环境并能 `pip install -e .`。
 - 会用 `cd` / `ls` / `cat` 基础命令；无需 Shell 脚本经验。
 
 ## 正文
@@ -303,7 +303,7 @@ print("commands:", build_transcribe_commands(wavs)[:2])
 
 ## 习题
 
-> 参考答案与测试在 `answers/week02/`，运行 `pytest answers/week02/ -q` 验证。题目均为 hermetic 纯函数，不依赖网络或外部服务。
+> 参考答案与测试在 `answers/chapter02/`，运行 `pytest answers/chapter02/ -q` 验证。题目均为 hermetic 纯函数，不依赖网络或外部服务。
 
 1. **通配列文件**：实现 `glob_audio_files(directory: str, pattern: str = "*.wav") -> list[str]`，返回按字典序排序的匹配路径；目录不存在返回 `[]`。
 2. **按扩展名过滤**：实现 `filter_by_ext(paths: list[str], ext: str) -> list[str]`，`ext` 可带或不带点，大小写不敏感。
@@ -317,5 +317,3 @@ print("commands:", build_transcribe_commands(wavs)[:2])
 1. 为本书仓库写一个 `Makefile` 目标 `transcribe-all`，支持 `AUDIO_DIR={目录} make transcribe-all` 覆盖默认目录，并在 `help` 中可见（含 `##` 注释）。
 2. 用 `find {目录} -name "*.wav" -print0 | xargs -0 -P 2 -I {} bash -c '...'` 尝试并行批量处理，对比串行 `for` 循环的日志顺序差异，思考何时需要 `-P` 并行、何时必须串行。
 3. 构造一个含空格与特殊字符的文件名（如 `my talk (1).wav`），验证 `for f in *.wav; do meetingtotext transcribe "$f"; done` 加引号与不加引号的区别；再用 Python `shlex.quote` 观察安全引号的效果。
-
-> 本章内容原创，自动化思想与批量处理案例对应 MeetingToText 的 Makefile 与 CLI 转写链路。

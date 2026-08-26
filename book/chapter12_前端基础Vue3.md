@@ -11,9 +11,9 @@ kernelspec:
   name: python3
 ---
 
-# 周12 前端基础：Vue3
+# 第12章 前端基础：Vue3
 
-> 为什么这一章要放在后端与持久化之后？前几周你已能启动 FastAPI 服务、持久化任务、排队转写——但这些能力还锁在「命令行与 `curl`」里，真实的 MeetingToText 是「浏览器里可点的任务列表页」。Vue 3（渐进式前端框架）是把「`GET /api/tasks` 的 JSON」变成「可交互页面」的桥梁：用组件（component）拆页面、用响应式（reactivity）让数据驱动视图、用 `v-model` 做输入双向绑定、用 `fetch` 消费后端 API。本章以 `frontend/src/views/TasksListPage.vue` 与 `frontend/src/api/client.ts` 为锚，带你从零写出一个消费 API 的任务列表页，并在 `book/samples/vue-min/` 留下一个最小可运行样例。
+> 为什么这一章要放在后端与持久化之后？前几章你已能启动 FastAPI 服务、持久化任务、排队转写——但这些能力还锁在「命令行与 `curl`」里，真实的 MeetingToText 是「浏览器里可点的任务列表页」。Vue 3（渐进式前端框架）是把「`GET /api/tasks` 的 JSON」变成「可交互页面」的桥梁：用组件（component）拆页面、用响应式（reactivity）让数据驱动视图、用 `v-model` 做输入双向绑定、用 `fetch` 消费后端 API。本章以 `frontend/src/views/TasksListPage.vue` 与 `frontend/src/api/client.ts` 为锚，带你从零写出一个消费 API 的任务列表页，并在 `book/samples/vue-min/` 留下一个最小可运行样例。
 
 ## 学习目标
 
@@ -26,8 +26,8 @@ kernelspec:
 
 ## 先修要求
 
-- 完成 [周7 HTTP 与 REST API](week07_HTTP与REST_API.md)（会读 `GET /api/tasks` 的请求/响应与状态码，理解 `frontend/src/api/client.ts` 的 `request` 封装）。
-- 完成 [周1 环境与项目骨架](week01_环境与项目骨架.md) 的 Node/npm 部分（会 `cd book/samples/vue-min && npm install && npm run build`）。
+- 完成 [第7章 HTTP 与 REST API](chapter07_HTTP与REST_API.md)（会读 `GET /api/tasks` 的请求/响应与状态码，理解 `frontend/src/api/client.ts` 的 `request` 封装）。
+- 完成 [第1章 环境与项目骨架](chapter01_环境与项目骨架.md) 的 Node/npm 部分（会 `cd book/samples/vue-min && npm install && npm run build`）。
 - 会读 MeetingToText `frontend/src/views/TasksListPage.vue` 与 `frontend/src/api/client.ts`（只读参考，不需启动后端）。
 - Python 基础与 `pytest`（本章习题为 hermetic 纯函数，用 Python 映射 Vue 概念）。
 
@@ -298,7 +298,7 @@ npm run dev          # 可选：vite 启动 5173 开发服务器
 
 ## 习题
 
-> 参考答案与测试在 `answers/week12/`，运行 `.venv/bin/pytest answers/week12/ -q` 验证。题目均为 hermetic 纯函数，不依赖网络/浏览器/Vue 运行时；与 `frontend/src/views/TasksListPage.vue` 与 `frontend/src/api/client.ts` 的逻辑一一对应，改签名即测试失败。
+> 参考答案与测试在 `answers/chapter12/`，运行 `.venv/bin/pytest answers/chapter12/ -q` 验证。题目均为 hermetic 纯函数，不依赖网络/浏览器/Vue 运行时；与 `frontend/src/views/TasksListPage.vue` 与 `frontend/src/api/client.ts` 的逻辑一一对应，改签名即测试失败。
 
 1. **URL 构造**：实现 `build_api_url(base: str, path: str) -> str`，拼接 `API_BASE` 与路径（处理尾斜杠、空 base 回退为 `/api` 的边界），要求 `build_api_url("/api", "/tasks") == "/api/tasks"` 且 `build_api_url("/api/", "/tasks") == "/api/tasks"`。
 2. **状态文案映射**：实现 `task_status_label(status: str) -> str`，将 `pending/processing/done/error` 映射为 `等待中/转写中/已完成/失败`，未知返回原值（与 `TasksListPage.vue` 的 `statusLabel` 一致）。
@@ -312,5 +312,3 @@ npm run dev          # 可选：vite 启动 5173 开发服务器
 1. 在 `book/samples/vue-min` 中为 `App.vue` 增加 `v-model` 搜索框与 `status` 下拉（`pending/done/error`），用计算属性（`computed`）派生过滤列表，观察「数据源 `ref` → `computed` → `v-for`」的自动更新链路。
 2. 把 `fetch('/mock.json')` 替换为 `fetch(import.meta.env.VITE_API_BASE_URL + '/tasks')`，并在 `vite.config.ts` 中加 `server.proxy` 将 `/api` 指向本地 `http://localhost:8000`，实现「开发走代理、生产走相对路径」的双环境切换。
 3. 为 `vue-min` 增加 `vue-router`：`/` 列任务、` /task/:id` 详情，详情页用 `useRoute().params.id` 取参并 `fetch('/api/task/' + id)`，对比 `TasksListPage.vue` 的 `router.push('/transcript/' + t.id)` 导航。
-
-> 本章内容原创，概念对应 MeetingToText 的 frontend/src/views/TasksListPage.vue 与 frontend/src/api/client.ts，示例代码与表述均为原创。

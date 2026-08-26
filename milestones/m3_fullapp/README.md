@@ -1,6 +1,6 @@
-# 里程碑 M3：全栈应用 + 答辩复盘（周 16）
+# 里程碑 M3：全栈应用 + 答辩复盘（第16章）
 
-> 对应章节：`week12 Vue3 前端` / `week13 ASR+LLM 集成` / `week14 打包部署` / `week15 健壮性与安全`  
+> 对应章节：`chapter12 Vue3 前端` / `chapter13 ASR+LLM 集成` / `chapter14 打包部署` / `chapter15 健壮性与安全`  
 > 前置能力：M1（CLI）/ M2（Web API）已通过；FastAPI、`m2t.store`/`m2t.asr`/`m2t.llm`/`m2t.export`、单工人 Future、最小前端  
 > 复用 MeetingToText 只读参考：`backend/app/routers/*` + `backend/app/services/{pipeline,store,llm}` + `frontend/src/views/*`（灵感，不复制）
 
@@ -180,7 +180,7 @@ bash milestones/m3_fullapp/verify_reverse.sh   # 产物 capture 进 evidence/tas
 - **2. 技术选型与权衡**：为何选 FastAPI + SQLite + 单工人 Future + mock；若用真实 ASR/LLM 会如何改
 - **3. 遇到的坑与解法**：并发（单工人串行）、状态机（pending→done）、hermetic（fake）、导出格式等至少 1 例
 - **4. 测试与质量**：如何用 TestClient 冒烟整条链路；一次「先写失败测试再改代码」的例子
-- **5. 下一步**：若再给一周，会做哪 2 项改进（可含实时录音 WS / SSE 推流 / 完整 Vue / 容器部署等延伸挑战）
+- **5. 下一步**：若再给一章，会做哪 2 项改进（可含实时录音 WS / SSE 推流 / 完整 Vue / 容器部署等延伸挑战）
 
 评分关注：**链路完整性**、**hermetic 自洽**、**对 trade-off 的诚实表述**，而非功能堆砌。
 
