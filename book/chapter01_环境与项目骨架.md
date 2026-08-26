@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 第1章 工程环境与项目骨架
+# 工程环境与项目骨架
 
 > 为什么先搞环境？因为「能在自己机器上把项目跑起来」是所有后续工作的前提。没有可复现的环境，再好的算法也无法交付、无法协作、无法测试。本章先把工程化的地基打牢：学会用合适的工具隔离 Python 环境、理解前端为什么需要 Node、管理依赖的唯一真相来源 `pyproject.toml`，并掌握「拿到任意一个项目都能跑起来」的通用三步。学完本章，你拿到 MeetingToText（或任何一个规范的 Python 项目）都能在 10 分钟内跑通。
 
@@ -32,7 +32,7 @@ kernelspec:
 
 ## 正文
 
-### 1.1 Python 环境管理：venv / uv / miniforge
+### Python 环境管理：venv / uv / miniforge
 
 Python 的「环境问题」本质是隔离：不同项目依赖不同版本的库，甚至不同版本的 Python 本身。三种主流工具分工不同：
 
@@ -74,7 +74,7 @@ print(sys.version)
 print(sys.executable)
 ```
 
-### 1.2 Node / npm（前端依赖）
+### Node / npm（前端依赖）
 
 MeetingToText 的前端在 `frontend/` 目录下，是独立的 Vite + Vue 3 项目。前端依赖与 Python 完全隔离，由 Node.js 与 `npm` 管理：
 
@@ -98,7 +98,7 @@ npm run dev
 
 Python 开发者常见误区：把 `npm install` 当成「装 Python 包」——它只影响 `frontend/node_modules/`，与 `.venv` 互不干扰。
 
-### 1.3 pyproject.toml 结构
+### pyproject.toml 结构
 
 `pyproject.toml` 是现代 Python 项目的唯一真相来源（PEP 517/518/621）。以 MeetingToText 为例（只读参考，字段以 HEAD 为准）：
 
@@ -162,7 +162,7 @@ print("scripts:", data["project"]["scripts"])
 print("deps:", data["project"]["dependencies"][:2])
 ```
 
-### 1.4 拿到任意一个项目都能跑起来的通用三步
+### 拿到任意一个项目都能跑起来的通用三步
 
 无论是 MeetingToText、本书仓库，还是你未来的任何项目，通用流程都是：
 
@@ -228,25 +228,25 @@ print("parsed requires-python:", info["project"]["requires-python"])
 
 以下 4 个改动并预测实验均可在本章的 `{code-cell}` 或本地 shell 中复现。每个改动并预测实验按「改什么 → 预测 → 解释」三段式书写。
 
-#### 改动并预测 实验 1：改 `requires-python` 为未来版本 → 预测 pip 行为
+#### 实验：改 `requires-python` 为未来版本 → 预测 pip 行为
 
 - **改什么**：把 `pyproject.toml` 中的 `requires-python = ">=3.12"` 改为 `requires-python = ">=3.99"`（一个不存在的未来版本），然后在 Python 3.12 环境中执行 `pip install -e .`。
 - **预测**：`pip` 会报错拒绝安装，提示当前 Python 版本不满足要求（类似 `Requires-Python >=3.99` / `no matching distribution`）。
 - **解释**：`requires-python` 是安装时的版本门槛，由 `pip` 在解析阶段检查。改成未来版本后，当前解释器 3.12 落在区间外，安装器直接拒绝，避免在不兼容的解释器上装出不可运行的环境。还原为 `>=3.12` 后即可正常安装。
 
-#### 改动并预测 实验 2：删 `__init__.py` → 预测导入行为
+#### 实验：删 `__init__.py` → 预测导入行为
 
 - **改什么**：在 `m2t/` 包目录中临时重命名或删除 `m2t/__init__.py`，然后执行 `python -c "import m2t; print(m2t.__version__)"`。
 - **预测**：Python 3.12 仍能 `import m2t`（因为 PEP 420 命名空间包允许无 `__init__.py` 的包），但 `m2t.__version__` 会报 `AttributeError`（该属性定义在 `__init__.py` 中）。
 - **解释**：自 Python 3.3 起，没有 `__init__.py` 的目录可作为命名空间包被导入，但包初始化代码（`__version__` 等）不会执行。本项目依赖 `__init__.py` 暴露版本与文档，属于「常规包（regular package）」而非命名空间包，故需保留该文件。
 
-#### 改动并预测 实验 3：改 `[project.scripts]` 入口名 → 预测命令变化
+#### 实验：改 `[project.scripts]` 入口名 → 预测命令变化
 
 - **改什么**：把 `[project.scripts]` 中的 `meetingtotext = "cli:main"` 改为 `mtt = "cli:main"`，重新 `pip install -e .`，然后分别尝试 `meetingtotext --help` 与 `mtt --help`。
 - **预测**：`meetingtotext` 命令不存在（`command not found`），`mtt --help` 生效并打印帮助信息。
 - **解释**：`[project.scripts]` 的键即生成的可执行文件名，值 `cli:main` 指定入口函数。改名后安装器只生成新名字对应的脚本，旧名字不会保留。验证了「入口名由配置决定，而非代码文件名」的机制。
 
-#### 改动并预测 实验 4：改 `project.dependencies` 删一项 → 预测运行时行为
+#### 实验：改 `project.dependencies` 删一项 → 预测运行时行为
 
 - **改什么**：把 `project.dependencies` 中的 `fastapi>=0.115.0` 删除，重新 `pip install -e .`（或在已安装环境中 `pip uninstall fastapi -y`），然后执行 `python -c "import m2t.llm; print('import ok')"` 与 `python -c "from fastapi import FastAPI; print('fastapi ok')"` 对比。
 - **预测**：`import m2t` 仍成功（`m2t` 的核心依赖仅 `numpy`/`soundfile`，见本书 `pyproject.toml`），但 `from fastapi import FastAPI` 报 `ModuleNotFoundError`；若尝试启动 `meetingtotext serve` 则直接失败。

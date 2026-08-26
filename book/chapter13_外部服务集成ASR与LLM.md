@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 第13章 外部服务集成：ASR与LLM
+# 外部服务集成：ASR与LLM
 
 > 前几章你已能在本地用 `m2t.store` 持久化任务、用 `FastAPI` 暴露接口、用 `ThreadPoolExecutor` 跑后台转写——但 MeetingToText 的“纪要生成”并不在本地算完：它把 `task.result.full_text` 与模板提示词一起发给外部 LLM（OpenAI 兼容 API，如 DeepSeek / OpenAI / Ollama），再把返回的 Markdown 存回数据库。外部服务（external service）意味着三件本地函数没有的事：密钥（Key）不能硬编码、网络会超时（timeout）与限流（rate limit）、失败信息必须脱敏（sanitize）后才展示。本章以 `m2t.llm` 的 `LLMClient(timeout=60, max_retries=2)` 与 `map_llm_error` 为锚，配合 `backend/app/templates/presets.py` 的模板选择与 `routers/generate.py` 的装配链路，用 mock（模拟）方式在教学环境中完整演示“超时→重试→脱敏中文错误”的闭环——全程不跑真 LLM。
 
@@ -32,7 +32,7 @@ kernelspec:
 
 ## 正文
 
-### 13.1 Key 管理：为什么 Key 不能进仓库
+### Key 管理：为什么 Key 不能进仓库
 
 LLM 的 `api_key` 是“能花钱的密码”——一旦提交到 Git，就会被爬虫扫到并盗用。MeetingToText 因此采用“代码不存 Key、运行时注入”：
 
@@ -46,7 +46,7 @@ LLM 的 `api_key` 是“能花钱的密码”——一旦提交到 Git，就会�
 
 > 规则：仓库中只出现 `{API_KEY}` 占位符（见 `STYLE.md`），绝不出现真实 Key；`.gitignore` 必须包含 `data/` 与 `.env`。
 
-### 13.2 超时与重试：`timeout=60` 与 `max_retries=2`
+### 超时与重试：`timeout=60` 与 `max_retries=2`
 
 外部调用的两个不可控因素是“慢”与“偶发失败”。`OpenAI(timeout=60, max_retries=2)` 的含义：
 
@@ -81,7 +81,7 @@ with patch("openai.OpenAI") as MockOpenAI:
 
 > 本节关键词：超时（timeout）与重试（retry）均为 `openai.OpenAI` 的构造期参数，非 `generate` 期参数；`m2t.llm.LLMClient` 将其收敛在 `__init__` 以便与生产对齐。
 
-### 13.3 错误脱敏：`map_llm_error` 的四类中文文案
+### 错误脱敏：`map_llm_error` 的四类中文文案
 
 原始异常常含 `api_key`、`base_url`、堆栈；若直接 `raise HTTPException(detail=str(e))`，前端即可看到 Key。`map_llm_error` 的契约是“绝不拼接 `str(exc)`，只返回固定中文文案”：
 
@@ -159,7 +159,7 @@ except NameError:
 
 要点：`map_llm_error` 不做 `return f"失败: {exc}"`，只做 `isinstance` 分支返回固定串；测试必须断言“返回值不含 `str(exc)` 的子串”以证明脱敏。
 
-### 13.4 模板选择与提示词装配
+### 模板选择与提示词装配
 
 MeetingToText 的纪要不是“一句话 prompt”，而是“模板库 + 装配器”：
 
@@ -258,7 +258,7 @@ print("未知模板返回 None（路由层应转 400）")
 
 > 以上 `get_template` / `build_minutes_messages` 的 shape 与生产 `presets.py` / `prompts.py` 一致，可直接对照 `backend/app/templates/presets.py:76` 的 `return TEMPLATES.get(template_id)` 与 `prompts.py:73-87` 的 `system_prompt += _OUTPUT_FORMAT_SUFFIX`。
 
-### 13.5 Mock 测试：教学环境不跑真 LLM
+### Mock 测试：教学环境不跑真 LLM
 
 教学环境不跑真 LLM（真 Key 手动可选）——所有单测均为 hermetic（不依赖网络/真实 Key），通过“注入 fake client”实现：
 
@@ -274,7 +274,7 @@ assert llm.generate(...) == "..."
 
 这样测到的正是“参数是否正确传递、提示词是否正确装配、脱敏是否不泄漏”，而非“LLM 智力”。
 
-### 13.6 流式（streaming）的概念镜像
+### 流式（streaming）的概念镜像
 
 真实纪要生成常为“流式（streaming）”：`stream=True` 时服务端以 SSE/ chunk 增量推送，前端逐字渲染；但本章教学环境不引入 SSE/WS 真链路。为验证“流式概念”而不跑网络，习题采用“概念镜像（conceptual mirror）”：
 
@@ -287,31 +287,31 @@ assert llm.generate(...) == "..."
 
 以下实验均可在本章 `{code-cell}` 或本地 `.venv` 中复现，按“改什么 → 预测 → 解释”三段式。
 
-#### 改动并预测 实验 1：把 `timeout=60` 改为 `0.001` → 预测 mock 超时映射
+#### 实验：把 `timeout=60` 改为 `0.001` → 预测 mock 超时映射
 
 - **改什么**：把 `LLMClient(..., timeout=60, max_retries=2)` 改为 `LLMClient(..., timeout=0.001, max_retries=0)`，并让 `fake_client.chat.completions.create.side_effect = APITimeoutError(fake_request)`。
 - **预测**：`llm.generate(...)` 抛 `APITimeoutError`，`map_llm_error(e)` 返回 `连接 LLM 服务失败，请检查网络或稍后重试`，且文案中不含 `{API_KEY}` 或 `sk-`；`MockOpenAI` 的 `timeout` 入参变为 `0.001`。
 - **解释**：`timeout` 是 `OpenAI` 构造期参数，极小值模拟“网络慢于阈值”；`max_retries=0` 时不重试，超时直接暴露给 `map_llm_error` 做脱敏。验证了“超时阈值→触发→脱敏”的链路。
 
-#### 改动并预测 实验 2：把 `max_retries=2` 改为 `0` → 预测重试消失
+#### 实验：把 `max_retries=2` 改为 `0` → 预测重试消失
 
 - **改什么**：保持 `timeout=60`，把 `max_retries=2` 改为 `0`，用 `patch("openai.OpenAI")` 观察 `OpenAI(..., max_retries=?)` 的入参；同时用计数型 `fake_create` 记录被调次数。
 - **预测**：`MockOpenAI.call_args.kwargs["max_retries"] == 0`；若 `fake_create` 首调抛 `APIConnectionError`，`max_retries=0` 时只调 1 次即抛，`max_retries=2` 时（真实 SDK）会重试至多 3 次——mock 中通过 `side_effect=[APIConnectionError, success]` 可观测到 `max_retries=0` 时直接失败、`max_retries=2` 时第二次成功。
 - **解释**：`max_retries` 由 SDK 在底层重试，对调用方透明；教学中通过 mock 构造参数断言其值，而非真等重试退避。`generate` 的幂等性（同一 `system_prompt/user_message` 重试结果一致）是重试安全的前提。
 
-#### 改动并预测 实验 3：把 `map_llm_error` 改成 `return str(exc)` → 预测 Key 泄漏
+#### 实验：把 `map_llm_error` 改成 `return str(exc)` → 预测 Key 泄漏
 
 - **改什么**：把 `map_llm_error` 的 `return "连接 LLM 服务失败..."` 改为 `return str(exc)`（或 `return f"LLM 失败: {exc}"`），传入 `ValueError("sk-live-abc https://api.example.com")`。
 - **预测**：返回值含 `sk-live-abc` 与 URL，明文泄漏；`pytest` 中 `assert "sk-live" not in msg` 失败；若该文案经 `HTTPException(detail=msg)` 返回前端，浏览器即可看到 Key。
 - **解释**：`map_llm_error` 的核心契约是“绝不拼接原始异常”；固定文案 + `logger.exception` 分流（日志存原文、前端只见脱敏）是生产 `routers/generate.py:59` 的模式。改回固定文案后，`assert` 重新通过。
 
-#### 改动并预测 实验 4：把 `get_template("meeting_minutes")` 改为 `get_template("unknown")` → 预测 400 分支
+#### 实验：把 `get_template("meeting_minutes")` 改为 `get_template("unknown")` → 预测 400 分支
 
 - **改什么**：把 `get_template("meeting_minutes")` 的实参改为 `"unknown"` 或 `""`，保持后续 `if template is None: raise HTTPException(400, detail="Unknown template: ...")` 不变。
 - **预测**：`get_template` 返回 `None`，路由层抛 `400` 且 `detail` 含 `Unknown template: unknown`；若删掉该 `if` 检查而直接 `template["system_prompt"]`，则抛 `TypeError: 'NoneType' object is not subscriptable` 导致 500，掩盖了“模板不存在”的业务语义。
 - **解释**：`presets.py` 的 `TEMPLATES.get` 对未知 id 返回 `None` 是刻意设计，路由层必须显式处理并映射为 400，让客户端知道“换个模板 id 重试”而非“服务端崩溃”。习题 `test_template_selection` 即断言此分支。
 
-#### 改动并预测 实验 5：去掉 `build_minutes_messages` 的 `output_format` 追加 → 预测 system 长度变化
+#### 实验：去掉 `build_minutes_messages` 的 `output_format` 追加 → 预测 system 长度变化
 
 - **改什么**：把 `if output_format_hint: system_prompt += _OUTPUT_FORMAT_SUFFIX.format(...)` 删掉，始终 `system_prompt = template_prompt`。
 - **预测**：`messages[0]["content"]` 长度变短，不再含 `请按照以下格式输出` 与 Markdown 骨架；`quick_summary` 等依赖格式约束的模板，mock 生成的“格式”将不再可断言（如 `assert "# "` 不再稳定）。

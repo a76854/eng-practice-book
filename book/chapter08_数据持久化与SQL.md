@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 第8章 数据持久化与 SQL
+# 数据持久化与 SQL
 
 > 上一章你把「转写」封装成了 HTTP 接口，但重启服务后任务就丢了——因为 `FAKE_DB = {}` 只活在内存里。真实的 MeetingToText 需要把会议、转写结果、用户设置落盘，即使进程重启也能找回。本章把「内存字典」换成 SQLite（SQLite）：用 `sqlite3` 标准库建表、做 CRUD、用事务（transaction）保证原子性、用 WAL（Write-Ahead Logging，预写日志）与 `busy_timeout` 解决并发写入冲突。学完本章，你能为 `m2t.store` 写出带事务与 WAL 的持久层，并解释为什么「显示名可改而文件名不可改」只需改一列。
 
@@ -32,13 +32,13 @@ kernelspec:
 
 ## 正文
 
-### 8.1 为什么需要持久化：从内存字典到 SQLite
+### 为什么需要持久化：从内存字典到 SQLite
 
 内存字典的问题：进程结束，数据消失；多进程各自一份，互不可见。持久化（persistence）指把数据写入磁盘上的数据库文件，进程重启后仍可读取。SQLite 是单文件嵌入式数据库，无需独立服务进程，Python 标准库 `sqlite3` 即开即用，非常适合 MeetingToText 这类单机应用的任务与设置存储。
 
 选择 SQLite 的理由：零运维、单文件易备份、WAL 模式下读写可并发、事务保证原子性。代价是「单写者多读者」的并发模型对高并发写入不如服务端数据库，但对本项目的任务量已足够。
 
-### 8.2 表设计与 CREATE TABLE
+### 表设计与 CREATE TABLE
 
 MeetingToText 的生产表结构以 `backend/app/services/store.py` 的 `SCHEMA` 为准（只读参考，记录于此）：
 
@@ -112,7 +112,7 @@ conn.close()
 
 要点：`sqlite3.Row` 让 `row["id"]` 按列名访问；所有 SQL 值用 `?` 占位符传入元组，防止拼接注入；`executescript` 可一次执行多条 `CREATE`。
 
-### 8.3 CRUD：增查改删
+### CRUD：增查改删
 
 CRUD 对应四类 SQL：
 
@@ -167,7 +167,7 @@ conn.close()
 
 生产中 `m2t.store.TaskStore` 的 `create/get/list_tasks/update/delete` 即对此的封装，区别在于：生产取连接时自动执行 `PRAGMA journal_mode=WAL` 与 `PRAGMA busy_timeout=5000`，并用 `threading.Lock` 串行化写操作。
 
-### 8.4 事务（transaction）：`with conn:` 保证原子性
+### 事务（transaction）：`with conn:` 保证原子性
 
 事务指「多条 SQL 要么全成功，要么全失败」。`sqlite3` 的 `Connection` 对象本身是上下文管理器：`with conn:` 进入时开启事务，块内所有 `execute` 在同一事务中；正常退出自动 `COMMIT`，抛异常则自动 `ROLLBACK`。若不使用事务，每条 `execute` 后立即生效，中途失败会留下半完成状态。
 
@@ -225,7 +225,7 @@ demo_without_transaction()
 
 生产中 `TaskStore._init_db` 的建表与懒迁移（`ALTER TABLE ADD COLUMN`）也在 `with self._get_conn() as conn:` 块内，最后 `conn.commit()`，保证多语句迁移要么全成要么全回滚。
 
-### 8.5 WAL 与 busy_timeout：并发读写的性能与正确性
+### WAL 与 busy_timeout：并发读写的性能与正确性
 
 SQLite 默认 `journal_mode=DELETE`（回滚日志），写时会锁整个库，读被阻塞。WAL（Write-Ahead Logging，预写日志）把写入追加到 `-wal` 文件，读可并发进行，极大提升「多读少写」场景的吞吐。`PRAGMA journal_mode=WAL` 开启；`PRAGMA busy_timeout=5000` 表示遇到锁时等待最多 5000 毫秒而非立即抛 `database is locked`。
 
@@ -264,7 +264,7 @@ with tempfile.TemporaryDirectory() as tmp:
     print("wal file exists after close:", wal_exists)
 ```
 
-### 8.6 对照：`m2t.store` 与生产 `store.py` 的设计取舍
+### 对照：`m2t.store` 与生产 `store.py` 的设计取舍
 
 `m2t.store.TaskStore`（教学版）与 `backend/app/services/store.py`（生产版）共享同一设计骨架，差异是生产版更完整：
 
@@ -280,25 +280,25 @@ with tempfile.TemporaryDirectory() as tmp:
 
 以下实验均可在本章 `{code-cell}` 或本地 `sqlite3` 中复现。按「改什么 → 预测 → 解释」三段式书写。
 
-#### 改动并预测 实验 1：去掉 `with conn:` 事务块 → 预测一致性破坏
+#### 实验：去掉 `with conn:` 事务块 → 预测一致性破坏
 
 - **改什么**：把 8.4 节 `with conn:` 包裹的两条 `INSERT` 改为裸的两次 `conn.execute(...)` + `conn.commit()`（或设 `isolation_level=None`），并在第二条后抛异常。
 - **预测**：`SELECT count(*)` 返回 2 而非 0；第一条已落盘，异常只阻止后续语句，已写入的脏数据残留。若后续查询依赖「两条要么全有要么全无」，会读到半完成状态。
 - **解释**：`with conn:` 把多语句包进同一事务，异常触发 `ROLLBACK` 保证原子性；去掉后每条语句独立提交，失败无法回滚。生产 `store.py` 的迁移与批量更新均依赖此机制保证一致性。
 
-#### 改动并预测 实验 2：关掉 WAL（改回 DELETE 模式）→ 预测并发行为差异
+#### 实验：关掉 WAL（改回 DELETE 模式）→ 预测并发行为差异
 
 - **改什么**：把 `_get_conn()` 中的 `PRAGMA journal_mode=WAL` 改为 `PRAGMA journal_mode=DELETE`（或直接删掉该行），然后用两连接并发：一连接长事务 `BEGIN; INSERT ...` 不提交，另一连接执行 `SELECT * FROM tasks`。
 - **预测**：`DELETE` 模式下读会被写阻塞（或立即报 `database is locked`，若 `busy_timeout=0`），`WAL` 模式下读可并发返回旧快照；`PRAGMA journal_mode` 查询返回 `delete` 而非 `wal`。
 - **解释**：WAL 把写追加到 `-wal` 文件，读不抢锁；`DELETE` 模式写时持独占锁。`m2t.store` 默认 WAL 正是为了让「前端轮询列表」不被「后台转写更新」阻塞，`busy_timeout=5000` 则让短暂锁冲突等待而非直接失败。
 
-#### 改动并预测 实验 3：删掉 `idx_tasks_created_at` 索引 → 预测查询变化
+#### 实验：删掉 `idx_tasks_created_at` 索引 → 预测查询变化
 
 - **改什么**：把 `SCHEMA` 中的 `CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(created_at DESC)` 删除，重建空库后插入 1000 条任务，分别 `EXPLAIN QUERY PLAN SELECT * FROM tasks ORDER BY created_at DESC LIMIT 10` 并计时。
 - **预测**：`EXPLAIN QUERY PLAN` 从 `USING INDEX idx_tasks_created_at` 变为 `USING TEMP B-TREE FOR ORDER BY`（需排序），`LIMIT 10` 仍正确但需全表扫描+排序，耗时随数据量线性增长；结果正确性不变，性能退化。
 - **解释**：索引是「按 `created_at` 排好序的副本」，`ORDER BY created_at DESC LIMIT 10` 可直接取索引前 10 行，无需排序。删索引不影响语义，但把「索引扫描」退化为「全表扫描+排序」，生产 `store.py` 对列表查询建此索引正是为此。
 
-#### 改动并预测 实验 4：把 `?` 占位符改成字符串拼接 → 预测注入风险
+#### 实验：把 `?` 占位符改成字符串拼接 → 预测注入风险
 
 - **改什么**：把 `conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))` 改为 `conn.execute(f"SELECT * FROM tasks WHERE id = '{task_id}'")`，然后传入 `task_id = "' OR '1'='1"`。
 - **预测**：拼接版返回全表（`WHERE id = '' OR '1'='1'` 恒真），参数化版返回 0 行（把恶意串当普通值匹配）；拼接版还可能被 `'; DROP TABLE tasks; --` 破坏结构。

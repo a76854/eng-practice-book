@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 第5章 测试的思维与工程
+# 测试的思维与工程
 
 > 写代码只花一天，修 Bug 却花一章——差距往往不在编码速度，而在是否有测试把行为钉住。测试不是「写完代码后的检查表」，而是一种思维方式：先把期望说清楚，再让代码去满足它。本章以 `m2t.asr` 的结果归一化（把 FunASR 不稳定的原始回包收敛为统一的 `[{speaker, text, start, end}]`）为贯穿例子，学习 pytest 的核心用法、参数化（parametrize）、固件（fixture）、四层测试划分与测试先行（test-first），并在 hermetic（隔离）单测中把三种结果形状与空结果一次性覆盖。
 
@@ -33,7 +33,7 @@ kernelspec:
 
 ## 正文
 
-### 5.1 测试的思维：为什么先把期望写清楚
+### 测试的思维：为什么先把期望写清楚
 
 工程直觉：Bug 的修复成本随发现阶段指数上升——在编码时用断言发现，成本几乎为零；到联调或线上才发现，成本则是定位、复现、回归与用户影响的总和。测试的思维就是把「期望行为」提前用可执行的代码表达出来，让机器替你日夜守门。
 
@@ -53,7 +53,7 @@ kernelspec:
 
 本章聚焦单元层，其余层在后续章（第7章 后端、第14章 部署）逐步展开。MeetingToText 的 `tests/{unit,integration,system}` 目录与 `pyproject.toml` 中的 `addopts = "-m 'not system'"` 即是这一划分的实践参考，本书仅借其分层思路。
 
-### 5.2 pytest 基础：一个测试即一个断言
+### pytest 基础：一个测试即一个断言
 
 pytest 约定：文件名 `test_*.py`、函数名 `test_*`、用 `assert` 断言。示意如下（仅示意，不被执行）：
 
@@ -79,7 +79,7 @@ def test_sentence_info_shape_single_speaker():
 
 关键点：一个测试只验证一件事；失败信息即文档。若 `normalize_result` 忘记把毫秒除以 `MS_PER_S`，断言会直接告诉你 `1.0 != 1000.0`。
 
-### 5.3 参数化：用一张表覆盖多条分支
+### 参数化：用一张表覆盖多条分支
 
 三种形状若各写一个函数，断言逻辑会大量重复。`@pytest.mark.parametrize` 把「输入表」与「期望表」解耦：
 
@@ -107,7 +107,7 @@ def test_normalize_parametrized(raw, expected):
 
 表中有几行，pytest 就生成几条用例（上例为 3 条）。新增一行即新增一条用例，无需复制函数。
 
-### 5.4 fixture：复用与隔离
+### fixture：复用与隔离
 
 fixture（固件）是 pytest 的依赖注入机制，用于复用构造逻辑并保证隔离。对比直接在函数内构造，fixture 的优势是作用域可控与 teardown 统一管理。
 
@@ -130,7 +130,7 @@ def test_with_fixture(sentence_info_result):
 
 常用 `scope`：`function`（每测试一次，默认，隔离最好）、`module`/`session`（跨测试复用，适合重型资源如临时数据库）。本章习题会要求你为 `normalize_result` 的三种形状各写一个 fixture，体会「复用而不共享可变状态」。
 
-### 5.5 测试先行：先让测试杀死 bug
+### 测试先行：先让测试杀死 bug
 
 测试先行的反向练习：给你一个已知的 buggy 实现，任务是写一条测试使其失败——测试是「猎手」，bug 是「猎物」。修复前测试红，修复后测试绿。
 
@@ -157,7 +157,7 @@ def test_kills_ms_bug():
 
 这条测试在 buggy 上失败、在正确实现上通过——即「测试杀死了 bug」。`answers/chapter05/buggy_impl.py` 提供了一份故意带 bug 的实现，`test_buggy_demo.py` 中的演示测试在正常 `pytest` 运行时被跳过，避免污染绿条；去掉 `@pytest.mark.skip` 即可亲眼看到失败。
 
-### 5.6 应用：为 m2t.asr.normalize_result 写 hermetic 单测
+### 应用：为 m2t.asr.normalize_result 写 hermetic 单测
 
 `m2t.asr.normalize_result` 的签名（以本书仓库 `m2t/asr.py` HEAD 为准，归一化为 `normalize_result(result: list[Any]) -> list[dict[str, Any]]`，时间毫秒转秒，`SPEAKER_LABEL_TEMPLATE = "说话人{}"` 1 基渲染）与 `backend/app/services/asr_parse.py` 的 `parse_result` 同源，已在第1章 引入。本节把它作为单元测试的完整示例。
 
@@ -222,25 +222,25 @@ def test_shapes(case, sample_results):
 
 以下实验均可在本地 `.venv` 中复现，每个按「改什么 → 预测 → 解释」三段式。
 
-#### 改动并预测 实验 1：为一条 buggy 实现写测试 → 预测测试失败
+#### 实验：为一条 buggy 实现写测试 → 预测测试失败
 
 - **改什么**：把 `answers/chapter05/buggy_impl.py` 中 `normalize_result` 的 `float(start) / MS_PER_S` 改回 `float(start)`（即忘记毫秒转秒），或直接将 `m2t.asr.normalize_result` 替换为 `buggy_impl.normalize_result` 后，运行 `pytest answers/chapter05/test_buggy_demo.py -v`（去掉 skip 后）。
 - **预测**：`test_kills_ms_bug` 失败，断言信息类似 `assert 1000.0 == 1.0`；其他依赖时间断言的用例一并失败。
 - **解释**：测试把「时间以秒为单位」这一契约钉死，buggy 实现破坏了契约，测试即告警。先写失败测试再修 bug，正是测试先行的价值——测试成为 bug 的可复现证明。
 
-#### 改动并预测 实验 2：加 @pytest.mark.parametrize → 预测用例数翻倍
+#### 实验：加 @pytest.mark.parametrize → 预测用例数翻倍
 
 - **改什么**：在 `test_chapter05.py` 中把参数表从 3 行扩为 6 行（为每种形状各加一个边界条件，如 `spk` 缺失与 `timestamp` 非法项）。
 - **预测**：`pytest -q` 报告的用例数从 N 变为 N+3（或从 3 变为 6），新增用例独立报告通过/失败，不影响原有用例的隔离性。
 - **解释**：`parametrize` 的每一行即一条独立用例，pytest 在收集期展开。参数化的本质是「用数据驱动用例生成」，避免复制函数体。
 
-#### 改动并预测 实验 3：把 fixture scope 从 function 改为 module → 预测隔离性变化
+#### 实验：把 fixture scope 从 function 改为 module → 预测隔离性变化
 
 - **改什么**：把 `sentence_info_result` fixture 的 `@pytest.fixture(scope="function")` 改为 `@pytest.fixture(scope="module")`，并在测试中对返回的 `result[0]["sentence_info"].append(...)` 做可变修改。
 - **预测**：`function` 作用域下各测试互不影响；改为 `module` 后，后执行的测试会看到前一个测试追加的元素，导致用例间相互污染、偶发失败。
 - **解释**：`module` 作用域在模块内复用同一对象，适合不可变或重型资源；对可变数据复用会破坏 hermetic 隔离。默认 `function` 是最安全的选择。
 
-#### 改动并预测 实验 4：删去清洗步骤 → 预测文本断言失败
+#### 实验：删去清洗步骤 → 预测文本断言失败
 
 - **改什么**：在 `m2t/asr.py` 的 `_clean_text` 中注释掉 `re.sub(r'<\|[^|>]+\|>', '', text)` 一行，或直接让 `normalize_result` 不调用 `_clean_text`，再运行 `pytest answers/chapter05/test_chapter05.py -k test_clean`。
 - **预测**：含 `<|zh|>` 标签或句首标点的用例失败，期望 `"你好"` 实际得到 `"<|zh|>你好"` 或 `"。，你好"`，断言提示文本不等。

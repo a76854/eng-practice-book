@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 第11章 里程碑 M2：Web API
+# 里程碑 M2：Web API
 
 > 把 CLI 的能力用 HTTP 暴露——本章把 `m2t` 的转写与导出、SQLite 的持久化、单工人 Future 的并发模型收敛为一个可用 Web API。客户端以 `POST /transcribe → GET /status → GET /export` 完成异步转写，服务全程 hermetic（不实现 ASR 本体，走 mock/fake）且状态机与 MeetingToText 只读参考对齐。
 
@@ -31,13 +31,13 @@ kernelspec:
 - 会执行 `.venv/bin/pytest milestones/m2_webapi/tests -q` 与 `jupyter-book build --execute`。
 - 已阅读 `milestones/m2_webapi/README.md` 与 `milestones/grader.py` 的目录与双反向约定；对 `MeetingToText/backend/app/routers/{transcribe,generate,upload}.py` 与 `deps.py` 的路由分层仅作只读参考。
 
-## 1. 里程碑目标
+## 里程碑目标
 
 M2 把 M1 的 CLI 能力包装为**最小可用 FastAPI 服务**：提交任务→轮询状态→导出结果。后端在单工人线程池中复用 `m2t` 完成转写，状态经 `m2t.store` 持久化。**不实现 ASR 本体，复用 `m2t`（mock/fake 模型）**——教学与评测环境全程 hermetic，不安装 `funasr/torch`，不访问网络/真实模型；通过注入**确定性 fake 模型**（`generate(input, ...)` 返回固定 `sentence_info`）经 `m2t.asr.transcribe(model=fake)` 归一，再以 `m2t.export` 导出，满足 `grep -c "不实现 ASR 本体\|mock\|fake"` 门控。
 
 权威定义见 [`milestones/m2_webapi/README.md`](../milestones/m2_webapi/README.md)，本文为摘要与教学导读。
 
-## 2. 任务说明（摘要）
+## 任务说明（摘要）
 
 ### `POST /transcribe`
 
@@ -57,7 +57,7 @@ M2 把 M1 的 CLI 能力包装为**最小可用 FastAPI 服务**：提交任务�
 
 参考 `MeetingToText/backend/app/routers/deps.py`：路由薄、服务厚；统一 `404` 出口为 `get_task_or_404`；状态机 `pending→processing→done|error` 与 `400/404` 边界对齐。
 
-## 3. 提交结构
+## 提交结构
 
 ```
 milestones/m2_webapi/
@@ -84,7 +84,7 @@ def reset_state() -> None: ...
 
 内部必须：`TaskStore(db_path)`（WAL + busy_timeout）、`FakeModel.generate(...) -> list[dict]` 经 `transcribe`、 `m2t.export.export(task, fmt)`、单工人 Future。
 
-## 4. 评测（黑盒 + grader 约定）
+## 评测（黑盒 + grader 约定）
 
 唯一判分引擎为 `pytest`，由 [`milestones/grader.py`](../milestones/grader.py) 的 `run_grader` 封装：
 
@@ -100,11 +100,11 @@ python -m milestones.grader milestones/m2_webapi --solution reference_solution
 
 `milestones/m2_webapi/verify_reverse.sh` 三分支：(a) 好解→PASS (b) buggy（状态不流转/导出错）→FAIL (c) 复用教师 tests× buggy →FAIL，产物入 `evidence/task-16-m2.txt`，与 `grader_selfcheck.sh` 同思想。
 
-## 5. 评分 rubric 要点
+## 评分 rubric 要点
 
 第11章 教师指南 rubric：功能正确性 40%（黑盒全绿）、路由设计 20%（分层清晰、404 收敛一处）、测试覆盖 20%（≥5 条 TestClient，覆盖 200/400/404）、OpenAPI 文档 10%（`response_model` 齐全，`/docs` 可交互）、双反向验证 10%（三分支通过）。评审时重点看：是否收敛 404 到 `deps.py` 风格的唯一出口、状态机是否可观测 `pending→processing→done`、导出是否经 `m2t.export` 而非手拼。
 
-## 6. 答辩提示
+## 答辩提示
 
 - 演示脚本：用 `TestClient` 或 `curl` 现场跑 `POST /transcribe {"audio_path":"mock"}`→轮询 `GET /status/{id}`（展示 `pending→done`）→ `GET /export?format=srt` 与 `md`，突出 ` --> ` 与 `# 会议转录` 的差异。
 - 必答问题准备：单工人为何选 `max_workers=1`？`Future.cancel()` 对排队与运行中任务有何不同？`TaskStore` 的 WAL 与 `busy_timeout` 解决什么并发问题？
@@ -112,19 +112,19 @@ python -m milestones.grader milestones/m2_webapi --solution reference_solution
 
 ## 自测实验（改动并预测）
 
-#### 实验 1：把单工人改为 `max_workers=2` → 预测并发语义变化
+### 实验：把单工人改为 `max_workers=2` → 预测并发语义变化
 
 - **改什么**：将 `ThreadPoolExecutor(max_workers=1)` 改为 `2`。
 - **预测**：并发提交时任务不再严格串行，`test_status_flow_pending_to_done` 仍可能 PASS，但“排队可取消”的教学点被削弱；若测试加“先提交 blocker 占住工人再取消排队任务”的探针，则行为与单工人预期不一致。
 - **解释**：单工人刻意为排队而非加速，与 `pipeline.py` 对齐；改大工人需配套加锁与状态保护。
 
-#### 实验 2：删掉 `get_task_or_404` 统一出口 → 预测 404 文案不一致
+### 实验：删掉 `get_task_or_404` 统一出口 → 预测 404 文案不一致
 
 - **改什么**：在 `GET /status` 与 `GET /export` 中各写一套 `if task is None: raise HTTPException(404, "Not found")`。
 - **预测**：`test_status_unknown_id_returns_404` 与 `test_export_unknown_id_returns_404` 因断言 `Task not found` 而一处失败，且 `response_model` 丢失导致 `/docs` schema 不一致。
 - **解释**：统一出口保证文案与文档一致性，收敛是复用的价值。
 
-#### 实验 3：在顶层 `import funasr` → 预测 hermetic 失败
+### 实验：在顶层 `import funasr` → 预测 hermetic 失败
 
 - **改什么**：在 `app.py` 顶层加 `import funasr`。
 - **预测**：`test_no_real_asr_import_at_runtime` 断言 `funasr not in sys.modules` 失败。

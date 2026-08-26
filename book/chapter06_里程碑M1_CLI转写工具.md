@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 第6章 里程碑 M1：CLI 转写工具
+# 里程碑 M1：CLI 转写工具
 
 > 从零散脚本到可交付工具的跨越——本章把前 5 章的 Shell、Git、类型与测试能力收敛为一个可被黑盒评测的命令行转写工具。工具不实现 ASR 本体，而是复用 `m2t` 子包并以确定性 fake 模型离线完成转写与导出，完整链路可在 `pytest` 与 `jupyter-book --execute` 下复现。
 
@@ -31,13 +31,13 @@ kernelspec:
 - 会执行 `.venv/bin/pytest -q` 与 `jupyter-book build --execute`，理解 `m2t` 为只读教学包。
 - 已阅读 `milestones/m1_cli/README.md` 与 `milestones/grader.py` 的目录约定。
 
-## 1. 里程碑目标
+## 里程碑目标
 
 M1 的交付物是一个最小可用的 CLI 转写工具（示例名 `m2tc`）：给定一个音频文件路径，经 `m2t` 转写后按 `--format txt|srt|md` 写出结果文件。**不实现 ASR 本体，走 `m2t` mock**——真实环境下 `m2t.asr.transcribe` 懒加载 FunASR；教学与评测环境全程 hermetic，不安装 `funasr/torch`，不访问网络/真实模型。CLI 通过注入**确定性 fake 模型**（实现 `generate(input, ...)` 返回固定 `sentence_info`）完成转写，再复用 `m2t.export` 导出，满足 `grep -c "不实现 ASR 本体\|mock\|fake" milestones/m1_cli/README.md ≥1` 的声明门控。
 
 详细任务定义以 [`milestones/m1_cli/README.md`](../milestones/m1_cli/README.md) 为权威，本文仅作摘要与教学导读。
 
-## 2. 任务说明（摘要）
+## 任务说明（摘要）
 
 ### 命令行接口
 
@@ -67,7 +67,7 @@ python -m cli transcribe path/to/audio.wav --stub
 
 思路对齐 `MeetingToText/cli.py:_cmd_transcribe`（只读参考，不逐字复制）：校验存在性与扩展名 → 解析输出路径与有效格式 → `m2t.asr.transcribe(model=fake)` + `m2t.export.export(task, fmt)` → 原子写文件（UTF-8）→ 打印 `转录完成 → <path>`。错误一律 `print("错误: ...", file=sys.stderr); sys.exit(1)`。
 
-## 3. 提交结构
+## 提交结构
 
 ```
 milestones/m1_cli/
@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
 `conftest.py` 在 grader 外的直接 `pytest` 场景下回退到 `reference_solution`；`grader` 另行注入 `PYTHONPATH` 指向被测目录。
 
-## 4. 评测（黑盒 + grader 约定）
+## 评测（黑盒 + grader 约定）
 
 唯一判分引擎为 `pytest`，由 [`milestones/grader.py`](../milestones/grader.py) 的 `run_grader` 封装：
 
@@ -111,11 +111,11 @@ python -m milestones.grader milestones/m1_cli --solution reference_solution
 
 `milestones/m1_cli/verify_reverse.sh` 三分支对齐 `grader_selfcheck.sh` 思想：(a) 好解→PASS (b) buggy 实现→FAIL (c) 学生测试× buggy →FAIL，产出 `evidence/task-11-m1.txt`，保证测试非空心。
 
-## 5. 评分 rubric 要点
+## 评分 rubric 要点
 
-第6章 教师指南 rubric（见 `teacher_guide.md` 第6章）：功能正确性 40%（`pytest tests/ -q` 全绿，grader 通过）、代码质量 20%（`ruff check` 0 告警）、测试覆盖 20%（≥5 用例，覆盖正常/异常/边界）、可读性 10%（函数级 docstring）、双反向验证 10%（`grader_selfcheck.sh` 三分支通过）。评审时重点看：是否通过 `m2t` 复用而非直调 FunASR、错误分支是否中文且 `stderr` 可断言、输出文件是否 UTF-8 与目录自动创建。
+第6章 教师指南 rubric：功能正确性 40%（`pytest tests/ -q` 全绿，grader 通过）、代码质量 20%（`ruff check` 0 告警）、测试覆盖 20%（≥5 用例，覆盖正常/异常/边界）、可读性 10%（函数级 docstring）、双反向验证 10%（`grader_selfcheck.sh` 三分支通过）。评审时重点看：是否通过 `m2t` 复用而非直调 FunASR、错误分支是否中文且 `stderr` 可断言、输出文件是否 UTF-8 与目录自动创建。
 
-## 6. 答辩提示
+## 答辩提示
 
 - 演示脚本：准备一个 `sample.wav`（任意占位文件，fake 不读内容）现场跑三条命令（`txt/srt/md`）并 `cat` 输出，突出 `srt` 的时间戳与 `md` 的标题差异。
 - 必答问题准备：为何 `--format` 要手动校验而非仅依赖 `choices`？`--out` 父目录不存在时为何要 `exist_ok=True`？如何证明测试未加载 `funasr`？
@@ -123,19 +123,19 @@ python -m milestones.grader milestones/m1_cli --solution reference_solution
 
 ## 自测实验（改动并预测）
 
-#### 实验 1：把 `--format` 改回 `choices` 自动校验 → 预测中文报错消失
+### 实验：把 `--format` 改回 `choices` 自动校验 → 预测中文报错消失
 
 - **改什么**：将手动 `if fmt not in ("txt","srt","md"): print("错误: 不支持的格式", file=sys.stderr); sys.exit(1)` 改为 `parser.add_argument("--format", choices=["txt","srt","md"])`。
 - **预测**：非法 `--format pdf` 时 `argparse` 直接以 `invalid choice` 英文退出，`test_invalid_format_exits_nonzero_and_chinese` 因断言 `不支持的格式` 而失败。
 - **解释**：手动校验保留中文错误文案的教学意图，与 `choices` 的英文提示冲突；黑盒测试钉住文案即钉住用户体验。
 
-#### 实验 2：删掉 `os.makedirs` → 预测嵌套 `--out` 失败
+### 实验：删掉 `os.makedirs` → 预测嵌套 `--out` 失败
 
 - **改什么**：注释掉 `os.makedirs(os.path.dirname(out_path), exist_ok=True)`。
 - **预测**：`test_out_option_honored` 在 `nested/out/custom.txt` 上抛 `FileNotFoundError`，非零退出但错误文案非预期。
 - **解释**：输出路径的父目录自动创建是 CLI 的可用性契约，测试以嵌套路径固化该契约。
 
-#### 实验 3：让测试导入 `funasr` → 预测 hermetic 保障失败
+### 实验：让测试导入 `funasr` → 预测 hermetic 保障失败
 
 - **改什么**：在 `cli.py` 顶层加 `import funasr`（即使未使用）。
 - **预测**：`test_no_real_asr_import_at_runtime` 断言 `funasr not in sys.modules` 失败。

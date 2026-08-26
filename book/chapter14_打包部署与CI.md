@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 第14章 打包部署与CI
+# 打包部署与CI
 
 > 为什么要单列一章讲“打包部署与 CI（Continuous Integration，持续集成）”？前几章你已经能在本机用 `meetingtotext serve --reload` + `npm run dev` 调通 M2 的 Web API，但这些命令强依赖“你的机器装对了 Python 3.12、装对了 funasr、前端装对了 Node 20”。换一台机器、换一位同学，往往就跑不起来。打包（image）解决“环境可复制”，编排（compose）解决“多服务一键启动”，CI（推送即测）解决“每次提交都自动验证是否可构建、可测试”。本章以“把 M2 一键部署（`docker compose up --build`）”为目标，带你打通 Docker 多阶段构建、容器网络、Compose 编排与 GitHub Actions 流水线，并厘清本项目最新拓扑：nginx 纯静态托管 + 前端通过 `VITE_API_BASE_URL` 直连后端（跨源（CORS，Cross-Origin Resource Sharing）直连）。
 
@@ -32,7 +32,7 @@ kernelspec:
 
 ## 正文
 
-### 14.1 从“本地可跑”到“别人可跑”：为何要打包
+### 从“本地可跑”到“别人可跑”：为何要打包
 
 本地开发的启动方式是两条独立命令：
 
@@ -46,7 +46,7 @@ cd frontend && npm run dev    # 监听 5173，vite 将 /api 代理到 8000
 
 这对“你的机器”有效，对“别人的机器”往往失效：Python 版本不对、系统缺 `libsndfile1`、前端 `node_modules` 未装、端口被占用、环境变量未设。Docker 的思路是“把运行环境也写进代码”：`Dockerfile` 声明“从什么基础镜像开始、装哪些系统依赖、拷哪些文件、跑什么命令”，`docker build` 产出不可变的镜像（image），`docker run / docker compose up` 在任意装了 Docker 的机器上复现同一环境。
 
-### 14.2 多阶段构建：以 `Dockerfile.frontend` 为例
+### 多阶段构建：以 `Dockerfile.frontend` 为例
 
 MeetingToText 的前端镜像使用两阶段（stage）：
 
@@ -105,7 +105,7 @@ assert resolve_api_base({}) == "/api"
 print("—— 断言通过：VITE_API_BASE_URL 缺失时回退到 /api ——")
 ```
 
-### 14.3 后端镜像：`python:3.12-slim` 的最小实践
+### 后端镜像：`python:3.12-slim` 的最小实践
 
 只读对照 `docker/Dockerfile.backend` 的形状：`FROM python:3.12-slim`，装 `libsndfile1`（`soundfile` / `librosa` 依赖），按 `ARG MTT_TORCH_FLAVOR=cpu|cuda` 条件装不同 `torch`，随后 `COPY pyproject.toml + backend/` 再 `pip install -e .`，最后 `EXPOSE 8000` 与 `CMD ["meetingtotext", "serve", "--host", "0.0.0.0", "--port", "8000"]`。
 
@@ -126,7 +126,7 @@ CMD ["python", "-m", "m2t.cli", "serve", "--host", "0.0.0.0", "--port", "8000"]
 
 层缓存（layer cache）技巧：先拷 `pyproject.toml` 再 `pip install`，最后拷常变的 `backend/`，可让依赖层被复用；`--no-cache-dir` 避免在镜像中残留 pip 缓存。
 
-### 14.4 容器网络与「纯静态托管 vs 反向代理」
+### 容器网络与「纯静态托管 vs 反向代理」
 
 #### 容器网络与端口
 
@@ -179,7 +179,7 @@ print("—— 断言通过：URL 拼接在两种拓扑下均正确 ——")
 
 > 关键时序：`VITE_API_BASE_URL` 是构建时注入（`ARG` → `ENV` → `vite build` 静态替换），不是运行时 `docker run -e`。若在 `docker-compose.yml` 改了该值，必须 `docker compose up --build` 重新构建前端镜像，否则 `dist` 中的硬编码旧值不变。
 
-### 14.5 Compose 编排：一键部署 M2
+### Compose 编排：一键部署 M2
 
 只读对照 `docker/docker-compose.yml` 的两服务形状：
 
@@ -257,7 +257,7 @@ else:
     print("—— 校验通过：compose 含 healthcheck 与 service_healthy 依赖 ——")
 ```
 
-### 14.6 CI「推送即测」：`.github/workflows/ci.yml`
+### CI「推送即测」：`.github/workflows/ci.yml`
 
 只读对照 MeetingToText 的 `.github/workflows/ci.yml`：`on: [push, pull_request, workflow_dispatch]`，三 jobs：`backend`（`setup-python 3.12` → `pip install -e ".[dev]"` → `ruff check` → `mypy` → `pytest -q`）、`frontend`（`setup-node 20` → `npm ci` → `eslint` → `build` → `vitest`）、`system`（`workflow_dispatch` 触发、缓存 `~/.cache/modelscope`、跑真实 FunASR 模型测试）。
 
@@ -290,25 +290,25 @@ jobs:
 
 以下实验均可在本章 `{code-cell}` 或本地 `.venv` 中复现。按“改什么 → 预测 → 解释”三段式书写。
 
-#### 改动并预测 实验 1：删掉 `healthcheck` → 预测依赖失效
+#### 实验：删掉 `healthcheck` → 预测依赖失效
 
 - **改什么**：把 `deploy-demo/docker-compose.yml` 中 `backend.healthcheck` 整段删除，保留 `frontend.depends_on.backend.condition: service_healthy`，随后执行 `docker compose -f deploy-demo/docker-compose.yml config`（或 `config -q`）。
 - **预测**：`config` 直接报错退出、非 0（`service "frontend" depends on service "backend" which is undefined: healthcheck is required for service_healthy` 或等价的 `depends_on condition service_healthy requires healthcheck`）；若把 `condition: service_healthy` 同步改为 `service_started` 则校验通过，但语义退化为“容器已启动即认为就绪”，前端可能在后端 `uvicorn` 尚未监听 `8000` 时就被浏览器访问，出现 `ERR_CONNECTION_REFUSED` 或 API 500。
 - **解释**：Compose 的 `service_healthy` 是“健康语义”，必须有 `healthcheck` 才能判定 `healthy`；去掉健康探针等于去掉“就绪契约”，`depends_on` 无法等待，依赖失效。生产用 `healthcheck: test urlopen /api/health` + `start_period: 300s` 正是为了让依赖等待“真就绪”而非“进程已起”。
 
-#### 改动并预测 实验 2：`client_max_body_size` 设为 `1m`（或过小）→ 预测上传 413
+#### 实验：`client_max_body_size` 设为 `1m`（或过小）→ 预测上传 413
 
 - **改什么**：在 `docker/nginx.conf`（或教学等价中）加入 `client_max_body_size 1m;`（nginx 默认即 `1m`），随后通过前端上传一个 `>1m` 的音频（如 `5m` 的 `wav`）到 `POST /api/upload`，若走纯静态直连则请求直达后端不受 nginx 限制，若为对比在反向代理形态下则经 nginx 转发。
 - **预测**：经 nginx 转发的形态下，nginx 在请求体超过 `1m` 时直接返回 `413 Payload Too Large`（`413 Request Entity Too Large`），不转发到后端；浏览器 `fetch` 抛错，前端提示“上传失败 413”。纯静态直连下该指令不生效（请求不经 nginx），需改回由后端 `upload.py` 的文件大小校验返回 `413` 或 `400`；若把 `client_max_body_size` 改为 `100m` 则大文件可通过 nginx 层，后端再做二次校验。
 - **解释**：`client_max_body_size` 是 nginx 的“请求体大小闸门”，与后端的应用层校验互补：网关层 413 发生在“进应用之前”，应用层 413/400 发生在“进处理器之后”。本项目纯静态下 API 不经 nginx，故该指令对 `/api/upload` 无效，这一区别正是“纯静态 vs 反代”在上传链路上的体现——调小该值仅影响反代形态，纯静态需靠后端校验。
 
-#### 改动并预测 实验 3：`VITE_API_BASE_URL` 缺失或为空 → 预测 404 跨域直连失败
+#### 实验：`VITE_API_BASE_URL` 缺失或为空 → 预测 404 跨域直连失败
 
 - **改什么**：把 `deploy-demo/docker-compose.yml` 中 `frontend.build.args.VITE_API_BASE_URL: "http://localhost:8000/api"` 删除或设为空字符串 `""`，重新 `docker compose up --build`，浏览器访问 `http://localhost` 并触发任意 API（如 `GET /tasks` 或 `POST /api/upload`）。
 - **预测**：前端 `API_BASE` 回退为 `"/api"`（见 `client.ts: || '/api'`），浏览器发 `GET http://localhost/api/tasks`（同源相对路径），命中 nginx 的 `location /api/ { return 404; }`，响应 `404 Not Found`（非 CORS 失败）；`fetch` 抛 `detail: 404 Not Found`，前端列表为空且控制台可见 `404`；若改为正确值 `http://localhost:8000/api` 则请求为 `http://localhost:8000/api/tasks` 跨源直连，后端 `MTT_CORS_ORIGINS` 放行 `http://localhost` 时成功返回 `200`。
 - **解释**：`VITE_API_BASE_URL` 是构建时注入的“前端到后端的地址契约”，缺失时前端退化为相对路径，而纯静态 nginx 故意对 `/api/` 返回 404（不代理），迫使问题显性暴露而非静默走错后端。修复必须重建前端镜像（`--build`），运行时 `docker run -e` 无法改写已编译的 `dist`。
 
-#### 改动并预测 实验 4：删掉 `.dockerignore` 中的 `data/` → 预测构建上下文膨胀
+#### 实验：删掉 `.dockerignore` 中的 `data/` → 预测构建上下文膨胀
 
 - **改什么**：把 `deploy-demo/.dockerignore`（或根 `.dockerignore`）中的 `data/` 一行删除，`data/` 中放一个 `500 MB` 的占位文件（或已有模型缓存），随后 `docker build -f deploy-demo/Dockerfile.backend .` 观察 `Sending build context to Docker daemon` 的大小与耗时。
 - **预测**：上下文从数 MB 膨胀至 `500 MB+`，`docker build` 的首步 `Sending context` 明显变慢，且 `COPY pyproject.toml` 等层的缓存命中率下降（因上下文 hash 改变）；若同时 `COPY . .`（而非选择性 `COPY pyproject.toml + m2t/`）则镜像内多出 `data/` 内容，镜像体积激增且可能泄露本地数据库/密钥。

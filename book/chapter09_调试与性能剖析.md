@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 第9章 调试与性能剖析
+# 调试与性能剖析
 
 > 为什么要把调试与性能剖析放在一起？前几章你已经能写 HTTP 服务、持久化任务、调用 ASR/LLM——但当转写变慢、日志刷屏看不出问题、接口返回 500 却不知哪一行触发时，仅靠“多打几个 print”会越调越乱。日志（logging）是“事后可查的现场记录”，断点（breakpoint）是“暂停现场的显微镜”，而性能剖析（profiling）是“给程序计时的秒表”。本章先把日志的分级、落盘与轮转配好，再用断点定位逻辑错误，最后用 `cProfile` 找到转写流水线的真正热点——三者配合，才能从“能跑”迈向“可维护、可变快”。
 
@@ -32,7 +32,7 @@ kernelspec:
 
 ## 正文
 
-### 9.1 日志的本质：分级与过滤
+### 日志的本质：分级与过滤
 
 日志不是 `print` 的别名，而是“带级别、带去向、可过滤的结构化记录”。Python `logging` 定义了五级（数值越大越严重）：
 
@@ -65,7 +65,7 @@ print("—— 阈值 INFO 时，DEBUG 被过滤，INFO 及以上可见 ——")
 
 把阈值改成 `WARNING` 后，`INFO` 也会消失——这正是下一节要验证的“级别即过滤器”。
 
-### 9.2 配置日志：basicConfig 与 dictConfig
+### 配置日志：basicConfig 与 dictConfig
 
 `basicConfig` 适合脚本与演示：一次调用配好 `root` logger 与 `StreamHandler`。参数常用：
 
@@ -137,7 +137,7 @@ with open(demo_log, encoding="utf-8") as f:
 
 关键区别：`basicConfig` 是“快捷键”，`dictConfig` 是“完整配置表”——后者才能表达“多 handler、多 logger、落盘与轮转”（见 9.3）。`cli.py` 的 `--log-level/--log-file` 正是把命令行参数翻译成 `build_log_config` 的两个实参，再传给 `uvicorn.run(log_config=...)`，从而让 `uvicorn.*` 日志与业务日志走同一套落盘。
 
-### 9.3 落盘与轮转：RotatingFileHandler
+### 落盘与轮转：RotatingFileHandler
 
 “落盘”指把日志写入文件而非仅打印到终端；“轮转”指文件过大时自动切新文件、保留 N 个备份，避免单文件无限增长。
 
@@ -177,11 +177,11 @@ for p in files:
     print(p.name, p.stat().st_size, "bytes")
 ```
 
-若把 `backupCount` 从 `2` 改为 `1`，文件数会从 3 变为 2——这正是“改动并预测”实验 3 要验证的。
+若把 `backupCount` 从 `2` 改为 `1`，文件数会从 3 变为 2——这正是"调低 backupCount"实验要验证的。
 
 > 小结：MeetingToText 的 `cli.py --log-file {路径}` + `logging_config.build_log_config(level, log_file)` 即“命令行→字典配置→落盘轮转”的完整链路；`--log-level` 控制阈值，`--log-file` 为空则仅控制台。
 
-### 9.4 断点调试：何时停下来
+### 断点调试：何时停下来
 
 当日志告诉你“结果错了”但看不出哪一行算错时，需要“暂停现场、查看变量”。Python 3.7+ 的 `breakpoint()` 即“在此处暂停、进入调试会话（pdb）”的入口（等价于 `import pdb; pdb.set_trace()`，但可被 `PYTHONBREAKPOINT` 环境变量统一开关）。
 
@@ -211,7 +211,7 @@ def normalize_segments(segments):
 
 本章不展开调试器内核（如 `bdb` 事件循环、帧对象 `frame.f_back` 等实现细节），仅要求掌握“插入断点→单步→查看→继续”的最小闭环；更多调试技巧放在习题与延伸挑战中练习。
 
-### 9.5 性能剖析：cProfile 与热点定位
+### 性能剖析：cProfile 与热点定位
 
 “性能剖析（profiling）”回答“时间花在哪”。Python 标准库 `cProfile` 是确定性剖析器（deterministic profiler）：为每个函数记录 `ncalls`（调用次数）、`tottime`（函数自身耗时，不含子调用）、`cumtime`（含子调用的累积耗时）。两种用法：
 
@@ -282,9 +282,9 @@ print("—— 断言通过：剖析数据含热点函数，且表头正常打印
 - `ncalls=8` 即 `slow_transform` 被调用 8 次（与 `repeats=8` 一致）。
 - `tottime` 大者为热点自身；`cumtime` 大者为“含子调用”的热点入口。`transcribe_pipeline_mock` 的 `cumtime` 是其所有子调用之和，故常排顶部；按 `tottime` 排序则 `slow_transform` 会升至顶部。
 
-改 `sort_stats` 的 key 会改变排序：`sort_stats("cumulative")` 按 `cumtime` 排序（入口函数在前），`sort_stats("tottime")` 按自身耗时排序（叶子热点在前），`sort_stats("ncalls")` 按调用次数排序（高频小函数在前）——这正是实验 2 要预测的。
+改 `sort_stats` 的 key 会改变排序：`sort_stats("cumulative")` 按 `cumtime` 排序（入口函数在前），`sort_stats("tottime")` 按自身耗时排序（叶子热点在前），`sort_stats("ncalls")` 按调用次数排序（高频小函数在前）——这正是"切换 sort_stats 排序键对比排序结果"实验要预测的。
 
-### 9.6 应用：定位 m2t 转写热点
+### 应用：定位 m2t 转写热点
 
 把 9.5 的方法套用到“m2t 转写”场景（mock，不依赖真实 `FunASR` 模型）：假设流水线为 `load_audio → asr_infer → normalize → export`，其中 `asr_infer` 最耗时。用 `cProfile` 即可在不改业务代码的情况下定位：
 
@@ -311,25 +311,25 @@ print("—— 断言通过：剖析数据含热点函数，且表头正常打印
 
 以下 4 个实验均可在本章 `{code-cell}` 或本地 `.venv` 中复现，按“改什么 → 预测 → 解释”三段式。
 
-#### 改动并预测 实验 1：日志级别 `INFO` → `ERROR` → 预测 `INFO` 是否可见
+#### 实验：日志级别 `INFO` → `ERROR` → 预测 `INFO` 是否可见
 
 - **改什么**：把 `logging.basicConfig(level=logging.INFO, ...)` 或 `build_demo_config("INFO", ...)` 中的 `"INFO"` 改为 `"ERROR"`，保持 `logger.info("转写完成")` 与 `logger.error("转写失败")` 两条调用不变，重新运行。
 - **预测**：`INFO` 消息消失，仅 `ERROR`（及以上）可见；控制台与落盘文件均不再出现 `INFO` 行。
 - **解释**：`level` 是阈值过滤器，`ERROR(40) > INFO(20)`，低于阈值的记录在 `logger` 或 `handler` 层即被丢弃，不会到达格式化与输出。MeetingToText 的 `cli.py --log-level ERROR` 即此效果——生产排障时切 `DEBUG` 可见细节，切 `ERROR` 则降噪。
 
-#### 改动并预测 实验 2：`sort_stats("cumulative")` → `sort_stats("ncalls")` → 预测排序变化
+#### 实验：`sort_stats("cumulative")` → `sort_stats("ncalls")` → 预测排序变化
 
 - **改什么**：把 `pstats.Stats(prof).sort_stats("cumulative")` 改为 `sort_stats("ncalls")`（或 `"tottime"`），对同一份 `prof` 重新 `print_stats(12)`，对比两次输出的首行函数。
 - **预测**：`cumulative` 时首行常为 `transcribe_pipeline_mock`（`cumtime` 最大，含所有子调用）；改为 `ncalls` 后首行变为调用次数最多的叶子函数（如被调用 8 次的 `slow_transform` 或高频的 `<built-in>`）；改为 `tottime` 时首行变为自身耗时最长的函数（常仍是 `slow_transform`，但与 `cumulative` 的理由不同）。
 - **解释**：`sort_stats` 的 key 决定“按哪一列排序”。`cumulative` 突出“入口热点”（谁包含的子调用最重），`tottime` 突出“自身热点”（谁自己最重），`ncalls` 突出“高频调用”。定位热点前需先选对排序依据，否则会在错误的维度上优化。
 
-#### 改动并预测 实验 3：`RotatingFileHandler(backupCount=2)` → `backupCount=1` → 预测轮转文件数
+#### 实验：`RotatingFileHandler(backupCount=2)` → `backupCount=1` → 预测轮转文件数
 
 - **改什么**：把 9.3 代码中的 `RotatingFileHandler(log_path, maxBytes=400, backupCount=2)` 改为 `backupCount=1`，保持 `maxBytes` 与写入条数（30 条）不变，重新运行并 `glob("rotate.log*")`。
 - **预测**：原先 `backupCount=2` 时文件数为 3（`rotate.log` + `rotate.log.1` + `rotate.log.2`），改为 `1` 后文件数为 2（`rotate.log` + `rotate.log.1`），最老的备份被丢弃，总占用减半。
 - **解释**：`backupCount` 即“保留几份历史”，超出的最老备份在轮转时删除。MeetingToText 用 `5` 即保留 5 份、共 6 个文件（当前 + 5 备份），单文件 10 MB 时上限约 60 MB，避免日志撑满磁盘。
 
-#### 改动并预测 实验 4：`dictConfig(disable_existing_loggers=False)` → `True` → 预测已有 logger 行为
+#### 实验：`dictConfig(disable_existing_loggers=False)` → `True` → 预测已有 logger 行为
 
 - **改什么**：把 `build_demo_config` 返回字典中的 `"disable_existing_loggers": False` 改为 `True`，在 `dictConfig` 之前先 `logging.getLogger("chapter09.pre_existing").addHandler(...)` 创建一个已有 logger，再 `dictConfig` 后尝试 `getLogger("chapter09.pre_existing").info("test")`。
 - **预测**：`False` 时已有 logger 保留、仍可输出；改为 `True` 后该 logger 被禁用（`disabled=True`），其 `info` 不再输出，除非在新配置的 `loggers` 字典中显式声明它。

@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 第10章 并发与异步
+# 并发与异步
 
 > 为什么要在此时学并发（concurrency）与异步（async）？前几章你已能启动 FastAPI 服务、持久化任务、调用 ASR——但 MeetingToText 的转写流水线（`backend/app/services/pipeline.py`）并不是“请求进来就同步算完再返回”，而是把 `run_pipeline(task_id)` 提交到 `ThreadPoolExecutor(max_workers=1)` 后台执行，前端通过轮询进度获得反馈；取消转写时也不是“强制杀线程”，而是 `Future.cancel()` + `Event` 协作检查。你若只会同步写法，就无法理解“单工人队列为何能排队、为何排队的能取消而运行中的不能、以及协作取消如何避免资源泄漏”。本章以 pipeline 的单工人 Future 注册与协作取消为锚，补全线程池、Future、锁与竞态、`asyncio` 原语三块拼图，并用可运行代码让你亲手验证“并行求和 vs 串行”“排队取消 vs 运行中取消”。
 
@@ -32,7 +32,7 @@ kernelspec:
 
 ## 正文
 
-### 10.1 并发、并行与 GIL：先分清再动手
+### 并发、并行与 GIL：先分清再动手
 
 - **并发（concurrency）**：逻辑上“同时进行”，通过交错执行让多任务在重叠时间段内推进；单核也能并发。
 - **并行（parallelism）**：物理上“同时执行”，需多核真正并行。
@@ -40,7 +40,7 @@ kernelspec:
 
 MeetingToText 选择 `max_workers=1` 恰恰**不为加速、而为串行化**：转写是重 I/O + 重模型推理，单工人保证同一时刻只跑一个 `run_pipeline`，既避免并发抢 GPU/内存，又让“排队”语义天然成立（第二个提交的任务在队列中等待，`Future.cancel()` 才能生效）。
 
-### 10.2 ThreadPoolExecutor 与 Future：提交、注册与状态
+### ThreadPoolExecutor 与 Future：提交、注册与状态
 
 `ThreadPoolExecutor` 是“线程池（thread pool）+ 任务队列”的封装；`Future` 是“未来结果的占位符（placeholder）”。
 
@@ -79,7 +79,7 @@ Future 状态机（记住这张表，后文实验直接考）：
 | finished（已完成） | `True` | `False` | `False` | 返回值 |
 | cancelled（已取消） | `True` | `True` | `True` | 抛 `CancelledError` |
 
-#### 可执行示例 1：线程池求和 vs 串行（验证结果一致）
+#### 示例：线程池求和 vs 串行（验证结果一致）
 
 ```{code-cell} ipython3
 from concurrent.futures import ThreadPoolExecutor, Future
@@ -107,7 +107,7 @@ print("—— 断言通过：分块并发求和结果恒等于串行 sum ——"
 
 `max_workers` 只影响分块数与并行度，不影响结果正确性——这正是习题 `parallel_sum` 的契约。
 
-### 10.3 Future 取消语义：排队的能取消，运行中的不能
+### Future 取消语义：排队的能取消，运行中的不能
 
 `Future.cancel()` 的语义常被误解为“杀掉线程”。实际是：**仅当任务仍在队列未开始时返回 `True`，已开始运行则返回 `False`（协作取消见 10.4）**。
 
@@ -128,7 +128,7 @@ def cancel_pipeline(task_id: str) -> bool:
 - 先 `_cancelled.add`：即使 `cancel()` 因已运行而失败，`run_pipeline` 内的检查点仍能通过 `_check_cancelled` 提前退出。
 - `fut.cancel()` 的返回值即“是否在队列中被拦截”。
 
-#### 可执行示例 2：排队取消成功 vs 运行中取消失败（确定性等待）
+#### 示例：排队取消成功 vs 运行中取消失败（确定性等待）
 
 用 `Event` 制造“确定性的排队/运行中”，不用 `sleep` 猜时序（与习题一致）：
 
@@ -178,7 +178,7 @@ print("—— 断言通过：排队可取消、运行中不可取消 ——")
 
 这直接对应习题的 `future_cancel_queued` 与 `future_cancel_running`。
 
-### 10.4 协作取消：检查点与 Event
+### 协作取消：检查点与 Event
 
 线程无法被安全“杀死”，故取消必须是**协作式（cooperative）**：请求方置位标志，执行方在**检查点（checkpoint）**主动退出。
 
@@ -229,7 +229,7 @@ print("—— 协作取消：置位后下一轮检查点即 break ——")
 
 跨线程变体 `cooperative_run_threaded` 用另一线程轮询 `len(executed)` 达到阈值后 `set()`，证明 `Event` 的跨线程可见性——但核心语义与单线程版一致。
 
-### 10.5 asyncio 原语：单线程内的并发
+### asyncio 原语：单线程内的并发
 
 `asyncio` 是**单线程协程（coroutine）并发**：`async def` 定义协程，`await` 让出执行权，`asyncio.gather` 并发等待多个协程。
 
@@ -276,7 +276,7 @@ print("—— gather 顺序保持：输入调换则输出相应调换 ——")
 | 大量并发 I/O（数千连接） | `asyncio` | 协程切换成本远低于线程 |
 | CPU 密集 | 均不合适，考虑 `ProcessPoolExecutor` | GIL 限制线程并行，协程更无法并行 |
 
-### 10.6 竞态条件与锁
+### 竞态条件与锁
 
 当多线程读写**共享可变状态**且操作非原子时，交错执行导致结果丢失——即**竞态条件（race condition）**。
 
@@ -303,25 +303,25 @@ def _worker_with_lock():
 
 以下 4 个实验均可在本章 `{code-cell}` 或本地 `.venv` 中复现，按“改什么 → 预测 → 解释”三段式。
 
-#### 改动并预测 实验 1：`ThreadPoolExecutor(max_workers=4)` → `max_workers=1` → 预测 `parallel_sum` 结果与耗时
+#### 实验：`ThreadPoolExecutor(max_workers=4)` → `max_workers=1` → 预测 `parallel_sum` 结果与耗时
 
 - **改什么**：把 `parallel_sum(nums, max_workers=4)` 改为 `parallel_sum(nums, max_workers=1)`，保持 `nums = list(range(1, 1001))` 与分块逻辑不变，重新运行并对比返回值与 wall-clock（可用 `time.perf_counter()` 包裹）。
 - **预测**：返回值仍 `== sum(nums)` 且 `parallel_sum([], 2) == 0` 不变；耗时上 `max_workers=1` 退化为串行分块求和，不比直接 `sum` 更快（甚至略慢于 `max_workers=4` 的并行版，但差异在小数据上微弱）。
 - **解释**：`max_workers` 只决定“同时取几个块并行算”，不改变“分块求和再汇总”的正确性；纯计算受 GIL 限制，线程数>1 也难显著加速，且 `max_workers=1` 时所有 `submit` 的任务在单工人队列中串行执行，等价于顺序 `sum` 各块。
 
-#### 改动并预测 实验 2：排队任务的 `Future.cancel()` → 运行中任务的 `cancel()` → 预测返回值
+#### 实验：排队任务的 `Future.cancel()` → 运行中任务的 `cancel()` → 预测返回值
 
 - **改什么**：把示例 2 中的 `demo_cancel_queued`（`started.wait` 后排队任务 `cancel()`）改为 `demo_cancel_running`（`started.wait` 后对**已开始**的 `Future` 调用 `cancel()`），对比 `cancelled / done / cancelled()` 与 `result`。
 - **预测**：排队版 `cancelled is True, done is True, is_cancelled is True`；运行中版 `cancelled is False, was_cancelled is False, was_done is True, result == 42`；后者的 `result()` 仍阻塞至 `blocker.set()` 后返回真实值而非抛 `CancelledError`。
 - **解释**：`cancel()` 仅对“未开始（queued）”有效，已 `running` 的任务无法被池强制终止，必须靠协作取消（10.4）。`pipeline.py` 因此在 `cancel_pipeline` 中既尝试 `fut.cancel()`（拦截排队），又 `add` 到 `_cancelled` 集合（让运行中的 `run_pipeline` 在检查点退出）。
 
-#### 改动并预测 实验 3：`asyncio.gather` 输入顺序调换 → 预测输出顺序
+#### 实验：`asyncio.gather` 输入顺序调换 → 预测输出顺序
 
 - **改什么**：把 `asyncio.run(gather_double([5, 3]))` 改为 `asyncio.run(gather_double([3, 5]))`，保持 `_double` 内 `await asyncio.sleep(0)` 不变，观察两次输出。
 - **预测**：`[5, 3] -> [10, 6]`，`[3, 5] -> [6, 10]`；输出顺序始终与输入顺序一致，不因协程内部让出顺序而乱序；空列表 `[] -> []` 保持空。
 - **解释**：`gather` 的契约是“按传入顺序收集结果”，与完成先后无关；`await sleep(0)` 仅让出调度以允许交错，不改变结果容器的索引对应。若需“谁先完成先取谁”，应改用 `asyncio.as_completed`，但本章习题锁定 `gather` 的顺序语义。
 
-#### 改动并预测 实验 4：`run_counter(use_lock=True)` → `use_lock=False` → 预测结果上界
+#### 实验：`run_counter(use_lock=True)` → `use_lock=False` → 预测结果上界
 
 - **改什么**：把 `run_counter(4, 1000, use_lock=True)` 改为 `run_counter(4, 1000, use_lock=False)`，保持 `n_threads * n_increments = 4000` 不变，多次运行取最大值观察。
 - **预测**：`use_lock=True` 恒 `== 4000`；`use_lock=False` 时结果 `>0 且 <= 4000`，通常 `<4000`（因 `tmp=holder[0]; holder[0]=tmp+1` 非原子，交错导致覆盖丢失），但不断言具体丢失数以保持确定性不 flaky。

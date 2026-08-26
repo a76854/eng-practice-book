@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 第4章 代码质量：类型与静态检查
+# 代码质量：类型与静态检查
 
 > 为什么这一章值得单列一章？前三章你已经能把项目跑起来、会用脚本批量处理、用 Git 协作。接下来最容易踩的坑是「代码看着能跑，一改就崩」——参数传错、返回值为 `None`、重构时漏改一处调用。类型注解与静态检查就是在「运行之前」把这类错误拦住的防线。本章用 Python 的渐进类型与 TypeScript 的 `strict` 模式作对比，带你读懂真实项目的 `ruff` / `mypy` / `eslint` 配置，并动手给 `m2t` 的一个模块补全类型，体会「无类型 → 加类型 → 工具变绿」的完整闭环。学完后，你能在任何 Python/TS 项目中自信地加类型、读报错、配检查。
 
@@ -33,7 +33,7 @@ kernelspec:
 
 ## 正文
 
-### 4.1 渐进类型：不改运行，只加信息
+### 渐进类型：不改运行，只加信息
 
 Python 是动态语言——同一个变量本轮是 `int`、下轮可以是 `str`，解释器运行前不检查类型。**渐进类型**的意思是：你可以「渐进地」给部分代码加注解，不加的地方保持动态，已加的地方由 `mypy` 等工具在运行前检查。注解不影响运行时行为（`python` 照样跑），只影响「人读代码」与「工具查错」。
 
@@ -53,7 +53,7 @@ def add(a: int, b: int) -> int:
 
 TypeScript 走得更远：`tsconfig.json` 的 `strict: true` 会在编译时强制检查所有文件，未加类型就是错误。Python 允许你逐文件、逐函数渐进；TS 要求你一次性严格。二者在团队协作中互补：Python 适合存量项目逐步加固，TS 适合前端从第一天就守住质量。
 
-### 4.2 真实项目的配置长这样（只读参考）
+### 真实项目的配置长这样（只读参考）
 
 教学的目的是让你「会读真实配置」，而不是背默认参数。以下两段分别来自 MeetingToText 的 `pyproject.toml` 与 `frontend/eslint.config.js`，以 HEAD 为准，只读讲解。
 
@@ -119,7 +119,7 @@ export default tseslint.config(
 
 `prettier`（`frontend/package.json` 的 `format` 脚本）只管格式（缩进、引号、换行），与 `eslint`/`ruff` 的「逻辑检查」正交：格式问题交给 prettier 自动修，逻辑问题交给 eslint/ruff 人工修，二者不互相替代。
 
-### 4.3 演示：无类型 → 加类型 → ruff/mypy 前后对比
+### 演示：无类型 → 加类型 → ruff/mypy 前后对比
 
 以 `m2t` 的导出模块为原型，构造一个最小可复现例子。先看无类型的版本（保存为 `demo_untyped.py`）：
 
@@ -192,7 +192,7 @@ Success: no issues found in 1 source file
 
 > 小结：`ruff` 负责「代码表面问题」（未用导入、风格、可疑写法），`mypy` 负责「类型一致性」（参数/返回值是否对得上）。二者互补，CI 中常同时跑 `ruff check` 与 `mypy`，任一非 0 即阻断合并。
 
-### 4.4 应用：给 `m2t` 某模块加类型
+### 应用：给 `m2t` 某模块加类型
 
 以 `m2t/export.py` 的 `_format_timestamp_srt` 为例，展示在真实模块上加类型的三步：
 
@@ -274,7 +274,7 @@ print(greet.__annotations__)
 print("mypy --version 概念验证：注解在运行时可被 get_type_hints 读取，静态时被 mypy 检查")
 ```
 
-### 4.5 检查工具的分工与常见错误码
+### 检查工具的分工与常见错误码
 
 | 工具 | 管什么 | 典型错误码 | 遇到时做什么 |
 |---|---|---|---|
@@ -292,7 +292,7 @@ print("mypy --version 概念验证：注解在运行时可被 get_type_hints 读
 
 以下 4 个实验均可在本地复现，每个实验按「改什么 → 预测 → 解释」三段式书写。建议先写预测，再运行验证。
 
-#### 改动并预测 实验 1：去掉一个参数注解 → 预测 mypy 错误码
+#### 实验：去掉一个参数注解 → 预测 mypy 错误码
 
 - **改什么**：把 `demo_typed.py` 中 `def annotated_add(a: int, b: int) -> int:` 的 `b: int` 改为无注解 `b`，即 `def annotated_add(a: int, b) -> int:`。
 - **预测**：`ruff check` 仍通过（`ruff` 不检查类型），`mypy` 报 `error: Need type annotation for "b"  [no-untyped-def]`，若同时删掉返回值 `-> int` 则额外报 `Function is missing a type annotation  [no-untyped-def]`。
@@ -304,7 +304,7 @@ demo_typed.py:4: error: Need type annotation for "b"  [no-untyped-def]
 Found 1 error in 1 file (checked 1 source file)
 ```
 
-#### 改动并预测 实验 2：引入未用 import → 预测 ruff F401
+#### 实验：引入未用 import → 预测 ruff F401
 
 - **改什么**：在 `demo_typed.py` 顶部加一行 `import os` 但不使用它。
 - **预测**：`mypy` 仍 `Success`（未用导入不影响类型），`ruff check` 报 `F401 [*] 'os' imported but unused`，且 `ruff check --fix` 会自动删掉该行。
@@ -316,7 +316,7 @@ F401 [*] `os` imported but unused
 Found 1 error.
 ```
 
-#### 改动并预测 实验 3：把返回值 `str | None` 改为 `str` → 预测 mypy return-value
+#### 实验：把返回值 `str | None` 改为 `str` → 预测 mypy return-value
 
 - **改什么**：把 `def pick_export(fmt: str) -> str | None:` 改为 `def pick_export(fmt: str) -> str:`，但保留 `return None` 分支。
 - **预测**：`ruff` 仍通过，`mypy` 报 `error: Incompatible return value type (got "None", expected "str")  [return-value]`。
@@ -328,7 +328,7 @@ demo_typed.py:9: error: Incompatible return value type (got "None", expected "st
 Found 1 error in 1 file (checked 1 source file)
 ```
 
-#### 改动并预测 实验 4：把 TS 的 `strict` 关掉 → 预测未用变量的检查变化
+#### 实验：把 TS 的 `strict` 关掉 → 预测未用变量的检查变化
 
 - **改什么**：在 `frontend/tsconfig.json` 中把 `"strict": true` 改为 `"strict": false`，或在 `eslint.config.js` 中把 `no-unused-vars` 从 `error` 改为 `off`，然后在某 `.ts` 文件中写 `const unused = 42;` 且不使用它。
 - **预测**：`strict: true` 时 `tsc --noEmit` 会对隐式 `any` 与未用局部变量（若 `noUnusedLocals: true`）报错；改为 `false` 后 `tsc` 放过 `any` 相关错误。`eslint` 侧，`no-unused-vars: error` 时 `npm run lint` 报 `'_unused' is defined but never used`，改为 `off` 后静默。

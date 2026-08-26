@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 第3章 Git 与协作工作流
+# Git 与协作工作流
 
 > 为什么学 Git？因为从本章起，你不再是「单人写脚本」，而是「多人改同一仓库」。没有分支与提交规范，两个人同时改一个文件就会互相覆盖；没有 PR（Pull Request）流程，代码质量全靠自觉。本章以本书仓库 `eng-practice-book` 为演练场，完成你的首次特性分支（feature branch）协作闭环：从提交、分支、推送到 PR 与冲突解决。学完本章，你能用分支隔离改动、用 PR 发起协作、用正确姿势解决冲突——并理解 MeetingToText 的协作约定为何这样设计。
 
@@ -33,7 +33,7 @@ kernelspec:
 
 ## 正文
 
-### 3.1 提交（commit）：最小可审查单元
+### 提交（commit）：最小可审查单元
 
 Git 的提交不是「改动了哪几行」的补丁（patch），而是「整个工作区在这一刻的快照（snapshot）」加一个指向父提交的指针。连续提交形成一条有向无环图（DAG），`git log` 看到的直线只是 DAG 的一种拓扑展示。
 
@@ -83,7 +83,7 @@ for rec in parse_git_log(sample_log.splitlines()):
 
 **要点**：`parse_git_log` 把人类可读的日志文本变成机器可断言的结构，这正是习题用 hermetic Python 题「模拟 git」而非依赖真实仓库状态的原因——文本解析确定、可重复、可 pytest。
 
-### 3.2 分支（branch）：可移动的指针
+### 分支（branch）：可移动的指针
 
 分支在 Git 中只是一个指向某次提交的可移动指针（`refs/heads/{分支名}`），创建与切换成本极低。`HEAD` 指向当前分支，提交时分支指针与 `HEAD` 一起前移。
 
@@ -135,7 +135,7 @@ print("合并后 main 指向", branches_after_merge["main"], "parents:", commits
 - 分支命名用 `feature/` / `fix/` / `docs/` 前缀，如 `feature/chapter03-demo`、`docs/chapter03`，见名知意。
 - 已推送的 `main` 历史不改写（不用 `git push --force` 重写公共历史），撤销用 `revert` 而非 `reset`。
 
-### 3.3 协作：PR 流程——在本书仓库做首次特性分支演练
+### 协作：PR 流程——在本书仓库做首次特性分支演练
 
 本节是本章的**应用演练**：在 `eng-practice-book` 仓库内走通一次真实的特性分支协作。以下步骤在本书仓库根目录执行，假设远端为 `origin`、主分支为 `main`。
 
@@ -174,7 +174,7 @@ git log --oneline --graph --all -n 8
 
 > 提示：本书仓库当前为本地私有、未设远端推送（见计划决策⑦），课堂演练可用本机多克隆或在个人 fork 上完成上述流程，命令与协作语义完全一致。
 
-### 3.4 冲突（conflict）：复现、读懂、解决
+### 冲突（conflict）：复现、读懂、解决
 
 当两个分支改了同一文件的同一区域，`git merge` 无法自动决定以谁为准，会停在冲突状态，让你手动选择。
 
@@ -226,7 +226,7 @@ git commit -m "Merge feature/a into main (resolve conflict)"
 - 按文件职责分工，减少多人同时改同一段落。
 - 合并前 `git diff main...feature/a` 预览差异。
 
-### 3.5 撤销：revert vs reset
+### 撤销：revert vs reset
 
 | 操作 | 是否改写历史 | 是否影响已推送分支 | 适用场景 |
 |---|---|---|---|
@@ -247,7 +247,7 @@ git log --oneline -n 5   # 多了一次 revert 提交，原错误提交仍在历
 
 **原则**：公共历史（已 `push` 的 `main`）只用 `revert` 撤销；`reset` / `rebase -i` 只用于本地未推送的分支整理，整理完再 `push`。
 
-### 3.6 协作约定范例：对照 MeetingToText `CONTRIBUTING.md`
+### 协作约定范例：对照 MeetingToText `CONTRIBUTING.md`
 
 本书以 MeetingToText 的 `CONTRIBUTING.md` 为协作约定范例（只读对照，不复制源码）。其要点可直接映射到本章的协作流程：
 
@@ -262,7 +262,7 @@ git log --oneline -n 5   # 多了一次 revert 提交，原错误提交仍在历
 
 以下 3 个实验均可在本地临时仓库（`tmp_path` + 真 `git`）或本书仓库的特性分支上复现。每个实验按「改什么 → 预测 → 解释」三段式书写。
 
-#### 改动并预测 实验 1：同一文件同一行分叉修改后 merge → 预测冲突标记块
+#### 实验：同一文件同一行分叉修改后 merge → 预测冲突标记块
 
 - **改什么**：从同一基点切出 `feature/a` 与 `main` 两个分支，分别把同一文件的同一行改为不同内容（如 `line: hello from a` vs `line: hello from main`），然后在 `main` 上执行 `git merge feature/a`。
 - **预测**：`git merge` 退出非零，提示 `CONFLICT (content): Merge conflict in {文件}`，`git status` 显示 `both modified: {文件}`；打开文件会看到三段式冲突标记：
@@ -276,13 +276,13 @@ git log --oneline -n 5   # 多了一次 revert 提交，原错误提交仍在历
   此时 `git commit` 被阻塞，必须先编辑文件解决冲突、`git add` 标记已解决后才能完成合并。
 - **解释**：Git 以行为单位做三路合并（merge base → HEAD → 被合入分支），同一区域的并发修改无唯一正确解，Git 选择停下来让人决策。`HEAD` 侧是当前分支内容，`>>>>>>>` 侧是被合入分支内容，`=======` 为分界。解决冲突的本质是「写出正确的最终文件」，而非机械二选一。
 
-#### 改动并预测 实验 2：对已推送提交执行 git revert → 预测历史节点变化
+#### 实验：对已推送提交执行 git revert → 预测历史节点变化
 
 - **改什么**：在 `main` 上做一次提交 `c_bad`（如改错一行配置），`git push` 后执行 `git revert c_bad` 并完成提交，观察 `git log --oneline --graph -n 5`。
 - **预测**：历史多一个新提交 `c_revert`，其信息默认为 `Revert "c_bad 的 subject"`，`git log` 显示 `c_bad` 仍在原位、`c_revert` 在其后；`git show c_revert` 的 diff 恰好是 `c_bad` 的反向补丁；工作区文件回到 `c_bad` 之前的状态。
 - **解释**：`revert` 不改写历史，而是新增一次「抵消提交」来保持 DAG 的不可变性——这对已推送的公共历史是安全的。`reset --hard` 会移动分支指针并丢弃 `c_bad`，需要 `push --force` 才能同步远端，会让已拉取该历史的协作者产生分叉，故公共分支禁用。
 
-#### 改动并预测 实验 3：工作区有未暂存改动时执行 git restore / git checkout -- → 预测文件内容
+#### 实验：工作区有未暂存改动时执行 git restore / git checkout -- → 预测文件内容
 
 - **改什么**：修改某已跟踪文件（如在 `book/chapter03_Git与协作工作流.md` 末尾加一行 `TEMP`），不 `git add`，分别试验 `git diff` 能看到改动，然后执行 `git restore --source=HEAD -- {文件}`（或 `git checkout -- {文件}`），再看文件内容与 `git status`。
 - **预测**：`git restore` 后文件内容回到 `HEAD` 版本，`TEMP` 行消失，`git status` 变干净（`working tree clean`），且 `git log` 完全不变（历史未动）；若改动已 `git add` 但未 commit，则需 `git restore --staged {文件}` 先取消暂存，再 `git restore --worktree {文件}` 丢弃工作区改动。

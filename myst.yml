@@ -1,5 +1,9 @@
 version: 1
 project:
+  numbering:
+    title:
+      enabled: true
+    headings: true
   title: 算法编程与工程实践
   description: 以 MeetingToText 为贯穿演示项目、用真实代码展示各项工程实践的螺旋课纲教科书
   authors:

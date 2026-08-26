@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 第16章 里程碑 M3：全栈应用与答辩复盘
+# 里程碑 M3：全栈应用与答辩复盘
 
 > 从 API 到可用产品——本章把上传/转写/列表/纪要/导出串成一条最小全栈链路，完成可本地运行、可被 `TestClient` 冒烟的会议转写应用，并以复盘论文完成答辩。本里程碑仍全 hermetic（不实现 ASR 本体，走 m2t mock/fake），并与 `review_template.md` 的论文模板对齐。
 
@@ -31,13 +31,13 @@ kernelspec:
 - 会执行 `.venv/bin/pytest milestones/m3_fullapp/tests -q` 与 `jupyter-book build --execute`。
 - 已阅读 `milestones/m3_fullapp/README.md` 与 `review_template.md`，对 `MeetingToText/backend/app/routers/*` 与 `backend/app/services/{pipeline,store,llm}` 仅作只读参考（不复制）。
 
-## 1. 里程碑目标
+## 里程碑目标
 
 M3 的交付物是一条**最小全栈链路**：上传（mock）→转写（`pending→done`）→列表→生成纪要（mock LLM）→导出 `txt/srt/md`，并以 `GET /` 返回内联 HTML 列表页（`fetch("/tasks")` 驱动，无需完整 Vue 重搭）。后端复用 `m2t` 子包与单工人 Future 的并发模型，前端为可选但计分友好的单文件 HTML。**不实现 ASR 本体，走 m2t mock（fake 模型 / mock LLM），全 hermetic**——不安装 `funasr/torch/真实 LLM`，不访问网络/真实模型；`FakeModel.generate` 经 `m2t.asr.transcribe(model=fake)` 归一，`FakeLLM.generate` 返回固定纪要，不触 `openai`，满足 `grep -c "不实现 ASR 本体\|mock\|fake"` 门控。
 
 权威定义见 [`milestones/m3_fullapp/README.md`](../milestones/m3_fullapp/README.md) 与 [`review_template.md`](../milestones/m3_fullapp/review_template.md)，本文为摘要与教学导读。
 
-## 2. 任务说明（摘要）
+## 任务说明（摘要）
 
 ### `POST /transcribe`
 
@@ -67,7 +67,7 @@ M3 的交付物是一条**最小全栈链路**：上传（mock）→转写（`pe
 
 路由薄、服务厚；统一 `404` 出口；状态机 `pending→processing→done|error`；`400/404` 边界与 MeetingToText 对齐。
 
-## 3. 提交结构
+## 提交结构
 
 ```
 milestones/m3_fullapp/
@@ -86,7 +86,7 @@ milestones/m3_fullapp/
 
 同接口 `app: FastAPI` + 可选 `create_app(db_path)` / `reset_state()`；内部必须 `TaskStore`（WAL + busy_timeout）、`FakeModel`/`FakeLLM`、`m2t.export.export`、单工人 Future、`GET /` 内联 HTML。学生另需在 `student_solution/README.md` 中按 README 第 4 节撰写项目简介、架构图、接口清单、本地运行与 hermetic 声明。
 
-## 4. 复盘论文模板指引
+## 复盘论文模板指引
 
 独立模板见 [`milestones/m3_fullapp/review_template.md`](../milestones/m3_fullapp/review_template.md)，亦在本章与该 README 第 5 节摘录要点。学生需提交 800–1500 字 Markdown 复盘论文，结构如下（与模板五段对应）：
 
@@ -99,7 +99,7 @@ milestones/m3_fullapp/
 
 末尾含 **AI 辅助声明**（工具名 + 用途，遵循 `book/ai_policy.md`）与 **引用**（`backend/app/routers/*`、`m2t` 等，只作引用不搬运）。评分关注链路完整性、hermetic 自洽与对 trade-off 的诚实表述。
 
-## 5. 评测（黑盒端到端冒烟 + grader 约定）
+## 评测（黑盒端到端冒烟 + grader 约定）
 
 唯一判分引擎为 `pytest`，由 [`milestones/grader.py`](../milestones/grader.py) 封装：
 
@@ -115,7 +115,7 @@ python -m milestones.grader milestones/m3_fullapp --solution reference_solution
 
 `milestones/m3_fullapp/verify_reverse.sh` 三分支：(a) 好解→PASS (b) buggy（导出错/状态不流转/纪要空）→FAIL (c) 复用教师 tests× buggy →FAIL，产物入 `evidence/task-21-m3.txt`。
 
-## 6. 答辩复盘提示
+## 答辩复盘提示
 
 - 演示脚本：`POST /transcribe {"audio_path":"mock"}`→轮询 `GET /status` 至 `done`→`GET /tasks`→`POST /generate/{id}`→`GET /export?format=md`（含纪要）→打开 `GET /` 列表页，5 分钟内走完全链路。
 - 必答问题准备：为何 `GET /` 选内联 HTML 而非完整 Vue？`FakeLLM` 如何保证不触 `openai` 且幂等？`from m2t.store import TaskStore` 的 WAL 如何支撑并发读？
@@ -123,19 +123,19 @@ python -m milestones.grader milestones/m3_fullapp --solution reference_solution
 
 ## 自测实验（改动并预测）
 
-#### 实验 1：把 `GET /` 的 `fetch("/tasks")` 改为 `fetch("/api/tasks")` → 预测列表页空
+### 实验：把 `GET /` 的 `fetch("/tasks")` 改为 `fetch("/api/tasks")` → 预测列表页空
 
 - **改什么**：将内联 HTML 中的 `fetch("/tasks")` 字符串改为 `/api/tasks`。
 - **预测**：`test_index_html_contains_tasks_fetch` 因断言 `fetch("/tasks")` 而失败，即使后端仍有 `/tasks`，前端显示空列表。
 - **解释**：评测以字符串存在性证明前端确由该接口驱动，路径必须对齐契约。
 
-#### 实验 2：让 `POST /generate` 不做 `status != done` 校验 → 预测未完成生成通过
+### 实验：让 `POST /generate` 不做 `status != done` 校验 → 预测未完成生成通过
 
 - **改什么**：注释掉 `if status != "done": raise 400` 一行。
 - **预测**：`test_export_and_generate_before_done_returns_400` 中对未完成任务的 `POST /generate` 预期 `400 任务未完成`，实际 `200` 且 `minutes` 为空或异常，测试失败。
 - **解释**：状态机保证纪要仅对已完成任务生成，绕过校验破坏链路语义。
 
-#### 实验 3：在 `app.py` 顶层 `import openai` → 预测 hermetic 语义虽未显式断言但集成风险
+### 实验：在 `app.py` 顶层 `import openai` → 预测 hermetic 语义虽未显式断言但集成风险
 
 - **改什么**：加 `import openai`。
 - **预测**：`test_no_real_asr_import_at_runtime` 仍 PASS（仅查 `funasr/torch`），但后续 `POST /generate` 需真实 Key 时测试在离线环境挂起或鉴权失败，暴露隐式依赖。

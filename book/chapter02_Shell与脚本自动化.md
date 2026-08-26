@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 第2章 Shell 与脚本自动化
+# Shell 与脚本自动化
 
 > 为什么要学 Shell？因为「把重复操作变成一行命令」是工程师的第一层自动化。装环境、批量转写、跑测试、查日志——这些日常工作若每次都靠手点，慢且易错。本章以 MeetingToText 的批量音频处理为落点（`for f in *.wav; do meetingtotext transcribe "$f"; done`），串起 Shell 的核心工具：管道与重定向、文件查找与文本过滤（`find`/`grep`）、结构化处理（`awk`/`jq`）。学完本章，你能把「对一堆文件做同一件事」写成可复用的脚本，并用 Makefile 把常用命令固化为团队共识——正如 MeetingToText 根 `Makefile` 把 `install`/`test`/`lint` 等目标收敛为单一入口。
 
@@ -31,7 +31,7 @@ kernelspec:
 
 ## 正文
 
-### 2.1 Shell 是什么：从「敲命令」到「写脚本」
+### Shell 是什么：从「敲命令」到「写脚本」
 
 Shell（壳）是人与操作系统内核之间的命令解释器：你输入一行文本，它解析、执行、返回结果。常见的 Shell 有 `bash` / `zsh`，语法大同小异，本书统一用 `bash` 示意。
 
@@ -53,7 +53,7 @@ ls -lh {目录}
 
 `set -euo pipefail` 是脚本的「安全带」：`e` 遇错即停、`u` 未定义变量即报错、`o pipefail` 管道中任一环节失败即视为整体失败。后续脚本均以此为默认头。
 
-### 2.2 管道与重定向：让程序「连起来」
+### 管道与重定向：让程序「连起来」
 
 Shell 最核心的抽象是「一切皆文件描述符」：每个进程默认有 `stdin(0)` / `stdout(1)` / `stderr(2)` 三个流。重定向与管道就是在流之间「接管子」：
 
@@ -105,7 +105,7 @@ txt_like = [p for p in all_files if "note" in p]
 print("grep 'note':", txt_like)
 ```
 
-### 2.3 文件查找与文本过滤：find / grep
+### 文件查找与文本过滤：find / grep
 
 #### find：按「文件属性」找文件
 
@@ -147,7 +147,7 @@ grep -E "transcribe.*\.wav" {脚本文件}
 
 > **区分**：`find -name "*.wav"` 匹配「文件名」，`grep -r "wav"` 匹配「文件内容」。两者常管道组合：`find … -name "*.py" | xargs grep -l "transcribe"`——先定范围，再搜内容。
 
-### 2.4 结构化处理：awk / jq
+### 结构化处理：awk / jq
 
 当文本有「列」或「JSON 结构」时，`awk` 与 `jq` 比 `grep` 更合适。
 
@@ -181,7 +181,7 @@ cat {任务列表.json} | jq -r '.[] | "\(.id) \(.status)"'
 
 三者分工速记：`grep` 定行、`awk` 定列、`jq` 定 JSON 路径。遇到结构化日志（JSON Lines）时，`jq` 几乎是必选。
 
-### 2.5 应用：批量处理音频
+### 应用：批量处理音频
 
 本章的应用落点是「把目录里的一堆音频批量转写」。最直接的写法就是任务要求中的一行循环：
 
@@ -277,25 +277,25 @@ print("commands:", build_transcribe_commands(wavs)[:2])
 
 以下实验均可在本机 Shell 或本章 `{code-cell}` 中复现。按「改什么 → 预测 → 解释」三段式书写。
 
-#### 改动并预测 实验 1：改 `glob` 模式 `*.wav` → `*.mp3` → 预测命中数变化
+#### 实验：改 `glob` 模式 `*.wav` → `*.mp3` → 预测命中数变化
 
 - **改什么**：把批量脚本中的 `for f in {音频目录}/*.wav` 改为 `for f in {音频目录}/*.mp3`，或在 Python 中把 `glob_audio_files(tmpdir2, "*.wav")` 改为 `glob_audio_files(tmpdir2, "*.mp3")`。
 - **预测**：命中数从 `2`（`talk1.wav`/`talk2.wav`/`empty.wav` 视目录而定）变为 `1`（`music.mp3`），Python 返回列表长度相应变化；若目录无 `*.mp3`，Shell 的 `for` 会得到字面量 `*.mp3`（需 `[ -e "$f" ] || continue` 防御），Python 则返回空列表 `[]`。
 - **解释**：`glob` 是「文件名模式匹配」，`*` 匹配任意字符但不跨目录，扩展名不同即不同集合。Shell 与 `glob.glob` 语义一致，区别在于「无匹配时的行为」——Shell 保留字面量，Python 返回空列表，脚本需分别处理。
 
-#### 改动并预测 实验 2：管道里加 `sort | uniq -c` → 预测聚合效果
+#### 实验：管道里加 `sort | uniq -c` → 预测聚合效果
 
 - **改什么**：在 `find {音频目录} -type f | awk -F. '{print $NF}'` 后追加 `| sort | uniq -c | sort -rn`，或在 Python 中把 `ext_counter = Counter(...)` 后的输出改为 `counter.most_common()` 排序。
 - **预测**：原本每行一个扩展名（如 `wav` 重复多行），追加后变为「计数 + 扩展名」的聚合表（如 `3 wav` / `1 mp3`），并按计数降序排列；Python 侧 `most_common()` 同样给出降序列表。
 - **解释**：`sort` 将相同扩展名聚到一起，`uniq -c` 统计连续相同行的出现次数，二者组合实现「分组计数」。`sort -rn` 再按计数数值反向排序，等价于 Python `Counter.most_common()`。去掉 `sort` 则 `uniq -c` 只能对相邻重复计数，结果错误——这正是「管道顺序」的重要性。
 
-#### 改动并预测 实验 3：`grep` 加 `-v` 反选 → 预测输出翻转
+#### 实验：`grep` 加 `-v` 反选 → 预测输出翻转
 
 - **改什么**：把 `grep "ERROR" {日志文件}` 改为 `grep -v "ERROR" {日志文件}`，或在 Python 中把 `[p for p in lines if "ERROR" in p]` 改为 `[p for p in lines if "ERROR" not in p]`。
 - **预测**：原本只输出含 `ERROR` 的行，改后输出「除 `ERROR` 外的所有行」；行数从「少数」变为「多数」，两者之和等于总行数（无重叠、无遗漏）。
 - **解释**：`-v` 是 `grep` 的反选（invert-match）开关，将匹配谓词取反。与之等价的还有 `awk '!/ERROR/'`。该实验验证「过滤条件是否可逆」——正选与反选互补，管道中常用 `grep -v "DEBUG"` 去噪后再统计。
 
-#### 改动并预测 实验 4：重定向 `>` 改 `>>` → 预测文件是覆盖还是追加
+#### 实验：重定向 `>` 改 `>>` → 预测文件是覆盖还是追加
 
 - **改什么**：把批量脚本中的 `meetingtotext transcribe "$f" > "$OUT_DIR/$base.txt"` 改为 `>> "$OUT_DIR/$base.txt"`，连续对同一文件执行两次。
 - **预测**：用 `>` 时第二次执行会覆盖第一次的内容，文件大小约等于单次输出；用 `>>` 时第二次会在文件末尾追加，文件大小近似翻倍（可用 `wc -c` 验证）。

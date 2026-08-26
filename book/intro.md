@@ -9,6 +9,9 @@ kernelspec:
   display_name: Python 3
   language: python
   name: python3
+numbering:
+  title:
+    enabled: false
 ---
 
 # 《算法编程与工程实践》简介

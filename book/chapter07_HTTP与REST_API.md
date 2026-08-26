@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# 第7章 HTTP 与 REST API
+# HTTP 与 REST API
 
 > 为什么这一章要放在后端篇的起点？前几章你已经会用 `m2t` 在本地把音频转成文字、导出为 `txt`/`srt`/`md`。但这些能力还锁在「命令行里」——别人要调用，必须在同一台机器上 `import m2t`。HTTP（HyperText Transfer Protocol，超文本传输协议）是把「本地函数」变成「网络服务」的通用约定；REST（Representational State Transfer，表述性状态转移）是在 HTTP 之上组织资源与动词的一套设计风格。学会它，你就能把「转写一段音频」暴露为 `GET /transcribe/{task_id}?fmt=txt` 这样的网络接口，让前端、脚本、其他服务都能通过 URL 调用。本章以 FastAPI（Python 的现代 Web 框架）为载体，完成从「函数」到「服务」的跨越；真实项目中的路由分层与 `get_task_or_404` 模式将在 7.6 节对照讲解。
 
@@ -32,7 +32,7 @@ kernelspec:
 
 ## 正文
 
-### 7.1 HTTP 快速回顾：请求、响应与状态码
+### HTTP 快速回顾：请求、响应与状态码
 
 HTTP 是「请求-响应」协议：客户端发一个请求（request），服务端回一个响应（response）。一个请求由四部分组成：
 
@@ -48,7 +48,7 @@ HTTP 是「请求-响应」协议：客户端发一个请求（request），服�
 
 REST 把「资源」映射到 URL，把「操作」映射到方法：`GET /tasks` 列任务，`GET /transcribe/{task_id}` 取某任务的转写结果。查询参数用于修饰返回（如 `?fmt=srt` 选格式），路径参数用于定位资源（如 `{task_id}`）。
 
-### 7.2 FastAPI 最小应用：路由与 TestClient
+### FastAPI 最小应用：路由与 TestClient
 
 FastAPI 的核心是「用装饰器把函数变成路由」。最小可运行示例——一个 `GET /ping`：
 
@@ -76,7 +76,7 @@ print(resp.headers.get("content-type"))
 - `@app.get("/ping")` 把 `ping()` 注册为 `GET /ping` 的处理器，返回的 `dict` 自动序列化为 JSON。
 - `TestClient(app)` 劫持应用的 ASGI 调用，不占端口、不起子进程，适合单测与教材演示（正文所有代码均用此方式，不调用 `uvicorn.run` 长驻）。
 
-### 7.3 校验（validation）：Query 参数与 Pydantic 模型
+### 校验（validation）：Query 参数与 Pydantic 模型
 
 「校验」指在处理器执行前拒绝非法输入。FastAPI 用两类声明式校验：
 
@@ -85,7 +85,7 @@ print(resp.headers.get("content-type"))
 
 校验失败时，FastAPI 自动返回 `422`，并在响应体中列出错误位置；业务层面的「参数不合法」（如 `fmt` 不在允许列表）则应手动抛 `HTTPException(status_code=400)`，以区分「格式错误（422）」与「业务拒绝（400）」。
 
-### 7.4 应用：暴露 `/transcribe`（复用 `m2t.export`，mock 转写）
+### 应用：暴露 `/transcribe`（复用 `m2t.export`，mock 转写）
 
 本节把 `m2t.export` 包装为 HTTP 接口。`m2t.export(task, fmt)` 签名 `(task)->str`，支持 `txt`/`srt`/`md` 三种格式；这里用内存字典 `FAKE_DB` 模拟已完成的任务（真实项目中由 `store.get(task_id)` 查库），处理器只做三件事：查任务→校验格式→调 `export`。
 
@@ -169,7 +169,7 @@ print("默认值 fmt:", r6.json()["format"])
 - `Query(default="txt", description=...)` 让 `fmt` 成为可选查询参数，默认值 `txt`；描述会出现在 `/docs` 文档中。
 - 400 与 404 由 `HTTPException` 显式抛出，语义分别为「参数不合法」与「资源不存在」，与自动的 422 区分。
 
-### 7.5 状态码的语义与客户端行为
+### 状态码的语义与客户端行为
 
 | 状态码 | 含义 | 客户端应如何处理 |
 |---|---|---|
@@ -180,7 +180,7 @@ print("默认值 fmt:", r6.json()["format"])
 
 把不同错误映射到不同状态码，是为了让客户端能用 `if resp.status_code == 404` 分支处理，而非解析字符串。
 
-### 7.6 真实项目的路由分层与 `get_task_or_404`
+### 真实项目的路由分层与 `get_task_or_404`
 
 MeetingToText 的后端并非把所有路由写在一个文件，而是按资源拆分：`backend/app/routers/transcribe.py`（转写流程）、`backend/app/routers/upload.py`（上传与任务列表）、`backend/app/routers/deps.py`（共享依赖）。只读参考其设计（以 HEAD 为准）：
 
@@ -204,7 +204,7 @@ MeetingToText 的后端并非把所有路由写在一个文件，而是按资源
 
 这种「一处定义 404 文案与状态码，多处复用」的收敛，避免了复制粘贴导致的文案不一致与遗漏检查（漏判空会把 `None` 当任务用，导致 500）。
 
-### 7.7 OpenAPI 自动文档：`/docs` 与 `response_model`
+### OpenAPI 自动文档：`/docs` 与 `response_model`
 
 FastAPI 在启动时扫描所有路由，生成符合 OpenAPI 规范的 JSON（`/openapi.json`），并据此渲染交互式文档 `/docs`（Swagger UI）与 `/redoc`。`response_model` 的作用在 `/openapi.json` 中最直观：
 
@@ -245,25 +245,25 @@ print("无 response_model 的 schema:", naked_schema)
 
 以下实验均可在本章 `{code-cell}` 或本地 `pytest` 中复现。按「改什么 → 预测 → 解释」三段式书写。
 
-#### 改动并预测 实验 1：去掉 `response_model` → 预测 OpenAPI schema 的变化
+#### 实验：去掉 `response_model` → 预测 OpenAPI schema 的变化
 
 - **改什么**：把 `@app.get("/transcribe/{task_id}", response_model=TranscribeResponse)` 改为 `@app.get("/transcribe/{task_id}")`（删掉 `response_model` 参数），重启（或重建 `TestClient`）后再次 `GET /openapi.json`，观察 `paths./transcribe/{task_id}.get.responses.200.content.application/json.schema`。
 - **预测**：原先的 `{"$ref": "#/components/schemas/TranscribeResponse"}` 会变为 `{"type": "object"}` 或含 `additionalProperties` 的泛化描述，`components/schemas` 中不再出现 `TranscribeResponse`；`/docs` 页面中该接口的 Example Value 从结构化字段（`task_id`/`status`/`format`/`content`）退化为「空对象」或无字段说明。
 - **解释**：`response_model` 是 FastAPI 生成 OpenAPI 的唯一依据；没有它，框架无法知道处理器返回的 `dict` 有哪些键、类型是什么，只能按「任意 JSON 对象」描述。文档即契约，去掉模型等于去掉契约，前端无法据此生成类型与校验。
 
-#### 改动并预测 实验 2：去掉 `Query` 校验（改 `fmt: str = Query(...)` 为 `fmt: str = "txt"`）→ 预测能否传入空值与文档变化
+#### 实验：去掉 `Query` 校验（改 `fmt: str = Query(...)` 为 `fmt: str = "txt"`）→ 预测能否传入空值与文档变化
 
 - **改什么**：把 `fmt: str = Query(default="txt", description="导出格式：txt/srt/md")` 改为 `fmt: str = "txt"`（普通默认值，无 `Query`），然后分别 `GET /transcribe/demo123?fmt=`（空字符串）与 `GET /transcribe/demo123`（缺省），并查看 `/openapi.json` 中 `fmt` 参数的 `description`。
 - **预测**：`?fmt=` 时，`fmt` 会以空字符串 `""` 进入处理器，原先 `if fmt not in ("txt","srt","md")` 仍会判 400，但若删掉该业务检查则空字符串会被当作合法值传给 `export`，后者抛 `ValueError` 导致 500；`/openapi.json` 中 `fmt` 的 `description` 消失，`required` 仍为 `false` 但文档不再提示可选值。
 - **解释**：`Query` 不仅提供默认值，还把「参数元信息（描述、是否必填、约束）」注册到 OpenAPI；裸默认值虽能运行，但丢失了「文档即校验」的声明式信息。空字符串是「传了但无值」，与「未传走默认值」语义不同，`Query` 的声明让这一区别在文档与校验层可见。
 
-#### 改动并预测 实验 3：把 404 改为 200+错误体 → 预测客户端行为
+#### 实验：把 404 改为 200+错误体 → 预测客户端行为
 
 - **改什么**：把 `raise HTTPException(status_code=404, detail="Task not found")` 改为 `return {"error": "Task not found", "task_id": task_id}`（状态码 200，错误藏在体里），然后让 `TestClient` 分别检查 `resp.status_code` 与 `resp.json()`。
 - **预测**：原先 `client.get("/transcribe/notfound?fmt=txt").status_code == 404` 的断言失败，变为 `200`；客户端若按 `if resp.status_code == 404` 分支处理「任务不存在」，该分支永远不进，错误被当成成功数据继续处理（如 `resp.json()["content"]` 报 `KeyError`）。
 - **解释**：状态码是 HTTP 层的「元信号」，客户端（前端、脚本、网关）优先按状态码路由；把错误藏在 200 体里，等于让所有中间件与通用错误处理失效。REST 要求「用状态码表达结果类别」，体只承载细节。
 
-#### 改动并预测 实验 4：把 `fmt` 的 400 改为 422（抛 `HTTPException(422)`）→ 预测与自动校验 422 的混淆
+#### 实验：把 `fmt` 的 400 改为 422（抛 `HTTPException(422)`）→ 预测与自动校验 422 的混淆
 
 - **改什么**：把 `raise HTTPException(status_code=400, detail="不支持的导出格式...")` 改为 `raise HTTPException(status_code=422, detail="不支持的导出格式...")`，然后对比「缺必填字段」与「fmt 非法」两种 422 的响应体。
 - **预测**：两者状态码同为 422，但自动校验的 422 体为 `{"detail": [{"loc": ["query", "fmt"], "msg": ..., "type": ...}]}`（结构化字段错误），手动抛的 422 体为 `{"detail": "不支持的导出格式..."}`（字符串）；客户端若按 `detail` 是否为列表来区分，切分逻辑会出错。
