@@ -16,7 +16,7 @@ SPEAKER_LABEL_TEMPLATE = "说话人{}"
 
 
 def _clean_text(text: str) -> str:
-    text = re.sub(r"<\\|[^|>]+\\|>", "", text)
+    text = re.sub(r"<\|[^|>]+\|>", "", text)
     text = text.strip()
     text = re.sub(r"^[。，、；：！？,.!?:;]+", "", text)
     return text.strip()

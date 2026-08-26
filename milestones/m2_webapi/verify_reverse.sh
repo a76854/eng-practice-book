@@ -2,7 +2,7 @@
 # verify_reverse.sh — 三分支双反向验证（对齐 grader_selfcheck.sh 思想，但针对 m2_webapi）
 # (a) 好解 reference_solution → PASS
 # (b) 故意 buggy 实现 → FAIL
-# (c) 学生测试（此处复用教师 tests，因本里程碑黑盒测试即判分依据）× buggy → FAIL
+# (c) tests-not-hollow（测试非摆设）检查 — 同一套黑盒 tests 复跑于 buggy 实现之上 → expect FAIL（证明 tests 能捕获回归，非空心）
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BOOK_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -82,7 +82,8 @@ echo "$OUT_B"
 if [ $RC_B -ne 0 ]; then echo "[PASS] Branch (b) PASS — buggy correctly failed"; BRANCH_B="PASS"; else echo "[FAIL] Branch (b) FAIL — buggy should have failed"; BRANCH_B="FAIL"; fi
 echo ""
 
-echo "--- Branch (c): BUGGY vs tests (student_tests 同源) — expect FAIL ---"
+echo "--- Branch (c): tests-not-hollow（测试非摆设）检查 — same black-box tests × buggy → expect FAIL ---"
+# tests-not-hollow：同一套黑盒 tests（含 m2_webapi）直接对 buggy 实现跑，验证测试非摆设
 set +e
 OUT_C=$(PYTHONPATH="$TMP_BUG:${PYTHONPATH:-}:$BOOK_DIR" $PYTEST -q "$MILESTONE/tests" 2>&1)
 RC_C=$?

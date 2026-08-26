@@ -8,8 +8,10 @@ repository:
   url: https://github.com/example/eng-practice-book
   branch: main
 
+only_build_toc_files: true
+
 execute:
-  execute_notebooks: cache
+  execute_notebooks: force
   timeout: 120
 
 parse:

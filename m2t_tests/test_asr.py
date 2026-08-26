@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from m2t.asr import normalize_result, transcribe
+from m2t.asr import _clean_text, normalize_result, transcribe
 
 
 def test_normalize_sentence_info_with_speaker():  # type: ignore[no-untyped-def]
@@ -82,3 +82,17 @@ def test_transcribe_with_fake_model_empty():  # type: ignore[no-untyped-def]
 
     segs = transcribe("dummy.wav", model=FakeModel())
     assert segs == []
+
+
+def test_clean_text_strips_language_tag_and_leading_punct():  # type: ignore[no-untyped-def]
+    # 回归：broken regex 原文 r"<\\|[^|>]+\\|>" 无法去掉 <|zh|> 标签；修复为 r"<\|[^|>]+\|>"（与 asr_parse.py:35 一致）
+    # _clean_text 会先去标签再去句首标点，故 "<|zh|>。，你好" → 去标签得 "。，你好" → 去句首标点得 "你好"
+    assert _clean_text("<|zh|>。，你好") == "你好"
+    assert "<|zh|>" not in _clean_text("<|zh|>。，你好")
+    # 完整链路：normalize_result 复用 _clean_text，同样应得 "你好"
+    raw = [{"sentence_info": [{"text": "<|zh|>。，你好", "start": 0, "end": 1000, "spk": 0}]}]
+    assert normalize_result(raw)[0]["text"] == "你好"
+    # 任务原文的中间态断言（去标签后为 "。，你好"）亦成立，可由分步验证：
+    import re
+
+    assert re.sub(r"<\|[^|>]+\|>", "", "<|zh|>。，你好") == "。，你好"

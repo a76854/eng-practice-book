@@ -27,7 +27,7 @@ kernelspec:
 ## 先修要求
 
 - 完成 [周7 HTTP 与 REST API](week07_HTTP与REST_API.md)与 [周8 数据持久化与 SQL](week08_数据持久化与SQL.md)（会用 `FastAPI`、`TestClient` 与 `sqlite3`；理解 `store.save_minutes`）。
-- 会 `import m2t.llm` 并阅读 `m2t/llm.py` 的 `LLMClient` 与 `map_llm_error`（只读参考，不需安装 `openai` 即可跑 mock 示例）。
+- 会 `import m2t.llm` 并阅读 `m2t/llm.py` 的 `LLMClient` 与 `map_llm_error`（`openai` 已列为 `m2t` dev 依赖，需 `pip install -e ".[dev]"` 后即可跑本章 mock 示例；模块本身对 `openai` 懒导入，`import m2t.llm` 仍可在未安装时成功）。
 - 无需真实 LLM Key；本章所有网络调用均为 mock（模拟），教学环境不跑真 LLM（真 Key 手动可选，仅在个人机器上按需开启）。
 
 ## 正文
@@ -131,8 +131,12 @@ except ImportError:
 # 进阶：mock LLM 客户端让 generate 抛超时，验证路由层的 try/except + 映射链路
 def demo_generate_timeout_to_sanitized():
     llm = LLMClient(base_url="https://api.example.com", api_key="{API_KEY}", model="mock-model", timeout=1, max_retries=0)
-    # 注入 fake client：chat.completions.create 直接抛超时
-    fake_create = MagicMock(side_effect=APITimeoutError(fake_request) if 'APITimeoutError' in dir() else ValueError("timeout"))
+    # 注入 fake client：chat.completions.create 直接抛超时（openai 已为 dev 依赖，需安装后此分支才生效）
+    try:
+        timeout_exc = APITimeoutError(fake_request)
+    except NameError:
+        timeout_exc = ValueError("timeout")
+    fake_create = MagicMock(side_effect=timeout_exc)
     fake_client = MagicMock()
     fake_client.chat.completions.create = fake_create
     llm._client = fake_client

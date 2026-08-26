@@ -167,7 +167,7 @@ XSS（Cross-Site Scripting，跨站脚本）的本质是“把不可信输入当
 防御分两层：
 
 1. **框架自动转义**：Vue 3 的 `{{ text }}` 插值会自动对 HTML 特殊字符转义；只有显式 `v-html` 才需人工把关。
-2. **服务端/工具层转义**：导出 `export.py` 生成 HTML/Markdown 时，对任务名、说话人、文本字段做 `escape_html`（`&→&amp; <→&lt; >→&gt; "→&quot; '→&#x27;`），避免拼接出可执行标签。
+2. **服务端/工具层转义（本章练习设想）**：`m2t/export.py` 当前仅提供 TXT/SRT/MD 三种导出（不含 HTML），并未内置 `escape_html`；若后续需导出 HTML，则应对任务名、说话人、文本字段做假设性的 `escape_html`（`&→&amp; <→&lt; >→&gt; "→&quot; '→&#x27;`），避免拼接出可执行标签——本章将其作为 XSS 练习的假设场景，而非对 `export.py` 现有实现的描述。
 
 ```{code-cell} ipython3
 # 15.3 可执行示例：XSS 转义（hermetic 纯函数）
@@ -268,7 +268,7 @@ print("—— 断言通过：白名单缺 origin 则跨源请求被浏览器阻�
 1. 上传链路加魔数 + `Content-Length` 双重校验 + 空文件 400。
 2. 全局 `RateLimitMiddleware` 仅对 `/api/*` 生效，429 带 `Retry-After` 与 CORS 头。
 3. `GET /api/health` 探针返回 `200`（健康）或 `503`（`disk low` / `db error`），供容器 `healthcheck` 与编排器判定是否摘流。
-4. 前端所有动态文本用插值而非 `v-html`，导出拼接前 `escape_html`。
+4. 前端所有动态文本用插值而非 `v-html`；若为导出拼接 HTML，则在拼接前做 `escape_html` 练习（当前 `export.py` 的 TXT/SRT/MD 导出不涉及 HTML，故为假设性练习）。
 5. CORS 白名单通过 `MTT_CORS_ORIGINS` 环境变量配置，默认即含 `http://localhost` 以支持纯静态跨源直连。
 
 认证（Bearer token 中间件）留作本章作业（见 `answers/week15/auth_exercise.md`），正文不实现。

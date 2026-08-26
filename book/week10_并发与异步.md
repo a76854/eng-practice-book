@@ -259,12 +259,12 @@ async def gather_double(nums: list[int]) -> list[int]:
         return n * 2
     return list(await asyncio.gather(*(_double(n) for n in nums)))
 
-# 同步驱动多个用例
+# Jupyter 已在运行事件循环，直接用顶层 await 驱动（asyncio.run 会因“事件循环已在运行”而报错）
 cases = [[3, 1, 4, 1, 5], [], [7], [5, 3], [3, 5]]
 for c in cases:
-    print(c, "->", asyncio.run(gather_double(c)))
-assert asyncio.run(gather_double([3, 1, 4, 1, 5])) == [6, 2, 8, 2, 10]
-assert asyncio.run(gather_double([5, 3])) == [10, 6]
+    print(c, "->", await gather_double(c))
+assert await gather_double([3, 1, 4, 1, 5]) == [6, 2, 8, 2, 10]
+assert await gather_double([5, 3]) == [10, 6]
 print("—— gather 顺序保持：输入调换则输出相应调换 ——")
 ```
 
