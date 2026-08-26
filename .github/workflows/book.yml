@@ -37,6 +37,7 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install jupyter-server
+          pip install -e ".[dev]"
 
       - name: Register Jupyter kernel for MyST execution
         run: |
