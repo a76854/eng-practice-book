@@ -20,37 +20,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.3.0"
+
+      - name: Install MyST CLI
+        run: |
+          npm i -g mystmd
+          myst --version
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Build book (execute notebooks)
-        # JB1 uses execute.execute_notebooks: cache in _config.yml; --execute is JB2 flag.
-        # Keep spec literal with fallback so workflow passes on JB1.
-        run: jupyter-book build book --execute 2>/dev/null || jupyter-book build book
-
-      # Guarded: m2t_tests/ may be empty until todo 3 — non-fatal
-      - name: Run m2t tests (guarded, empty until todo 3)
+      - name: Install Python dependencies
         run: |
-          if [ -d m2t_tests ] && ls m2t_tests/**/*.py m2t_tests/*.py 2>/dev/null | grep -q .; then
-            pytest m2t_tests/ -q
-          else
-            echo "m2t_tests empty or no tests yet — skipping (non-fatal)"
-          fi
-        continue-on-error: true
+          pip install -r requirements.txt
+          pip install jupyter-server
 
-      - name: Linkcheck
-        run: jupyter-book build book --builder linkcheck
-        continue-on-error: true
+      - name: Register Jupyter kernel for MyST execution
+        run: |
+          python -m ipykernel install --user --name python3 --display-name "Python 3 (book)"
+          python -m ipykernel install --user --name book-venv --display-name "book-venv"
+          jupyter kernelspec list
+          python -c "import fastapi; print('fastapi', fastapi.__version__)"
+
+      - name: Build book (force re-execution, honest mode)
+        run: |
+          myst clean --execute -y
+          myst build --html --execute --strict
 
       - name: Upload Pages artifact
         if: github.event_name == 'push'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: book/_build/html
+          path: _build/html
 
   deploy:
     if: github.event_name == 'push'
