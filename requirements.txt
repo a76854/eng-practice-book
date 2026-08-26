@@ -5,3 +5,4 @@ myst-parser==3.0.1
 nbclient==0.10.1
 ipykernel==6.29.5
 PyYAML==6.0.2
+fastapi==0.141.1  # week07+ 后端章节运行依赖（FastAPI 入门 + TestClient 演示）
