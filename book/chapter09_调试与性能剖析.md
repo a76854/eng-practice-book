@@ -261,11 +261,14 @@ ps = pstats.Stats(prof, stream=buf).sort_stats("cumulative")
 ps.print_stats(12)
 output = buf.getvalue()
 print(output)
-# 校验：输出必含表头 ncalls 且含被剖析的函数名（用于习题断言的稳定锚点）
+# 校验分两类锚点：
+#   身份锚点——查剖析数据结构本身（调用者必随子调用入档，与打印行数/行序无关）；
+#   表头锚点——"ncalls" 必在打印文本中。
+func_names = {func for (_file, _line, func) in ps.stats}
 assert "ncalls" in output
-assert "slow_transform" in output
-assert "transcribe_pipeline_mock" in output
-print("—— 断言通过：ncalls 表头与热点函数名均存在 ——")
+assert "slow_transform" in func_names
+assert "transcribe_pipeline_mock" in func_names
+print("—— 断言通过：剖析数据含热点函数，且表头正常打印 ——")
 ```
 
 读表要点（以真实输出为例）：
