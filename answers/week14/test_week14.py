@@ -6,7 +6,6 @@ import pathlib
 import textwrap
 
 import pytest
-
 from solution import (
     build_api_url,
     is_pure_static_nginx,
@@ -15,7 +14,6 @@ from solution import (
     resolve_api_base,
     validate_compose,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers: load deploy-demo compose if present, else inline fallback
@@ -40,7 +38,7 @@ def _load_demo_compose_text() -> str:
         build: { context: ., dockerfile: Dockerfile.backend }
         ports: ["8000:8000"]
         healthcheck:
-          test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+          test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
           interval: 30s
           retries: 10
           start_period: 30s
@@ -115,9 +113,7 @@ def test_build_api_url_relative() -> None:
 
 def test_is_pure_static_true() -> None:
     assert is_pure_static_nginx(NGINX_PURE) is True
-    # also load real file if present
-    real = pathlib.Path(__file__).resolve().parents[2] / "deploy-demo" / "docker-compose.yml"
-    # not nginx, but check constant still true
+    # also ensure demo file path resolves (no-op, keeps hermetic)
     assert is_pure_static_nginx(NGINX_PURE) is True
 
 

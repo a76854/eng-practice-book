@@ -44,7 +44,7 @@ LLM 的 `api_key` 是“能花钱的密码”——一旦提交到 Git，就会�
 
 生产 `backend/app/services/llm.py` 的 `get_llm()` 从 `settings`（即 `app_settings` 落库的内存镜像）读取 `llm_base_url / llm_api_key / llm_model`，并用 `threading.Lock` 保证单例；教学 `m2t.llm.LLMClient` 把构造参数显式化为 `LLMClient(base_url, api_key, model, timeout, max_retries)`，便于在习题中直接断言。
 
-> 规则：仓库中只出现 `{API_KEY}` 占位符（见 STYLE.md），绝不出现真实 Key；`.gitignore` 必须包含 `data/` 与 `.env`。
+> 规则：仓库中只出现 `{API_KEY}` 占位符（见 `STYLE.md`），绝不出现真实 Key；`.gitignore` 必须包含 `data/` 与 `.env`。
 
 ### 13.2 超时与重试：`timeout=60` 与 `max_retries=2`
 

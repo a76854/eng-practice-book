@@ -113,9 +113,13 @@ def validate_compose(data: dict) -> list[str]:
             be = depends.get("backend", {})
             if isinstance(be, dict):
                 cond = be.get("condition")
-    if cond == "service_healthy":
-        if not isinstance(backend, dict) or "healthcheck" not in backend:
-            errors.append("healthcheck is required for service_healthy: backend missing healthcheck")
+    if cond == "service_healthy" and (
+        not isinstance(backend, dict) or "healthcheck" not in backend
+    ):
+        errors.append(
+            "healthcheck is required for service_healthy: "
+            "backend missing healthcheck"
+        )
     return errors
 
 

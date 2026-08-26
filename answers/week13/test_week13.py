@@ -7,17 +7,14 @@
 
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 import pathlib
-import sys
-import types
 from unittest.mock import MagicMock, patch
 
 # 确保 fake openai 已注入（solution 会注入，这里再兜底）
-try:
+with contextlib.suppress(ImportError):
     import openai  # type: ignore  # noqa: F401
-except ImportError:
-    pass
 
 _spec = importlib.util.spec_from_file_location(
     "week13_solution",
@@ -38,7 +35,7 @@ collect_stream = _mod.collect_stream  # type: ignore[attr-defined]
 LLMClient = _mod.LLMClient  # type: ignore[attr-defined]
 
 # 取 fake openai 异常类（无论真实/假）
-import openai as _openai  # type: ignore
+import openai as _openai  # type: ignore  # noqa: E402
 
 APITimeoutError = _openai.APITimeoutError  # type: ignore[attr-defined]
 APIConnectionError = _openai.APIConnectionError  # type: ignore[attr-defined]
@@ -95,7 +92,8 @@ def test_sanitize_four_categories_and_no_leak() -> None:
         resp429.status_code = 429
 
     # 超时
-    e1 = APITimeoutError(req) if "request" in APITimeoutError.__init__.__code__.co_varnames else APITimeoutError("timeout")
+    _has_req = "request" in APITimeoutError.__init__.__code__.co_varnames
+    e1 = APITimeoutError(req) if _has_req else APITimeoutError("timeout")
     msg1 = sanitize_error(e1)
     assert msg1 == "连接 LLM 服务失败，请检查网络或稍后重试"
     # 连接失败
@@ -176,7 +174,12 @@ def test_mock_generate_success() -> None:
     fake_client.chat.completions.create.return_value = fake_resp
     llm._client = fake_client
 
-    result = llm.generate(system_prompt="系统提示", user_message="用户转录", temperature=0.3, max_tokens=100)
+    result = llm.generate(
+        system_prompt="系统提示",
+        user_message="用户转录",
+        temperature=0.3,
+        max_tokens=100,
+    )
     assert result == "mock 纪要结果"
     kwargs = fake_client.chat.completions.create.call_args.kwargs
     assert kwargs["model"] == "mock-model"
@@ -201,7 +204,7 @@ def test_mock_generate_timeout_to_sanitized() -> None:
 
     try:
         llm.generate(system_prompt="sys", user_message="user", temperature=0.3, max_tokens=10)
-        assert False, "应抛超时异常"
+        raise AssertionError("应抛超时异常")
     except Exception as e:
         msg = sanitize_error(e)
         assert msg == "连接 LLM 服务失败，请检查网络或稍后重试"
@@ -221,11 +224,14 @@ def test_streaming_mirror() -> None:
     # 流式中任一 chunk 抛超时，脱敏同样适用
     def gen_with_error():
         yield "part1"
-        raise APITimeoutError(_fake_request()) if "request" in APITimeoutError.__init__.__code__.co_varnames else APITimeoutError("timeout")
+        _has_req2 = "request" in APITimeoutError.__init__.__code__.co_varnames
+        if _has_req2:
+            raise APITimeoutError(_fake_request())
+        raise APITimeoutError("timeout")
 
     try:
         for _ in gen_with_error():
             pass
-        assert False
+        raise AssertionError()
     except Exception as e:
         assert sanitize_error(e) == "连接 LLM 服务失败，请检查网络或稍后重试"

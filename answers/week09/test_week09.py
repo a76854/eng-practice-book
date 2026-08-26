@@ -6,6 +6,7 @@ dictConfig 形状、sort_stats 排序语义、断点可开关。全部 hermetic�
 
 from __future__ import annotations
 
+import cProfile
 import importlib.util
 import io
 import logging
@@ -13,8 +14,6 @@ import pathlib
 import pstats
 import tempfile
 from unittest import mock
-
-import cProfile
 
 _spec = importlib.util.spec_from_file_location(
     "week09_solution",
@@ -102,7 +101,7 @@ def test_rotating_no_rotation_when_large_maxbytes() -> None:
 def test_cprofile_stats_contain_slow_compute() -> None:
     stats = profile_slow_compute(5000)
     # stats.stats 键为 (filename, lineno, funcname)
-    func_names = [k[2] for k in stats.stats.keys()]
+    func_names = [k[2] for k in stats.stats]
     assert "slow_compute" in func_names
     # 至少调用一次
     for k, v in stats.stats.items():
@@ -112,7 +111,7 @@ def test_cprofile_stats_contain_slow_compute() -> None:
             assert ncalls >= 1
             break
     else:
-        assert False, "slow_compute not in stats"
+        raise AssertionError("slow_compute not in stats")
 
 
 def test_cprofile_ncalls_in_output() -> None:
@@ -135,7 +134,7 @@ def test_cprofile_profile_is_deterministic() -> None:
     # 两次剖析同一函数，统计项稳定存在（非 flaky）
     for _ in range(2):
         stats = profile_slow_compute(2000)
-        func_names = [k[2] for k in stats.stats.keys()]
+        func_names = [k[2] for k in stats.stats]
         assert "slow_compute" in func_names
 
 

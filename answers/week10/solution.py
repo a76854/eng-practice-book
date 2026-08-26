@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor
 
@@ -43,7 +44,6 @@ def run_counter(n_threads: int, n_increments: int, use_lock: bool) -> int:
     use_lock=False 时无保护，结果 <= 期望（可能因竞态丢失）。
     所有线程均通过 join 确定性等待结束。
     """
-    counter = 0
     lock = threading.Lock()
 
     # 用 list 包装以便在嵌套函数中可变（避免 global）
@@ -103,10 +103,8 @@ def future_cancel_queued() -> dict:
         is_cancelled = f_queued.cancelled()
         # 释放首任务
         blocker.set()
-        try:
+        with contextlib.suppress(Exception):
             f_blocking.result(timeout=2)
-        except Exception:
-            pass
         # 再取一次终态
         final_done = f_queued.done()
         final_cancelled = f_queued.cancelled()

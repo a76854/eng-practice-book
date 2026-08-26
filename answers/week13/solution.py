@@ -77,14 +77,20 @@ TEMPLATES: dict[str, dict] = {
         "id": "meeting_minutes",
         "name": "标准会议纪要",
         "description": "包含会议主题、参会人员、讨论内容、决定事项和行动项",
-        "system_prompt": "你是一位专业的会议记录秘书，擅长从会议转录文字中提取关键信息并整理成结构化的会议纪要。",
+        "system_prompt": (
+            "你是一位专业的会议记录秘书，"
+            "擅长从会议转录文字中提取关键信息并整理成结构化的会议纪要。"
+        ),
         "output_format": "# 会议纪要\n\n## 一、会议基本信息\n- **主题**：{摘要}\n",
     },
     "action_items": {
         "id": "action_items",
         "name": "行动计划",
         "description": "提取会议中的待办事项，含负责人和截止日期",
-        "system_prompt": "你是一位高效的项目管理员，负责从会议转录文字中提取所有行动项 (Action Items)。",
+        "system_prompt": (
+            "你是一位高效的项目管理员，"
+            "负责从会议转录文字中提取所有行动项 (Action Items)。"
+        ),
         "output_format": "| 优先级 | 行动项 | 负责人 | 截止日期 |",
     },
     "quick_summary": {
@@ -111,7 +117,10 @@ def get_templates() -> list[dict]:
 # 2. 提示词装配（与 backend/app/templates/prompts.py 同形）
 # ------------------------------------------------------------------
 _OUTPUT_FORMAT_SUFFIX = "\n\n请按照以下格式输出：\n{output_format}"
-_TRANSCRIPT_SCAFFOLD = "请根据以下会议转录内容生成会议纪要：\n\n=== 会议转录开始 ===\n{transcript}\n=== 会议转录结束 ==="
+_TRANSCRIPT_SCAFFOLD = (
+    "请根据以下会议转录内容生成会议纪要：\n\n"
+    "=== 会议转录开始 ===\n{transcript}\n=== 会议转录结束 ==="
+)
 _CUSTOM_INSTRUCTIONS_SUFFIX = "\n\n额外要求：{custom_instructions}"
 
 

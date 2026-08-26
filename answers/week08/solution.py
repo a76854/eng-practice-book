@@ -117,12 +117,14 @@ def insert_two_atomic(conn: sqlite3.Connection, a_id: str, b_id: str) -> None:
     """
     with conn:
         conn.execute(
-            "INSERT INTO tasks (id, filename, status, created_at, full_text) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO tasks (id, filename, status, created_at, full_text) "
+            "VALUES (?, ?, ?, ?, ?)",
             (a_id, "a.wav", "pending", "2026-08-26T10:00:00+00:00", ""),
         )
         if b_id == "boom":
             raise RuntimeError("boom")
         conn.execute(
-            "INSERT INTO tasks (id, filename, status, created_at, full_text) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO tasks (id, filename, status, created_at, full_text) "
+            "VALUES (?, ?, ?, ?, ?)",
             (b_id, "b.wav", "pending", "2026-08-26T10:00:01+00:00", ""),
         )

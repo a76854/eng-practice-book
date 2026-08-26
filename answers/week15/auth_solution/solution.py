@@ -9,7 +9,6 @@ import json
 from typing import Any
 
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
 
 VALID_TOKEN = "test-token"
 

@@ -109,7 +109,7 @@ def test_transaction_rollback() -> None:
     except RuntimeError:
         pass
     else:
-        assert False, "should have raised"
+        raise AssertionError("should have raised")
     assert conn.execute("SELECT count(*) FROM tasks").fetchone()[0] == 0
     conn.close()
 

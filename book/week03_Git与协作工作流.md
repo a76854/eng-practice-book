@@ -247,7 +247,7 @@ git log --oneline -n 5   # 多了一次 revert 提交，原错误提交仍在历
 
 **原则**：公共历史（已 `push` 的 `main`）只用 `revert` 撤销；`reset` / `rebase -i` 只用于本地未推送的分支整理，整理完再 `push`。
 
-### 3.6 协作约定范例：对照 MeetingToText CONTRIBUTING.md
+### 3.6 协作约定范例：对照 MeetingToText `CONTRIBUTING.md`
 
 本书以 MeetingToText 的 `CONTRIBUTING.md` 为协作约定范例（只读对照，不复制源码）。其要点可直接映射到本章的协作流程：
 
@@ -331,4 +331,4 @@ chmod +x .git/hooks/pre-commit
 
 进阶可选 `pre-commit` 框架（`pip install pre-commit` + `.pre-commit-config.yaml`）或前端 `husky`，但均属选学工具链——本章不预置、不强制，未安装时协作流程完全可用；启用后也可用 `--no-verify` 按需绕过，避免阻塞紧急提交。
 
-本章内容原创，协作流程参考 MeetingToText 的 CONTRIBUTING.md，案例与习题均为原创。
+本章内容原创，协作流程参考 MeetingToText 的 `CONTRIBUTING.md`，案例与习题均为原创。

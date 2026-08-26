@@ -47,7 +47,8 @@ def create_memory_logger(level: str, name: str | None = None) -> tuple[logging.L
     # 非法 level 回落 INFO（与 build_demo_log_config 一致）
     if not isinstance(lvl, int):
         lvl = logging.INFO
-    if level.upper() not in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL") and isinstance(level, str):
+    _allowed = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
+    if isinstance(level, str) and level.upper() not in _allowed:
         lvl = logging.INFO
     logger.setLevel(lvl)
     handler = ListHandler()
@@ -69,7 +70,8 @@ def write_with_rotation(tmp_dir: str, max_bytes: int, backup_count: int, n: int)
         log_path, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8"
     )
     handler.setFormatter(logging.Formatter("%(message)s"))
-    logger = logging.getLogger(f"week09.rotate.{pathlib.Path(tmp_dir).name}.{max_bytes}.{backup_count}")
+    lg_name = f"week09.rotate.{pathlib.Path(tmp_dir).name}.{max_bytes}.{backup_count}"
+    logger = logging.getLogger(lg_name)
     logger.handlers.clear()
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
@@ -129,7 +131,9 @@ def profile_pipeline(sort_key: str = "cumulative") -> list[str]:
     for line in output.splitlines():
         # 统计表行含 " " 分隔的 ncalls 且含 "("
         line = line.strip()
-        if not line or line.startswith("Ordered by") or "ncalls" in line or "function calls" in line or line.startswith("{"):
+        if not line or line.startswith("Ordered by") or line.startswith("{"):
+            continue
+        if "ncalls" in line or "function calls" in line:
             continue
         # 提取括号内函数名
         if "(" in line and ")" in line:
