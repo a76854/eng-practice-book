@@ -49,7 +49,7 @@ jobs:
       - name: Build book (force re-execution, honest mode)
         run: |
           myst clean --execute -y
-          myst build --html --execute --strict
+          myst build --html --execute --strict --baseurl "/${GITHUB_REPOSITORY##*/}"
 
       - name: Upload Pages artifact
         if: github.event_name == 'push'
