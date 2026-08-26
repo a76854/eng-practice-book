@@ -103,7 +103,7 @@ myst clean --execute && myst build --html --execute
 myst build --html --execute --strict
 ```
 
-- 配置见 `myst.yml` (version: 1)：`project.title: 算法编程与工程实践`、`site.toc`/`project.toc` 列 `book/intro.md` + 16 章（`chapter01..16`），`exclude` 排除 `STYLE.md`/`ai_policy.md`/`forum_topics.md` 等非正文。
+- 配置见 `myst.yml` (version: 1)：`project.title: 算法编程与工程实践`、`project.toc` 列 `book/intro.md` + 16 章（`chapter01..16`），`exclude` 排除 `STYLE.md`/`ai_policy.md`/`forum_topics.md` 等非正文。
 - 扩展：`colon_fence` / `dollarmath` / `linkify` / `tasklist` 在 mystmd 中默认启用（`substitution` 已移除，Vue `{{ }}` 位于 code fences 内无需处理）。
 - 输出在 `_build/html/`（site 数据在 `_build/site/`），执行缓存由 `myst clean --execute` 清理；CI 每轮强制重跑。
 
@@ -202,7 +202,7 @@ bash milestones/grader_selfcheck.sh
 
 ### 作为学生
 
-1. **读教材**：按 `myst.yml` 的 `site.toc`/`project.toc` 顺序阅读 `book/intro.md → chapter01..16`，每章先看动机与学习目标，再运行正文中的 `{code-cell}`。
+1. **读教材**：按 `myst.yml` 的 `project.toc` 顺序阅读 `book/intro.md → chapter01..16`，每章先看动机与学习目标，再运行正文中的 `{code-cell}`。
 2. **做改动并预测**：每章 ≥3 个实验，按“改什么 → 预测 → 解释”三段式手写预测再运行验证（可用 AI 辅助生成改动，但必须先读懂并先预测，见 `book/ai_policy.md`）。
 3. **做习题**：在 `answers/chapterNN/` 中实现 `solution.py`，本地 `pytest answers/chapterNN -q` 绿后再对照参考解。
 4. **做里程碑**：阅读 `milestones/mX/README.md`，在 `student_solution/` 中实现，通过 `python -m milestones.grader milestones/mX` 自检，最后跑 `verify_reverse.sh` 确认测试有效。

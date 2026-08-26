@@ -37,29 +37,6 @@ project:
     - file: book/chapter14_打包部署与CI.md
     - file: book/chapter15_健壮性与安全基础.md
     - file: book/chapter16_里程碑M3_全栈应用与答辩.md
-  # Keep MyST extensions parity with JB1 parse.myst_enable_extensions
-  # colon_fence, dollarmath, linkify, tasklist are on by default in mystmd;
-  # substitution is not needed (Vue {{ }} is inside code fences).
 site:
   title: 算法编程与工程实践
   template: book-theme
-  # site.toc is required by the migration spec — duplicated from project.toc for validation;
-  # MyST primary TOC lives under project.toc (kept in sync).
-  toc:
-    - file: book/intro.md
-    - file: book/chapter01_环境与项目骨架.md
-    - file: book/chapter02_Shell与脚本自动化.md
-    - file: book/chapter03_Git与协作工作流.md
-    - file: book/chapter04_代码质量类型与静态检查.md
-    - file: book/chapter05_测试的思维与工程.md
-    - file: book/chapter06_里程碑M1_CLI转写工具.md
-    - file: book/chapter07_HTTP与REST_API.md
-    - file: book/chapter08_数据持久化与SQL.md
-    - file: book/chapter09_调试与性能剖析.md
-    - file: book/chapter10_并发与异步.md
-    - file: book/chapter11_里程碑M2_WebAPI.md
-    - file: book/chapter12_前端基础Vue3.md
-    - file: book/chapter13_外部服务集成ASR与LLM.md
-    - file: book/chapter14_打包部署与CI.md
-    - file: book/chapter15_健壮性与安全基础.md
-    - file: book/chapter16_里程碑M3_全栈应用与答辩.md
