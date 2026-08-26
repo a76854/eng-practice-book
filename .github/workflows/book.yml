@@ -47,9 +47,11 @@ jobs:
           python -c "import fastapi; print('fastapi', fastapi.__version__)"
 
       - name: Build book (force re-execution, honest mode)
+        env:
+          BASE_URL: /${{ github.event.repository.name }}
         run: |
           myst clean --execute -y
-          myst build --html --execute --strict --baseurl "/${GITHUB_REPOSITORY##*/}"
+          myst build --html --execute --strict
 
       - name: Upload Pages artifact
         if: github.event_name == 'push'
