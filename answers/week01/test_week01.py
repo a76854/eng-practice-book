@@ -1,13 +1,22 @@
 """week01 习题测试（≥5 例，全部 hermetic）。"""
 
-from solution import (
-    extract_dependency_names,
-    is_python_version_compatible,
-    normalize_version_constraint,
-    parse_requires_python,
-    parse_scripts,
-    required_fields_present,
+import importlib.util
+import pathlib
+
+_spec = importlib.util.spec_from_file_location(
+    "week01_solution",
+    pathlib.Path(__file__).with_name("solution.py"),
 )
+assert _spec is not None and _spec.loader is not None
+_mod = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
+
+extract_dependency_names = _mod.extract_dependency_names  # type: ignore[attr-defined]
+is_python_version_compatible = _mod.is_python_version_compatible  # type: ignore[attr-defined]
+normalize_version_constraint = _mod.normalize_version_constraint  # type: ignore[attr-defined]
+parse_requires_python = _mod.parse_requires_python  # type: ignore[attr-defined]
+parse_scripts = _mod.parse_scripts  # type: ignore[attr-defined]
+required_fields_present = _mod.required_fields_present  # type: ignore[attr-defined]
 
 
 def test_parse_requires_python_present():

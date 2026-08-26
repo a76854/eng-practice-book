@@ -3,12 +3,7 @@
 from __future__ import annotations
 
 import re
-import sys
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib  # type: ignore[import-not-found]
+import tomllib
 
 
 def parse_requires_python(pyproject_text: str) -> str:

@@ -2,18 +2,26 @@
 
 from __future__ import annotations
 
+import importlib.util
+import pathlib
 import subprocess
-import sys
 
 import pytest
 
-from solution import (
-    has_conflict_markers,
-    is_ancestor,
-    is_revert_commit,
-    is_valid_branch_name,
-    parse_git_log,
+# 隔离加载：避免与其它周的 solution 模块同名冲突（pytest 收集期复用 sys.modules["solution"]）
+_spec = importlib.util.spec_from_file_location(
+    "week03_solution",
+    pathlib.Path(__file__).with_name("solution.py"),
 )
+assert _spec is not None and _spec.loader is not None
+_mod = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
+
+has_conflict_markers = _mod.has_conflict_markers  # type: ignore[attr-defined]
+is_ancestor = _mod.is_ancestor  # type: ignore[attr-defined]
+is_revert_commit = _mod.is_revert_commit  # type: ignore[attr-defined]
+is_valid_branch_name = _mod.is_valid_branch_name  # type: ignore[attr-defined]
+parse_git_log = _mod.parse_git_log  # type: ignore[attr-defined]
 
 # ---------------------------------------------------------------------------
 # hermetic 题

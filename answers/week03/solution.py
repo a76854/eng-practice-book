@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 
-
 _COMMIT_RE = re.compile(
     r"^(?P<hash>[0-9a-f]{7,40})\s+(?:(?P<type>\w+)(?:\((?P<scope>[^)]+)\))?:\s*)?(?P<subject>.+)$"
 )
@@ -42,7 +41,14 @@ def parse_git_log(lines: list[str]) -> list[dict]:
                 d["type"] = ""
             if d["scope"] is None:
                 d["scope"] = ""
-            out.append({"hash": d["hash"], "type": d["type"] or "", "scope": d["scope"] or "", "subject": d["subject"]})
+            out.append(
+                {
+                    "hash": d["hash"],
+                    "type": d["type"] or "",
+                    "scope": d["scope"] or "",
+                    "subject": d["subject"],
+                }
+            )
         else:
             parts = line.split(None, 1)
             h = parts[0] if parts else ""
@@ -88,9 +94,11 @@ def has_conflict_markers(text: str) -> bool:
     if not isinstance(text, str):
         return False
     for line in text.splitlines():
-        # Git 标记行严格以 7 个字符开头
-        if line.startswith("<<<<<<< ") or line.startswith(">>>>>>> ") or line == "=======" or line.startswith("======="):
-            # 更精确：中间分隔行是 7 个 = ，可能后无空格
+        if (
+            line.startswith("<<<<<<< ")
+            or line.startswith(">>>>>>> ")
+            or line.startswith("=======")
+        ):
             if line.startswith("<<<<<<< ") or line.startswith(">>>>>>> "):
                 return True
             if line.startswith("======="):
@@ -114,11 +122,7 @@ def is_revert_commit(subject: str) -> bool:
         return True
     if low.startswith("revert:"):
         return True
-    if low.startswith("revert "):
-        # 如 Revert "feat: ..."
-        # 需排除普通以 revert 单词开头但非 revert 提交的误判？教学上视为 revert
-        return True
-    return False
+    return low.startswith("revert ")
 
 
 def is_ancestor(graph: dict[str, list[str]], anc: str, desc: str) -> bool:

@@ -1,17 +1,24 @@
 """week02 习题测试（≥5 例，全部 hermetic）。"""
 
+import importlib.util
 import os
 import pathlib
 import tempfile
 
-from solution import (
-    build_transcribe_commands,
-    count_by_extension,
-    filter_by_ext,
-    glob_audio_files,
-    jq_extract,
-    parse_find_output,
+_spec = importlib.util.spec_from_file_location(
+    "week02_solution",
+    pathlib.Path(__file__).with_name("solution.py"),
 )
+assert _spec is not None and _spec.loader is not None
+_mod = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
+
+build_transcribe_commands = _mod.build_transcribe_commands  # type: ignore[attr-defined]
+count_by_extension = _mod.count_by_extension  # type: ignore[attr-defined]
+filter_by_ext = _mod.filter_by_ext  # type: ignore[attr-defined]
+glob_audio_files = _mod.glob_audio_files  # type: ignore[attr-defined]
+jq_extract = _mod.jq_extract  # type: ignore[attr-defined]
+parse_find_output = _mod.parse_find_output  # type: ignore[attr-defined]
 
 
 def test_glob_audio_files_basic():
