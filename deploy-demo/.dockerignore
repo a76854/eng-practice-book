@@ -1,0 +1,12 @@
+.git/
+.omo/
+data/
+.idea/
+.vscode/
+*.log
+__pycache__/
+.pytest_cache/
+.venv/
+book/_build/
+frontend/node_modules/
+frontend/dist/

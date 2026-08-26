@@ -1,0 +1,26 @@
+# deploy-demo — .github style CI teaching sample (push-to-test)
+# Mirrors MeetingToText .github/workflows/ci.yml shape: on push/pull_request, jobs/steps
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps
+        run: pip install -e ".[dev]" && pip install pyyaml
+      - name: Lint (ruff)
+        run: ruff check .
+      - name: Type check (mypy)
+        run: mypy m2t --ignore-missing-imports
+      - name: Tests (pytest)
+        run: python -m pytest -q
+      - name: Validate compose
+        run: docker compose -f deploy-demo/docker-compose.yml config -q
