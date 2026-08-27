@@ -35,7 +35,6 @@ kernelspec:
 文件 `book/part2_backend_development/chapter03_backend_essence/demo_index.py`（验证本章环境与核心依赖可用）：
 
 ```{code-cell} ipython3
-# 文件 book/part2_backend_development/chapter03_backend_essence/demo_index.py
 import sys, pathlib
 
 import m2t

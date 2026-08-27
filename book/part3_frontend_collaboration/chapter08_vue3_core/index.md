@@ -34,7 +34,6 @@ kernelspec:
 文件 `book/part3_frontend_collaboration/chapter08_vue3_core/demo_index.py`（验证本章环境与 Vue 3 核心概念的最小协作闭环，本地可复现）：
 
 ```{code-cell} ipython3
-# 文件 book/part3_frontend_collaboration/chapter08_vue3_core/demo_index.py
 import sys, pathlib, json
 
 import m2t

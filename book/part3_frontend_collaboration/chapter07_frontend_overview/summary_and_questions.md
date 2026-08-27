@@ -25,7 +25,6 @@ kernelspec:
 文件 `book/part3_frontend_collaboration/chapter07_frontend_overview/demo_summary.py`（本章贯通校验：以后端视角串联“接口契约 → 响应式过滤 → 工程契约”，本地可复现，无网络）：
 
 ```{code-cell} ipython3
-# 文件 book/part3_frontend_collaboration/chapter07_frontend_overview/demo_summary.py
 import json, pathlib, re
 from dataclasses import dataclass, asdict
 

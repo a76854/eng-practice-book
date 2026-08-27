@@ -26,7 +26,6 @@ kernelspec:
 文件 `book/part2_backend_development/chapter04_http_restful/demo_summary.py`（本章贯通校验：HTTP 语义 + 路由校验 + 信封 + 契约的最小闭环）：
 
 ```{code-cell} ipython3
-# 文件 book/part2_backend_development/chapter04_http_restful/demo_summary.py
 import tempfile, pathlib
 from typing import Any, Annotated
 

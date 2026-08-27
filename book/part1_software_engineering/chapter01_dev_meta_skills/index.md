@@ -35,7 +35,6 @@ kernelspec:
 文件 `book/part1_software_engineering/chapter01_dev_meta_skills/demo_index.py`（验证本章环境与 m2t 教学包可用）：
 
 ```{code-cell} ipython3
-# 文件 book/part1_software_engineering/chapter01_dev_meta_skills/demo_index.py
 import sys, pathlib, importlib.metadata
 
 # 验证教学包 m2t 可导入（无需真实模型）

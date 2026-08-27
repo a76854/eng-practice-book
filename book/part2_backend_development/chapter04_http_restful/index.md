@@ -35,7 +35,6 @@ kernelspec:
 文件 `book/part2_backend_development/chapter04_http_restful/demo_index.py`（验证本章环境与 FastAPI 核心依赖可用）：
 
 ```{code-cell} ipython3
-# 文件 book/part2_backend_development/chapter04_http_restful/demo_index.py
 import sys, pathlib
 
 import m2t

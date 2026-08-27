@@ -26,7 +26,6 @@ kernelspec:
 文件 `book/part2_backend_development/chapter03_backend_essence/demo_summary.py`（本章贯通校验：分层 + 持久化 + 契约的最小闭环）：
 
 ```{code-cell} ipython3
-# 文件 book/part2_backend_development/chapter03_backend_essence/demo_summary.py
 import tempfile, pathlib
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient

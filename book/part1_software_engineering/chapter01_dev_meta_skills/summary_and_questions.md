@@ -26,7 +26,6 @@ kernelspec:
 文件 `book/part1_software_engineering/chapter01_dev_meta_skills/demo_summary.py`（本章贯通校验：用教学包串联“存储 → 导出”最小闭环）：
 
 ```{code-cell} ipython3
-# 文件 book/part1_software_engineering/chapter01_dev_meta_skills/demo_summary.py
 import tempfile, pathlib
 from m2t.store import TaskStore
 from m2t.export import export

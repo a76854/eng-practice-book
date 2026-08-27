@@ -29,7 +29,6 @@ kernelspec:
 文件 `book/part4_advanced_engineering/chapter09_external_integration/demo_summary.py`（本章贯通校验：用教学包串联“归一 → 存储 → 导出”最小闭环）：
 
 ```{code-cell} ipython3
-# 文件 book/part4_advanced_engineering/chapter09_external_integration/demo_summary.py
 import tempfile, pathlib, json
 from m2t.store import TaskStore
 from m2t.asr import normalize_result

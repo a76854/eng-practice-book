@@ -33,7 +33,6 @@ kernelspec:
 文件 `book/part4_advanced_engineering/chapter10_robustness_security/demo_index.py`（验证本章环境与教学包可用）：
 
 ```{code-cell} ipython3
-# 文件 book/part4_advanced_engineering/chapter10_robustness_security/demo_index.py
 import sys, pathlib, hashlib, hmac, json, base64
 
 import m2t

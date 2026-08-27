@@ -28,7 +28,6 @@ kernelspec:
 文件 `book/part4_advanced_engineering/chapter11_deploy_cicd/demo_summary.py`（本章贯通校验：用文本解析串联“演进思想 → Dockerfile → Compose → CI”最小闭环）：
 
 ```{code-cell} ipython3
-# 文件 book/part4_advanced_engineering/chapter11_deploy_cicd/demo_summary.py
 import pathlib, yaml, sys, hashlib, tempfile
 
 from m2t.store import TaskStore

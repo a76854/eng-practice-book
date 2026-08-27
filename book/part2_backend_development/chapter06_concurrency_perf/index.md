@@ -35,7 +35,6 @@ kernelspec:
 文件 `book/part2_backend_development/chapter06_concurrency_perf/demo_index.py`（验证本章环境与并发原语可用）：
 
 ```{code-cell} ipython3
-# 文件 book/part2_backend_development/chapter06_concurrency_perf/demo_index.py
 import sys, pathlib, asyncio, threading, concurrent.futures, cProfile, pstats, io
 
 import m2t

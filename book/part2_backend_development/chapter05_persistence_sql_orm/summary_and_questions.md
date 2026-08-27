@@ -27,7 +27,6 @@ kernelspec:
 文件 `book/part2_backend_development/chapter05_persistence_sql_orm/demo_summary.py`（本章贯通校验：事务 + 进阶 SQL + 建模 + 迁移思想的最小闭环）：
 
 ```{code-cell} ipython3
-# 文件 book/part2_backend_development/chapter05_persistence_sql_orm/demo_summary.py
 import tempfile, pathlib, sqlite3
 from m2t.store import TaskStore
 

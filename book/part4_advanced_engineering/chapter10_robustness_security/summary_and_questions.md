@@ -28,7 +28,6 @@ kernelspec:
 文件 `book/part4_advanced_engineering/chapter10_robustness_security/demo_summary.py`（本章贯通校验：用教学包串联“校验 → 签发 → 日志 → 降级”最小闭环）：
 
 ```{code-cell} ipython3
-# 文件 book/part4_advanced_engineering/chapter10_robustness_security/demo_summary.py
 import tempfile, pathlib, json, html, logging, io, hmac, hashlib, base64, time
 
 from m2t.store import TaskStore

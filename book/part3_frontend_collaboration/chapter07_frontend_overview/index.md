@@ -34,7 +34,6 @@ kernelspec:
 文件 `book/part3_frontend_collaboration/chapter07_frontend_overview/demo_index.py`（验证本章环境与前后端协作概念可用）：
 
 ```{code-cell} ipython3
-# 文件 book/part3_frontend_collaboration/chapter07_frontend_overview/demo_index.py
 import sys, pathlib, json
 
 import m2t

@@ -25,7 +25,6 @@ kernelspec:
 文件 `book/part3_frontend_collaboration/chapter08_vue3_core/demo_summary.py`（本章贯通校验：串联响应式→组件→路由→Pinia 的协作闭环，本地可复现，无网络）：
 
 ```{code-cell} ipython3
-# 文件 book/part3_frontend_collaboration/chapter08_vue3_core/demo_summary.py
 from typing import Callable
 import re
 

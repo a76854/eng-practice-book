@@ -35,7 +35,6 @@ kernelspec:
 文件 `book/part2_backend_development/chapter05_persistence_sql_orm/demo_index.py`（验证本章环境与 `m2t.store.TaskStore` 可用）：
 
 ```{code-cell} ipython3
-# 文件 book/part2_backend_development/chapter05_persistence_sql_orm/demo_index.py
 import sys, pathlib, sqlite3
 
 import m2t

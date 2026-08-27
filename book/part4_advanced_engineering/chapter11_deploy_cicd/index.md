@@ -34,7 +34,6 @@ kernelspec:
 文件 `book/part4_advanced_engineering/chapter11_deploy_cicd/demo_index.py`（验证本章环境与教学包可访问）：
 
 ```{code-cell} ipython3
-# 文件 book/part4_advanced_engineering/chapter11_deploy_cicd/demo_index.py
 import sys, pathlib, importlib.metadata
 
 import m2t

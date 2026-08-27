@@ -34,7 +34,6 @@ kernelspec:
 文件 `book/part4_advanced_engineering/chapter09_external_integration/demo_index.py`（验证本章环境与 m2t 教学包可用）：
 
 ```{code-cell} ipython3
-# 文件 book/part4_advanced_engineering/chapter09_external_integration/demo_index.py
 import sys, pathlib
 
 import m2t
