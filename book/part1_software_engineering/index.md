@@ -8,7 +8,7 @@
 
 本篇包含以下两章：
 
-- [第1章 开发者的元技能](chapter01_dev_meta_skills/index.md)，从 `src` 布局与 `pyproject.toml` 到 `venv` 与 `uv` 的选型，从 Shell 的文件、进程与管道到 Python 自动化脚本与 Git 对象模型，把环境、脚本与协作三件套一次讲透
+- [第1章 开发者的元技能](chapter01_dev_meta_skills/index.md)，从 `src` 布局与 `pyproject.toml` 到 `venv` 与 `uv` 的选型，从 Shell 的文件、进程与管道到 Python 自动化脚本与 Git 对象模型，把环境、脚本与协作三件套一次讲透。本章以通用项目为例，MeetingToText 仅在每节末尾以贯穿案例出现，适合作为独立的工程入门
 - [第2章 构筑代码质量的护城河](chapter02_code_quality/index.md)，用类型系统、Ruff 静态检查、pytest 测试金字塔与覆盖率门禁，把“能跑”提升为“可信”，让错误尽早暴露，让协作有底线可守
 
 建议按顺序阅读，并在阅读过程中同步完成实验一与实验二，让工程规范在动手中有落脚点。
