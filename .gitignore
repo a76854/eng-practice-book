@@ -7,3 +7,7 @@ book/_build/
 .omo
 evidence/
 ERRATA.md
+
+labs/**/__pycache__/
+labs/**/.venv/
+node_modules/

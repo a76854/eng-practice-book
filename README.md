@@ -1,66 +1,70 @@
 # 《算法编程与工程实践》
 
-本仓库是《算法编程与工程实践》教科书的源文件，以 MeetingToText 为贯穿演示项目、用真实代码展示各项工程实践，基于 MyST (Jupyter Book 2 / `mystmd`) 构建，全书 16 章螺旋课纲（13 个教学单元 + 3 个里程碑）配套可执行代码与 hermetic 习题。
-
----
-
-## 简介
-
-本书以 MeetingToText 为贯穿演示项目，用真实代码串联工程实践（环境/协作/测试/HTTP/SQL/调试/并发/前端/部署等），全书 16 章螺旋进阶（13 个教学单元 + 3 个里程碑项目 M1/M2/M3），所有代码单元可执行、习题 hermetic 可测。
-
----
+本仓库是《算法编程与工程实践》教科书的源文件，以 MeetingToText 为贯穿演示项目，用真实代码串联工程实践，基于 MyST (`mystmd` v1) 构建。全书采用五篇结构，正文 11 章 + 实验 8 个，配套 8 个 `labs/` 动手实验（README + starter 脚手架，无标准答案、无自动判分）。
 
 ## 目录结构
 
 ```
 eng-practice-book/
-├── book/                          # 教材正文（MyST Markdown + {code-cell}）
-│   ├── intro.md                   # 封面/简介（site root）
-│   ├── chapter01_环境与项目骨架.md … chapter16 (16 章正文)
-│   ├── intro.md                   # 简介（以 MeetingToText 为贯穿演示项目）
-│   ├── STYLE.md                   # 全书写作契约（章骨架、代码约定、构建校验）
-│   ├── ai_policy.md               # AI 工具使用政策（鼓励使用 AI，须读懂每一行）
-│   ├── chapter01_环境与项目骨架.md
-│   ├── chapter02_Shell与脚本自动化.md
-│   ├── ...                        # chapter03..15 教学单元
-│   ├── chapter06_里程碑M1_CLI转写工具.md
-│   ├── chapter11_里程碑M2_WebAPI.md
-│   ├── chapter16_里程碑M3_全栈应用与答辩.md
-│   ├── forum_topics.md            # 每章论坛讨论题
-│   └── samples/                   # 最小可运行样例（如 vue-min）
-├── m2t/                           # 教学辅助包（精简实现，对应演示项目的核心能力）
-│   ├── __init__.py
-│   ├── asr.py                     # normalize_result / transcribe（mock/fake）
-│   ├── store.py                   # TaskStore（SQLite + WAL）
-│   ├── export.py                  # txt/srt/md 导出
-│   ├── llm.py                     # LLMClient（timeout/max_retries + 脱敏）
-│   └── audio.py
-├── answers/                       # 习题参考答案（hermetic 纯函数，可 pytest）
-│   ├── chapter01/
-│   ├── chapter02/
-│   └── ...
-├── milestones/                    # 里程碑项目（黑盒评测）
-│   ├── grader.py                  # 统一判分引擎 run_grader（pytest 唯一引擎）
-│   ├── grader_selfcheck.sh
-│   ├── m1_cli/{student_solution,tests,reference_solution}
-│   ├── m2_webapi/{student_solution,tests,reference_solution}
-│   └── m3_fullapp/{student_solution,tests,reference_solution}
-├── pyproject.toml                 # 项目元数据（requires-python >=3.12, dev/asr 可选依赖）
-└── README.md                      # 本文件（使用指南）
+├── book/                                    # 教材正文（MyST Markdown + {code-cell}）
+│   ├── 前言.md                              # 前言
+│   ├── STYLE.md                             # 全书写作契约（章骨架、围栏规范、构建校验）
+│   ├── ai_policy.md                         # AI 工具使用政策
+│   ├── part1_软件工程筑基/                  # 第一篇：开发者元技能 + 代码质量护城河
+│   │   ├── chapter01_开发者的元技能/
+│   │   └── chapter02_构筑代码质量的护城河/
+│   ├── part2_后端开发全景与核心基石/         # 第二篇：后端全景、HTTP/RESTful、持久化、并发
+│   │   ├── chapter03_后端开发到底是什么/
+│   │   ├── chapter04_HTTP与RESTful架构/
+│   │   ├── chapter05_数据持久化从SQL到ORM/
+│   │   └── chapter06_并发模型与性能工程/
+│   ├── part3_前端协作与现代前端基础/         # 第三篇：前端协作、Vue 3 核心
+│   │   ├── chapter07_前端开发概况与工程化演进/
+│   │   └── chapter08_Vue3核心机制与状态设计/
+│   ├── part4_现代工程进阶与交付/             # 第四篇：外部集成、健壮性安全、部署CI/CD
+│   │   ├── chapter09_与外部世界的集成/
+│   │   ├── chapter10_健壮性与安全底线/
+│   │   └── chapter11_部署容器化与持续集成/
+│   ├── part5_实验指导书/                    # 第五篇：8 个实验（理论配套动手）
+│   │   ├── experiment01_工程初始化与自动化脚本/
+│   │   ├── experiment02_单元测试与静态检查实战/
+│   │   ├── experiment03_里程碑A_CLI转写工具/
+│   │   ├── experiment04_RESTful_API与数据库迁移/
+│   │   ├── experiment05_异步改造与压力测试/
+│   │   ├── experiment06_前端页面与路由状态管理/
+│   │   ├── experiment07_前后端联调与流式响应/
+│   │   └── experiment08_里程碑BC_全栈容器化与答辩/
+│   ├── appendix/                            # 附录
+│   │   └── 附录A_课程设计大作业选题.md
+│   └── samples/                             # 最小可运行样例（如 vue-min）
+├── labs/                                    # 实验脚手架（README + starter，无参考解/测试/判分）
+│   ├── lab01_工程初始化/starter/
+│   ├── lab02_单元测试与静态检查/starter/
+│   ├── lab03_里程碑A_CLI转写/starter/
+│   ├── lab04_RESTful_API与数据库/starter/
+│   ├── lab05_异步改造与压测/starter/
+│   ├── lab06_前端页面与路由状态/starter/
+│   ├── lab07_前后端联调与流式/starter/
+│   └── lab08_全栈容器化与答辩/starter/
+├── m2t/                                     # 教学辅助包（精简实现，对应演示项目核心能力）
+├── deploy-demo/                             # 部署演示（Dockerfile.backend / docker-compose.yml）
+├── myst.yml                                 # MyST 项目配置（toc 列前言 + part1..5 + 附录）
+├── requirements.txt                         # 构建执行依赖（nbclient/ipykernel/jupyter-server/fastapi）
+└── pyproject.toml                           # m2t 包元数据（requires-python >=3.12, [dev] 含 pytest/ruff/mypy）
 ```
 
----
+> `myst.yml` 的 `project.toc` 即全书目录权威来源；`m2t/`、`labs/`、`deploy-demo/`、`book/samples/` 均为可复用资产，不参与正文编号。
 
 ## 环境准备
 
-**要求**：Python 3.12 + Node 24（前端章节与里程碑 M3 涉及；`mystmd` 需 Node 18+，CI 用 Node 24）。
+要求：Python 3.12 + Node 24（`mystmd` 需 Node 18+，CI 固定 Node 24.3.0）。
 
 ```bash
 # 1) 克隆
 git clone {仓库URL}
 cd eng-practice-book
 
-# 2) 创建虚拟环境（任选其一）
+# 2) 创建虚拟环境
 uv venv --python 3.12 && source .venv/bin/activate
 # 或
 python3.12 -m venv .venv && source .venv/bin/activate
@@ -71,164 +75,62 @@ pip install -e ".[dev]"
 # 4) 验证
 python -c "import m2t; print(m2t.__version__)"
 pytest --version && ruff --version && mypy --version
-
-# 5) 前端（chapter12 / M3 需要）
-cd frontend 2>/dev/null && npm install && cd .. || echo "no frontend dir, skip"
 ```
-
-> 说明：`pyproject.toml` 的 `[project.optional-dependencies].dev` 包含 `pytest + ruff + mypy + httpx + openai`；`pip install -e ".[dev]"` 为构建与测试的唯一入口。
-
----
 
 ## 构建书籍
 
-全书可执行代码以 ````{code-cell} ipython3` 围栏标记，`myst build --html --execute` 会真实运行并校验（hermetic，失败即非零退出）。
+全书可执行代码以 ````{code-cell} ipython3` 围栏标记，`myst build --html --execute --strict` 会真实运行并校验——执行失败即非零退出，此为唯一构建门控。
 
 ```bash
-# 1) 安装 MyST CLI（Node 24 已装好）
-npm install -g mystmd
-myst --version
+# 1) 安装 MyST CLI
+npm i -g mystmd
+myst --version  # 期望 v1.10.1
 
-# 2) 注册执行内核（让 myst 找到 venv 中的 fastapi/httpx）
-.venv/bin/python -m ipykernel install --user --name python3 --display-name "Python 3 (book-venv)"
-.venv/bin/python -m ipykernel install --user --name book-venv
+# 2) 注册执行内核（让 myst 找到 .venv 中的 fastapi/m2t）
+.venv/bin/python -m ipykernel install --user --name python3 --display-name "Python 3 (book)"
+.venv/bin/python -m ipykernel install --user --name book-venv --display-name "book-venv"
+jupyter kernelspec list
 
 # 3) 增量构建（日常写作，不重跑 code-cell）
 myst build --html
 
-# 4) 全量执行构建（CI/交稿前必跑，--execute 强制重跑所有 code-cell）
-myst clean --execute && myst build --html --execute
-
-# 5) 严格模式（执行错误即失败，CI 默认行为）
-myst build --html --execute --strict
+# 4) 全量执行构建（CI/交稿前必跑，--strict 遇错即失败）
+myst clean --execute -y && myst build --html --execute --strict
 ```
 
-- 配置见 `myst.yml` (version: 1)：`project.title: 算法编程与工程实践`、`project.toc` 列 `book/intro.md` + 16 章（`chapter01..16`），`exclude` 排除 `STYLE.md`/`ai_policy.md`/`forum_topics.md` 等非正文。
-- 扩展：`colon_fence` / `dollarmath` / `linkify` / `tasklist` 在 mystmd 中默认启用（`substitution` 已移除，Vue `{{ }}` 位于 code fences 内无需处理）。
-- 输出在 `_build/html/`（site 数据在 `_build/site/`），执行缓存由 `myst clean --execute` 清理；CI 每轮强制重跑。
+- 输出在 `_build/html/`，执行缓存由 `myst clean --execute -y` 清理；CI 每轮强制重跑。
+- 写作契约见 `book/STYLE.md`：章骨架 `index.md`、围栏仅 `{code-cell} ipython3` / `bash`、章末 `小结与思考题.md`。
 
----
+## 实验
 
-## 运行习题测试
-
-习题为 hermetic 纯函数题，答案在 `answers/`，测试不依赖网络/外部服务/真实文件系统。
+第五篇为实验指导书（`book/part5_实验指导书/`），`labs/lab01..08` 为配套动手脚手架。每个实验仅含 `README.md`（任务说明）+ `starter/`（起始代码），不含参考解、测试或自动判分——以课堂讲解与动手完成度为准。
 
 ```bash
-# 全量习题
-.venv/bin/pytest answers/ -q
+# 查看实验说明
+cat book/part5_实验指导书/experiment01_工程初始化与自动化脚本/index.md
+cat labs/lab01_工程初始化/README.md 2>/dev/null || echo "详见 book/part5"
 
-# 单章（如 chapter01）
-.venv/bin/pytest answers/chapter01 -q
-.venv/bin/pytest answers/chapter01 -v
-
-# 某题
-.venv/bin/pytest answers/chapter05/test_chapter05.py -k test_normalize -q
+# starter 为空脚手架，按实验 README 自行实现
+ls labs/lab01_工程初始化/starter/
 ```
 
-- 约定：每章 ≥5 题，`answers/chapterNN/solution.py` 为参考解，`test_*.py` 为断言；`pytest answers/ -q` 绿为门控。
-- 质量门：`ruff check .` 与 `mypy` 亦在 CI 中执行，提交前建议本地同跑。
+## 可复用资产
 
----
-
-## 做里程碑项目
-
-里程碑是本课程的 3 次综合交付（M1 CLI、M2 WebAPI、M3 全栈），均在 `milestones/` 下以统一结构组织：
-
-```
-milestones/m1_cli/
-  README.md               # 任务说明（权威）
-  student_solution/       # 学生提交（被测对象，grader 默认测此目录）
-    cli.py                # 需实现 build_parser() + main(argv)
-  tests/                  # 黑盒测试（唯一判分依据，只断言退出码/文件/接口）
-    conftest.py
-    test_cli.py
-  reference_solution/     # 教师参考解（用于自检与对照）
-  verify_reverse.sh       # 双反向验证脚本
-```
-
-`m2_webapi` / `m3_fullapp` 结构相同（`app.py` 为入口）。
-
-### grader 用法
-
-唯一判分引擎为 `pytest`，由 `milestones/grader.py:run_grader` 封装，自动将 `solution_dir` 注入 `PYTHONPATH` 首位。
-
-```bash
-# 测学生提交（默认 student_solution）
-python -m milestones.grader milestones/m1_cli
-python -m milestones.grader milestones/m2_webapi
-python -m milestones.grader milestones/m3_fullapp
-
-# 测参考解（自检）
-python -m milestones.grader milestones/m1_cli --solution reference_solution
-
-# 测任意目录
-python -m milestones.grader milestones/m1_cli --solution-dir /tmp/my_impl
-
-# 直接 pytest（hermetic，conftest.py 保证直接运行也能回退到 reference）
-.venv/bin/pytest milestones/m1_cli/tests -q
-.venv/bin/pytest milestones/m2_webapi/tests -q
-.venv/bin/pytest milestones/m3_fullapp/tests -q
-```
-
-编程调用：
-
-```python
-from milestones.grader import run_grader
-r = run_grader("milestones/m1_cli")
-print(r.passed, r.summary)
-```
-
-### 双反向验证
-
-为保证“测试非空心”，每个里程碑提供 `verify_reverse.sh`，执行三分支：
-
-1. 好解 → PASS（reference_solution 绿）
-2. buggy 实现 → FAIL（故意破坏的实现应被判红）
-3. 学生测试 × buggy → FAIL（学生自写测试若空心则无法捕捉 bug）
-
-```bash
-bash milestones/m1_cli/verify_reverse.sh
-bash milestones/m2_webapi/verify_reverse.sh
-bash milestones/m3_fullapp/verify_reverse.sh
-# 全量自检（与 CI 一致）
-bash milestones/grader_selfcheck.sh
-```
-
-产物可重定向到 `evidence/` 用于交稿审计。
-
----
-
-## 学生与教师使用路径
-
-### 作为学生
-
-1. **读教材**：按 `myst.yml` 的 `project.toc` 顺序阅读 `book/intro.md → chapter01..16`，每章先看动机与学习目标，再运行正文中的 `{code-cell}`。
-2. **做改动并预测**：每章 ≥3 个实验，按“改什么 → 预测 → 解释”三段式手写预测再运行验证（可用 AI 辅助生成改动，但必须先读懂并先预测，见 `book/ai_policy.md`）。
-3. **做习题**：在 `answers/chapterNN/` 中实现 `solution.py`，本地 `pytest answers/chapterNN -q` 绿后再对照参考解。
-4. **做里程碑**：阅读 `milestones/mX/README.md`，在 `student_solution/` 中实现，通过 `python -m milestones.grader milestones/mX` 自检，最后跑 `verify_reverse.sh` 确认测试有效。
-5. **构建验证**：交稿前 `myst build --html --execute` 与 `pytest answers/ -q` 双绿，`git -C /home/huiguo/tools/MeetingToText status --porcelain | wc -l` 保持 0（演示项目只读）。
-
-### 作为教师
-
-1. **备课**：以 `book/STYLE.md` 为写作契约，以 `book/intro.md` 的“以 MeetingToText 为贯穿演示项目”为主线串联 16 章；演示项目 MeetingToText 仅作演示背景，不以其内部路径为教材主体。
-2. **出题与批改**：习题以 `answers/` 的 hermetic 测试为判分依据；里程碑以 `milestones/grader.py` 黑盒测试为唯一判分引擎，`reference_solution` 为满分对照，`verify_reverse.sh` 保障测试质量。
-3. **课堂与答辩**：用 `book/forum_topics.md` 组织讨论；M3 答辩关注链路完整性、hermetic 自洽与 trade-off 诚实表述，配合 `book/ai_policy.md`（鼓励使用 AI、以读懂/能解释/能预测为底线）进行 AI 辅助声明核查。
-4. **CI 门控**：`myst clean --execute && myst build --html --execute`、`pytest answers/ -q`、`ruff check`、`mypy` 与 `milestones/grader_selfcheck.sh` 构成提交门控；`_build/` 不入库。
-
----
+- `m2t/`：教学辅助包，精简实现 MeetingToText 核心能力（`asr` / `store` / `export` / `llm` / `audio`），`pip install -e ".[dev]"` 后可 `import m2t`。
+- `deploy-demo/`：部署演示资产（`Dockerfile.backend`、`docker-compose.yml`、`ci.yml`），供第 11 章与实验 08 参考。
+- `book/samples/vue-min`：前端最小可运行样例。
+- `requirements.txt`：MyST 执行链依赖（`nbclient`/`ipykernel`/`jupyter-server`/`fastapi`）；`myst.yml` 的 `project.exclude` 已排除 `labs/**`、`m2t/**` 等非正文路径。
 
 ## 常见命令速查
 
 | 目的 | 命令 |
 |------|------|
-| 安装 | `pip install -e ".[dev]"` |
-| 构建 | `myst build --html --execute` |
-| 习题 | `.venv/bin/pytest answers/ -q` |
-| 单章习题 | `.venv/bin/pytest answers/chapter01 -q` |
-| 里程碑 | `python -m milestones.grader milestones/m1_cli` |
-| 反向验证 | `bash milestones/m1_cli/verify_reverse.sh` |
-| 只读检查 | `git -C /home/huiguo/tools/MeetingToText status --porcelain \| wc -l` |
+| 安装依赖 | `pip install -e ".[dev]"` |
+| 全量执行构建 | `myst clean --execute -y && myst build --html --execute --strict` |
+| 增量构建 | `myst build --html` |
+| 查看内核 | `jupyter kernelspec list` |
+| 只读检查（演示项目） | `git -C /home/huiguo/tools/MeetingToText status --porcelain \| wc -l` |
 
 ---
 
-*构建与测试均在 Python 3.12 下验证；问题请见 `book/forum_topics.md` 或提 issue。*
+*构建在 Python 3.12 + Node 24 + mystmd v1.10.1 下验证；写作规范见 `book/STYLE.md`。*
