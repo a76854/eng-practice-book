@@ -1,0 +1,6 @@
+fastapi>=0.115
+uvicorn[standard]>=0.34
+httpx>=0.27
+# optional: for migration demo
+# alembic>=1.13
+# sqlalchemy>=2.0
