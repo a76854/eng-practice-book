@@ -1,0 +1,20 @@
+# 第五篇 实验指导书
+
+本篇是全书的动手部分，与前四篇的 11 章理论配套。理论负责把原理讲透，实验负责把能力练熟。两者的分工明确，理论章不设练习与评分，动手与验收统一由本篇承担，采用 README 加 starter 的形式，提供任务说明与起始代码，不提供参考实现，以演示与讨论作为验收方式。
+
+全篇共 8 个实验，按从基础到综合的顺序编排。前两个实验对应第一篇的工程底座，中间四个实验对应第二篇与第三篇的后端与前端核心，最后两个实验对应第四篇的联调与交付。实验之间存在递进关系，建议按顺序完成，但也可根据课程进度灵活组合。每个实验的起始代码位于 `labs` 目录下的对应子目录，任务说明以本篇的实验文档为准。
+
+本篇的实验设计强调“在约束中做完整切片”，而不是“在孤立环境中做语法练习”。每个实验都要求你在真实仓库中完成环境、协作、测试与运行的闭环，并在过程中体会工程权衡。完成质量以可演示、可解释、可复现为标准，而不是以是否通过某种自动评分脚本来衡量。
+
+本篇包含以下 8 个实验：
+
+- [实验一 工程初始化与自动化脚本](experiment01_project_init_automation/index.md)，从 `src` 布局与虚拟环境到 Shell 与 Python 自动化，建立可复现的工程起点
+- [实验二 单元测试与静态检查实战](experiment02_unit_test_static_check/index.md)，用类型检查、Ruff 与 pytest 为项目加上质量护城河
+- [实验三 里程碑 A，CLI 转写工具](experiment03_milestone_a_cli/index.md)，以命令行形态完成 MeetingToText 的首个可交付切片，贯通音频处理与导出
+- [实验四 RESTful API 与数据库迁移](experiment04_restful_api_db_migration/index.md)，用 FastAPI 与 SQLAlchemy 实现任务接口与持久化，并通过 Alembic 管理演进
+- [实验五 异步改造与压力测试](experiment05_async_refactor_load_test/index.md)，将同步逻辑异步化，处理 GIL 与事件循环陷阱，并通过压测验证改进
+- [实验六 前端页面与路由状态管理](experiment06_frontend_routing_state/index.md)，用 Vue 3 与 Pinia 完成页面、路由与跨组件状态的协作
+- [实验七 前后端联调与流式响应](experiment07_fullstack_streaming/index.md)，通过 OpenAPI 契约完成联调，实现流式返回与进度反馈
+- [实验八 里程碑 B/C，全栈容器化与答辩](experiment08_milestone_bc_container/index.md)，以前后端联调为基础，完成容器编排、持续集成与项目答辩的完整交付
+
+建议将本篇与理论篇交叉推进，每学完一章即完成对应实验，让概念在动手中有落脚点。所有实验均可在书仓根目录的 `.venv` 环境中复现，跨平台差异在各实验文档中标注。

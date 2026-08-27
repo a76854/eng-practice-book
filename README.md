@@ -7,45 +7,45 @@
 ```
 eng-practice-book/
 ├── book/                                    # 教材正文（MyST Markdown + {code-cell}）
-│   ├── 前言.md                              # 前言
+│   ├── preface.md                              # 前言
 │   ├── STYLE.md                             # 全书写作契约（章骨架、围栏规范、构建校验）
 │   ├── ai_policy.md                         # AI 工具使用政策
-│   ├── part1_软件工程筑基/                  # 第一篇：开发者元技能 + 代码质量护城河
-│   │   ├── chapter01_开发者的元技能/
-│   │   └── chapter02_构筑代码质量的护城河/
-│   ├── part2_后端开发全景与核心基石/         # 第二篇：后端全景、HTTP/RESTful、持久化、并发
-│   │   ├── chapter03_后端开发到底是什么/
-│   │   ├── chapter04_HTTP与RESTful架构/
-│   │   ├── chapter05_数据持久化从SQL到ORM/
-│   │   └── chapter06_并发模型与性能工程/
-│   ├── part3_前端协作与现代前端基础/         # 第三篇：前端协作、Vue 3 核心
-│   │   ├── chapter07_前端开发概况与工程化演进/
-│   │   └── chapter08_Vue3核心机制与状态设计/
-│   ├── part4_现代工程进阶与交付/             # 第四篇：外部集成、健壮性安全、部署CI/CD
-│   │   ├── chapter09_与外部世界的集成/
-│   │   ├── chapter10_健壮性与安全底线/
-│   │   └── chapter11_部署容器化与持续集成/
-│   ├── part5_实验指导书/                    # 第五篇：8 个实验（理论配套动手）
-│   │   ├── experiment01_工程初始化与自动化脚本/
-│   │   ├── experiment02_单元测试与静态检查实战/
-│   │   ├── experiment03_里程碑A_CLI转写工具/
-│   │   ├── experiment04_RESTful_API与数据库迁移/
-│   │   ├── experiment05_异步改造与压力测试/
-│   │   ├── experiment06_前端页面与路由状态管理/
-│   │   ├── experiment07_前后端联调与流式响应/
-│   │   └── experiment08_里程碑BC_全栈容器化与答辩/
+│   ├── part1_software_engineering/                  # 第一篇：开发者元技能 + 代码质量护城河
+│   │   ├── chapter01_dev_meta_skills/
+│   │   └── chapter02_code_quality/
+│   ├── part2_backend_development/         # 第二篇：后端全景、HTTP/RESTful、持久化、并发
+│   │   ├── chapter03_backend_essence/
+│   │   ├── chapter04_http_restful/
+│   │   ├── chapter05_persistence_sql_orm/
+│   │   └── chapter06_concurrency_perf/
+│   ├── part3_frontend_collaboration/         # 第三篇：前端协作、Vue 3 核心
+│   │   ├── chapter07_frontend_overview/
+│   │   └── chapter08_vue3_core/
+│   ├── part4_advanced_engineering/             # 第四篇：外部集成、健壮性安全、部署CI/CD
+│   │   ├── chapter09_external_integration/
+│   │   ├── chapter10_robustness_security/
+│   │   └── chapter11_deploy_cicd/
+│   ├── part5_lab_guide/                    # 第五篇：8 个实验（理论配套动手）
+│   │   ├── experiment01_project_init_automation/
+│   │   ├── experiment02_unit_test_static_check/
+│   │   ├── experiment03_milestone_a_cli/
+│   │   ├── experiment04_restful_api_db_migration/
+│   │   ├── experiment05_async_refactor_load_test/
+│   │   ├── experiment06_frontend_routing_state/
+│   │   ├── experiment07_fullstack_streaming/
+│   │   └── experiment08_milestone_bc_container/
 │   ├── appendix/                            # 附录
-│   │   └── 附录A_课程设计大作业选题.md
+│   │   └── appendix_a_course_design.md
 │   └── samples/                             # 最小可运行样例（如 vue-min）
 ├── labs/                                    # 实验脚手架（README + starter，无参考解/测试/判分）
-│   ├── lab01_工程初始化/starter/
-│   ├── lab02_单元测试与静态检查/starter/
-│   ├── lab03_里程碑A_CLI转写/starter/
-│   ├── lab04_RESTful_API与数据库/starter/
-│   ├── lab05_异步改造与压测/starter/
-│   ├── lab06_前端页面与路由状态/starter/
-│   ├── lab07_前后端联调与流式/starter/
-│   └── lab08_全栈容器化与答辩/starter/
+│   ├── lab01_project_init/starter/
+│   ├── lab02_unit_test_static_check/starter/
+│   ├── lab03_milestone_a_cli/starter/
+│   ├── lab04_restful_api_db/starter/
+│   ├── lab05_async_refactor_load_test/starter/
+│   ├── lab06_frontend_routing_state/starter/
+│   ├── lab07_fullstack_streaming/starter/
+│   └── lab08_fullstack_container/starter/
 ├── m2t/                                     # 教学辅助包（精简实现，对应演示项目核心能力）
 ├── deploy-demo/                             # 部署演示（Dockerfile.backend / docker-compose.yml）
 ├── myst.yml                                 # MyST 项目配置（toc 列前言 + part1..5 + 附录）
@@ -99,19 +99,19 @@ myst clean --execute -y && myst build --html --execute --strict
 ```
 
 - 输出在 `_build/html/`，执行缓存由 `myst clean --execute -y` 清理；CI 每轮强制重跑。
-- 写作契约见 `book/STYLE.md`：章骨架 `index.md`、围栏仅 `{code-cell} ipython3` / `bash`、章末 `小结与思考题.md`。
+- 写作契约见 `book/STYLE.md`：章骨架 `index.md`、围栏仅 `{code-cell} ipython3` / `bash`、章末 `summary_and_questions.md`。
 
 ## 实验
 
-第五篇为实验指导书（`book/part5_实验指导书/`），`labs/lab01..08` 为配套动手脚手架。每个实验仅含 `README.md`（任务说明）+ `starter/`（起始代码），不含参考解、测试或自动判分——以课堂讲解与动手完成度为准。
+第五篇为实验指导书（`book/part5_lab_guide/`），`labs/lab01..08` 为配套动手脚手架。每个实验仅含 `README.md`（任务说明）+ `starter/`（起始代码），不含参考解、测试或自动判分——以课堂讲解与动手完成度为准。
 
 ```bash
 # 查看实验说明
-cat book/part5_实验指导书/experiment01_工程初始化与自动化脚本/index.md
-cat labs/lab01_工程初始化/README.md 2>/dev/null || echo "详见 book/part5"
+cat book/part5_lab_guide/experiment01_project_init_automation/index.md
+cat labs/lab01_project_init/README.md 2>/dev/null || echo "详见 book/part5"
 
 # starter 为空脚手架，按实验 README 自行实现
-ls labs/lab01_工程初始化/starter/
+ls labs/lab01_project_init/starter/
 ```
 
 ## 可复用资产

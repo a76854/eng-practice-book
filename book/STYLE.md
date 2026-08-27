@@ -32,7 +32,7 @@
 > **预计理论学时**：X学时
 ```
 
-- 章组成：`index.md` + 若干 `<N.N>_<中文名>.md` 正文小节 + 章末 `小结与思考题.md`。章内节数量以内容需要为准，不凑数也不遗漏。
+- 章组成：`index.md` + 若干 `<N.N>_<中文名>.md` 正文小节 + 章末 `summary_and_questions.md`。章内节数量以内容需要为准，不凑数也不遗漏。
 - 章标题与节标题由 MyST 自动编号，写作时不手写编号前缀。
 
 ## 4 正文小节 .md 契约
@@ -68,9 +68,9 @@ python m2t/demo.py
 ```
 ````
 
-## 6 章末 小结与思考题.md 契约
+## 6 章末 summary_and_questions.md 契约
 
-- 每章章末固定文件为 `小结与思考题.md`，不得更名或拆分。
+- 每章章末固定文件为 `summary_and_questions.md`，不得更名或拆分。
 - 文件内必须包含两节，且仅含这两节：
   1. `## 本章小结`：用要点回顾本章核心概念与工程启示，不引入新概念。
   2. `## 思考题`：若干开放讨论题，鼓励课堂或论坛讨论，无答案、不设标准解、不做评分。
@@ -89,9 +89,9 @@ python m2t/demo.py
 
 ## 9 目录、命名与引用
 
-- 正文小节文件命名：`<N.N>_<中文名>.md`，如 `1.1_工程化项目结构.md`、`4.3_FastAPI路由设计.md`。章末固定项为 `小结与思考题.md`。
+- 正文小节文件命名：`<N.N>_<english_name>.md`（全英文小写下划线），如 `1.1_engineering_project_structure.md`、`4.3_fastapi_routing.md`。章末固定项为 `summary_and_questions.md`。
 - 章与节的编号由 `myst.yml` 的 `numbering: { headings: true }` 统一管理，文件命名仅作排序与可读性。
-- 跨章引用一律使用相对链接，如 `[](../chapter04_HTTP与RESTful架构/4.1_HTTP协议精髓.md)`，不使用绝对路径或硬编码 URL。
+- 跨章引用一律使用相对链接（从引用文件所在目录出发），如 `[](../chapter04_http_restful/4.1_http_protocol_essence.md)`，不使用绝对路径或硬编码 URL。
 - 资源与样例置于 `book/samples/` 等约定目录，引用时保持相对路径一致。
 
 ## 10 明令禁止
@@ -112,4 +112,4 @@ python m2t/demo.py
 
 ## 12 作者自检清单
 
-提交章节前逐项确认：`index.md` 骨架完整且含学习目标、为什么需要掌握本章、预计理论学时；正文小节含可运行的 `{code-cell} ipython3` 且标注路径与预期输出；Shell 仅用 `bash` 围栏；章末为 `小结与思考题.md` 且含本章小结与思考题；已标注 Windows / macOS / Linux 差异；跨章引用为相对链接；未出现第 10 节禁止内容。
+提交章节前逐项确认：`index.md` 骨架完整且含学习目标、为什么需要掌握本章、预计理论学时；正文小节含可运行的 `{code-cell} ipython3` 且标注路径与预期输出；Shell 仅用 `bash` 围栏；章末为 `summary_and_questions.md` 且含本章小结与思考题；已标注 Windows / macOS / Linux 差异；跨章引用为相对链接；未出现第 10 节禁止内容。
