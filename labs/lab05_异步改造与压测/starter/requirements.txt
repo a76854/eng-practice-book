@@ -1,0 +1,2 @@
+# Lab05 starter: stdlib only, no extra deps needed.
+# Python >=3.12 is sufficient for asyncio demo and bench.
