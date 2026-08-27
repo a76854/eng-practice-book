@@ -46,12 +46,13 @@ jobs:
           jupyter kernelspec list
           python -c "import fastapi; print('fastapi', fastapi.__version__)"
 
-      - name: Build book (force re-execution, honest mode)
+      - name: Build book (honest execution, log-gated)
         env:
           BASE_URL: /${{ github.event.repository.name }}
         run: |
           myst clean --execute -y
-          myst build --html --execute --strict
+          myst build --html --execute --strict 2>&1 | tee /tmp/build.log
+          ! grep -qE "⛔|Site has [1-9][0-9]* error" /tmp/build.log
 
       - name: Upload Pages artifact
         if: github.event_name == 'push'
