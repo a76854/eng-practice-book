@@ -25,7 +25,7 @@ kernelspec:
 9. **交付的可回滚性**：镜像的不可变标签（如 `m2t:2024-08-27-abc123`）与浮动标签（如 `m2t:latest`）在回滚时有何差异？Compose 如何通过固定镜像摘要而非标签来保证“回滚到任意历史版本可复现”？
 10. **端到端预演**：仅用 `yaml` 解析与 `pathlib` 文本检查，能否在不启动 Docker 的前提下完成“Dockerfile 层序合法、Compose 拓扑就绪、CI 门禁齐全”的交付预演？这种预演的边界与局限是什么？
 
-文件 `book/part4_advanced_engineering/chapter11_deploy_cicd/demo_summary.py`（本章贯通校验：用文本解析串联“演进思想 → Dockerfile → Compose → CI”最小闭环）：
+示例（本章贯通校验：用文本解析串联“演进思想 → Dockerfile → Compose → CI”最小闭环）：
 
 ```{code-cell} ipython3
 import pathlib, yaml, sys, hashlib, tempfile

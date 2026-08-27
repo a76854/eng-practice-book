@@ -23,7 +23,7 @@ kernelspec:
 6. **信封与 HTTP 状态码**：本书采用“HTTP 状态码 + Body 的 `code` 双轨”——HTTP 供网关与监控聚合，Body 供前端业务分支。若改为“HTTP 始终 200，靠 Body 的 `code` 区分”，会对网关重试、CDN 缓存与错误监控带来哪些影响？
 7. **契约演进**：后端为 `TaskOut` 新增一个必填字段而前端尚未更新，契约测试会在哪一环失败？应如何通过“新增字段设为可选/默认值 + 版本协商”降低协作成本？`openapi.json` 的 `required` 变更在代码生成器中会如何体现？
 
-文件 `book/part2_backend_development/chapter04_http_restful/demo_summary.py`（本章贯通校验：HTTP 语义 + 路由校验 + 信封 + 契约的最小闭环）：
+示例（本章贯通校验：HTTP 语义 + 路由校验 + 信封 + 契约的最小闭环）：
 
 ```{code-cell} ipython3
 import tempfile, pathlib

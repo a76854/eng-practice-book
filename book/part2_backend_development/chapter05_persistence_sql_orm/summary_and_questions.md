@@ -24,7 +24,7 @@ kernelspec:
 7. **范式化的边界**：MeetingToText 若为“列出任务时总要显示片段数”在 `tasks` 冗余 `segment_count`，更新该列的时机有哪些选择（应用层双写、触发器、定时物化）？每种选择在一致性延迟与实现复杂度上的 trade-off 是什么？若接受短暂不一致，如何向用户解释？
 8. **WAL 与锁**：`m2t/store.py` 的 `WAL + busy_timeout=5000` 让读不阻塞写、短暂锁冲突等待重试。若将 `busy_timeout` 设为 0，短暂并发写入会发生什么？WAL 模式下是否就无需关心锁？结合 [第6章 并发模型](../chapter06_concurrency_perf/index.md) 讨论你的理解。
 
-文件 `book/part2_backend_development/chapter05_persistence_sql_orm/demo_summary.py`（本章贯通校验：事务 + 进阶 SQL + 建模 + 迁移思想的最小闭环）：
+示例（本章贯通校验：事务 + 进阶 SQL + 建模 + 迁移思想的最小闭环）：
 
 ```{code-cell} ipython3
 import tempfile, pathlib, sqlite3

@@ -24,7 +24,7 @@ kernelspec:
 6. **覆盖率的误用**：某次提交将行覆盖从 78% 提升到 92%，但新增用例仅让代码“被执行”而未断言关键分支（如 `TaskStore.get` 返回 `None` 的处理）。讨论如何通过“分支覆盖 + 关键路径清单”而非单一数字来评估测试充分性。
 7. **门禁的演进**：假设 MeetingToText 从单人课程项目演进为多人协作的持续交付产品，CI 门禁从“本地可跑”扩展到“PR 必须通过 `ruff` / `mypy` / `pytest --cov-fail-under=80`”。这种变更会对开发者体验与合并节奏带来哪些影响？如何通过增量门禁与缓存来平衡安全与效率？
 
-文件 `book/part1_software_engineering/chapter02_code_quality/demo_summary.py`（本章贯通校验：用 `m2t` 串联“类型 → 风格 → 测试 → 覆盖率”最小闭环）：
+示例（本章贯通校验：用 `m2t` 串联“类型 → 风格 → 测试 → 覆盖率”最小闭环）：
 
 ```{code-cell} ipython3
 import tempfile, pathlib

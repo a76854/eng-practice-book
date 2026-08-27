@@ -31,7 +31,7 @@ kernelspec:
 
 > **环境约定**：本书面向 Linux，本章命令均面向 Linux，路径与环境激活统一使用 `source .venv/bin/activate` 与 `/` 分隔符；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第10章 健壮性与安全底线](../chapter10_robustness_security/index.md)。
 
-文件 `book/part4_advanced_engineering/chapter11_deploy_cicd/demo_index.py`（验证本章环境与教学包可访问）：
+示例（验证本章环境与教学包可访问）：
 
 ```{code-cell} ipython3
 import sys, pathlib, importlib.metadata

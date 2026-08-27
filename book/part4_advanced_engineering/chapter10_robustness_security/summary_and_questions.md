@@ -25,7 +25,7 @@ kernelspec:
 9. **错误码设计**：面向用户的错误码与面向运维的 `error_code` 应如何分层？当 LLM 返回限流与超时两类错误时，前端应分别给出何种文案与重试指引？
 10. **端到端演练**：为 MeetingToText 的“上传 → 转写 → 摘要”三段各注入一次故障（校验失败、ASR 超时、LLM 限流），推演日志、告警、重试与降级如何协同，才能让一次故障的排查时间控制在分钟级。
 
-文件 `book/part4_advanced_engineering/chapter10_robustness_security/demo_summary.py`（本章贯通校验：用教学包串联“校验 → 签发 → 日志 → 降级”最小闭环）：
+示例（本章贯通校验：用教学包串联“校验 → 签发 → 日志 → 降级”最小闭环）：
 
 ```{code-cell} ipython3
 import tempfile, pathlib, json, html, logging, io, hmac, hashlib, base64, time

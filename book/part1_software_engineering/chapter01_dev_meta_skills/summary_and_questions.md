@@ -25,7 +25,7 @@ kernelspec:
 6. **对象模型的启发**：Git 用 `SHA-1(头部 + 内容)` 做内容寻址，`m2t.store.TaskStore` 用 SQLite 做任务持久化。能否为任务存储设计一种类似 Git 的“不可变快照”机制？这种机制会如何影响“任务回滚”与“审计追溯”能力？
 7. **工具选型**：`uv` 声称比 `pip` 快 10–100 倍，但引入新工具也有学习与迁移成本。结合你所在团队的 CI 时长与成员熟悉度，讨论何时值得引入 `uv`，何时应保持 `venv + pip` 的简单方案。
 
-文件 `book/part1_software_engineering/chapter01_dev_meta_skills/demo_summary.py`（本章贯通校验：用教学包串联“存储 → 导出”最小闭环）：
+示例（本章贯通校验：用教学包串联“存储 → 导出”最小闭环）：
 
 ```{code-cell} ipython3
 import tempfile, pathlib

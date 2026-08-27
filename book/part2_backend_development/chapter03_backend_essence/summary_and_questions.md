@@ -23,7 +23,7 @@ kernelspec:
 6. **契约的演进**：当前后端通过 Pydantic 自动生成 OpenAPI，若前端已据此生成代码，后端新增一个必填字段会如何影响协作？应如何通过版本、默认值与兼容性设计降低契约漂移的成本？
 7. **存储替换**：若将 `SqliteTaskRepository` 替换为基于 SQLAlchemy 的 Postgres 实现，哪些层需要改动、哪些层可保持不变？`TaskRepository` 接口应如何设计以承载事务与分页等新需求？
 
-文件 `book/part2_backend_development/chapter03_backend_essence/demo_summary.py`（本章贯通校验：分层 + 持久化 + 契约的最小闭环）：
+示例（本章贯通校验：分层 + 持久化 + 契约的最小闭环）：
 
 ```{code-cell} ipython3
 import tempfile, pathlib

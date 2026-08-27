@@ -22,7 +22,7 @@ kernelspec:
 6. **包管理的诚实性**：pnpm 的严格依赖会让幽灵依赖直接失败，而 npm 的扁平可能让其“侥幸可跑”。讨论“严格失败”与“宽松兼容”对团队协作的长期影响：短期便利与长期可维护性应如何权衡？
 7. **ESM 静态性的启发**：ESM 的静态 `import` 让 tree-shaking 成为可能，Python 的 `import` 则更动态。能否为 MeetingToText 的 Python 工具链设计一种“静态可分析的插件注册”机制，以获得类似的“未使用即剔除”能力？这种机制会带来哪些约束？
 
-文件 `book/part3_frontend_collaboration/chapter07_frontend_overview/demo_summary.py`（本章贯通校验：以后端视角串联“接口契约 → 响应式过滤 → 工程契约”，本地可复现，无网络）：
+示例（本章贯通校验：以后端视角串联“接口契约 → 响应式过滤 → 工程契约”，本地可复现，无网络）：
 
 ```{code-cell} ipython3
 import json, pathlib, re

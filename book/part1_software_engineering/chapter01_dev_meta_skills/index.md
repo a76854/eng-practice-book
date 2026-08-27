@@ -34,7 +34,7 @@ kernelspec:
 
 > **环境约定**：全书命令均面向 **Linux**（以 Ubuntu / Debian 系为例）。路径与环境激活命令统一使用 Linux 语法与 `/` 分隔符；正文示例均可在书仓根目录的 `.venv` 环境中直接复现。正文跨章引用一律使用相对链接，如 [第2章 构筑代码质量的护城河](../chapter02_code_quality/index.md)。
 
-文件 `book/part1_software_engineering/chapter01_dev_meta_skills/demo_index.py`（验证本章环境与教学包可用）：
+示例（验证本章环境与教学包可用）：
 
 ```{code-cell} ipython3
 import sys, pathlib, importlib.metadata

@@ -26,7 +26,7 @@ kernelspec:
 9. **幂等与重试**：同一音频被用户重复提交时，幂等键应基于什么生成（文件哈希、业务 ID 还是随机 ID）？幂等去重表应放在 broker、worker 还是 result backend？
 10. **端到端观测**：为“上传 → 转写 → 摘要 → 导出”四段链路设计最小可用的观测指标（时延、成功率、重试次数），并说明每一跳的告警阈值应如何设定才能既灵敏又不噪声。
 
-文件 `book/part4_advanced_engineering/chapter09_external_integration/demo_summary.py`（本章贯通校验：用教学包串联“归一 → 存储 → 导出”最小闭环）：
+示例（本章贯通校验：用教学包串联“归一 → 存储 → 导出”最小闭环）：
 
 ```{code-cell} ipython3
 import tempfile, pathlib, json

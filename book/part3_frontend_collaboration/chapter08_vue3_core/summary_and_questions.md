@@ -22,7 +22,7 @@ kernelspec:
 6. **Pinia 与后端状态的一致性**：前端乐观更新“标记完成”后，若后端写入失败，前端应如何回滚并提示？对比“乐观更新 + 回滚”与“悲观等待后端成功再更新”，讨论两者的用户体验与实现复杂度 trade-off，并设计一种“可重试的乐观队列”。
 7. **跨 Store 协作的依赖方向**：`useUploadStore` 的 `onUploaded` 调用 `useTaskStore().load()` 刷新列表，这种“Store 间直接调用”会引入循环依赖吗？何时应通过事件总线或父组件协调来解耦 Store 间的协作？
 
-文件 `book/part3_frontend_collaboration/chapter08_vue3_core/demo_summary.py`（本章贯通校验：串联响应式→组件→路由→Pinia 的协作闭环，本地可复现，无网络）：
+示例（本章贯通校验：串联响应式→组件→路由→Pinia 的协作闭环，本地可复现，无网络）：
 
 ```{code-cell} ipython3
 from typing import Callable

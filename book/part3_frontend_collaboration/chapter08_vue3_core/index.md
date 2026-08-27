@@ -31,7 +31,7 @@ kernelspec:
 
 > **环境约定**：本书面向 Linux，本章命令均面向 Linux，路径与环境激活统一使用 `source .venv/bin/activate` 与 `/` 分隔符；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第7章 前端概况](../chapter07_frontend_overview/index.md)。
 
-文件 `book/part3_frontend_collaboration/chapter08_vue3_core/demo_index.py`（验证本章环境与 Vue 3 核心概念的最小协作闭环，本地可复现）：
+示例（验证本章环境与 Vue 3 核心概念的最小协作闭环，本地可复现）：
 
 ```{code-cell} ipython3
 import sys, pathlib, json

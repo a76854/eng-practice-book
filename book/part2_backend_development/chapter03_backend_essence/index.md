@@ -32,7 +32,7 @@ kernelspec:
 
 > **环境约定**：本书面向 Linux，本章命令均面向 Linux，路径与环境激活统一使用 `source .venv/bin/activate` 与 `/` 分隔符；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第2章 构筑代码质量的护城河](../../part1_software_engineering/chapter02_code_quality/index.md)。
 
-文件 `book/part2_backend_development/chapter03_backend_essence/demo_index.py`（验证本章环境与核心依赖可用）：
+示例（验证本章环境与核心依赖可用）：
 
 ```{code-cell} ipython3
 import sys, pathlib

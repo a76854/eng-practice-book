@@ -32,7 +32,7 @@ kernelspec:
 
 > **环境约定**：本书面向 Linux，本章命令均面向 Linux，路径与环境激活统一使用 `source .venv/bin/activate` 与 `/` 分隔符；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第4章 HTTP 与 RESTful 架构](../chapter04_http_restful/index.md)。
 
-文件 `book/part2_backend_development/chapter05_persistence_sql_orm/demo_index.py`（验证本章环境与 `m2t.store.TaskStore` 可用）：
+示例（验证本章环境与 `m2t.store.TaskStore` 可用）：
 
 ```{code-cell} ipython3
 import sys, pathlib, sqlite3
