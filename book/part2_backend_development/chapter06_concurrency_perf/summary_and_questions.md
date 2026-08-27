@@ -14,8 +14,6 @@ kernelspec:
 
 本章与第二篇前三章形成闭环：[第3章 后端职责与分层](../chapter03_backend_essence/index.md) 给出“请求如何穿过系统”，[第4章 HTTP 语义](../chapter04_http_restful/index.md) 约束“如何暴露契约”，[第5章 持久化](../chapter05_persistence_sql_orm/index.md) 解决“如何存得可靠”，本章则回答“如何跑得并发且快得可证明”——四章共同构成后端核心基石。
 
-> **跨平台约定回顾**：本章所有示例均用标准库（`threading` / `concurrent.futures` / `asyncio` / `cProfile` / `timeit` / `sqlite3`），Windows / macOS / Linux 行为一致；路径用 `pathlib.Path` 适配分隔符，环境激活为 `source .venv/bin/activate`（macOS / Linux）与 `.venv\Scripts\activate`（Windows）。
-
 ## 思考题
 
 1. **并发模型选型**：MeetingToText 需批量处理 20 个音频的 `load_audio`（文件 I/O）与随后的文本正则清洗（CPU 密集）两阶段。若全用 `threading` 会怎样？若全用 `multiprocessing` 又会怎样？你会如何为两阶段分别选型并说明代价？

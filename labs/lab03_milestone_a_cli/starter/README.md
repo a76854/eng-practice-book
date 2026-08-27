@@ -54,11 +54,10 @@ except ImportError:
 
 不要拷贝 `m2t` 源码到本实验目录，也不要修改 `m2t` 包内容。所有增强写在 `transcribe_file` 内部。
 
-## 跨平台说明
+## 环境说明
 
 - 路径操作使用 `pathlib.Path`，示例中统一写 `/`。
-- 虚拟环境激活：`source .venv/bin/activate`（macOS / Linux）与 `.venv\Scripts\activate`（Windows）。
-- 子命令与选项解析依赖标准库 `argparse`，三平台行为一致。
+- 子命令与选项解析依赖标准库 `argparse`，行为一致。
 
 ## 下一步
 

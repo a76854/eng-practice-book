@@ -13,7 +13,7 @@
 ## 本地校验（无需 Docker 守护进程）
 
 ```bash
-# YAML 解析预演（Windows / macOS / Linux 一致）
+# YAML 解析预演
 python -c "import yaml; yaml.safe_load(open('docker-compose.yml', encoding='utf-8')); print('compose yaml ok')"
 python -c "import pathlib; print('Dockerfile exists:', pathlib.Path('Dockerfile').exists())"
 
@@ -53,10 +53,10 @@ docker compose -f docker-compose.yml config -q && echo "compose config ok"
 - `EXPOSE` 与 `ports` 的分工，`restart: "no"` 在本地与云上的不同选型。
 - 多阶段构建如何把编译时与运行时分离，本实验的单阶段教学版如何体现同一思想。
 
-## 跨平台说明
+## 环境说明
 
-- `python -c "import yaml; yaml.safe_load(...)"` 三平台一致，Windows 上路径用 `open('docker-compose.yml', encoding='utf-8')` 亦可。
-- Dockerfile 与 Compose 的路径统一为 Linux 风格 `/app`、`/data`，在 Windows 宿主机上同样生成 Linux 镜像。
+- `python -c "import yaml; yaml.safe_load(...)"` 在 Linux 环境一致，路径用 `open('docker-compose.yml', encoding='utf-8')`。
+- Dockerfile 与 Compose 的路径统一为 Linux 风格 `/app`、`/data`。
 - `.dockerignore` 可按需忽略 `labs/`、`book/`、`.venv`、模型权重，保持构建上下文精简。
 
 ## 下一步

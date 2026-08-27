@@ -25,11 +25,10 @@ pip install -e .
 python -c "import demo_pkg; print(demo_pkg.__file__)"
 ```
 
-## 跨平台说明
+## 环境说明
 
 - 路径分隔符用 `pathlib` 自动适配，示例中统一写 `/`。
-- 虚拟环境激活：`source .venv/bin/activate`（macOS / Linux）与 `.venv\Scripts\activate`（Windows）。
-- `subprocess.run` 采用列表形式，未使用 `shell=True`，三平台行为一致。
+- `subprocess.run` 采用列表形式，未使用 `shell=True`，行为一致。
 
 ## 下一步
 

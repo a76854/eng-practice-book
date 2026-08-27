@@ -17,8 +17,6 @@
 1. 阅读 [第2章 2.1 类型系统与防御性编程](../../part1_software_engineering/chapter02_code_quality/2.1_type_system_defensive_programming.md) 至 [2.5 测试覆盖率与质量门禁](../../part1_software_engineering/chapter02_code_quality/2.5_test_coverage_quality_gate.md)，留意 `mypy` 严格选项与 `Ruff` 规则含义。
 2. 进入 `labs/lab02_unit_test_static_check/starter`，按其 `README.md` 安装最小依赖（若使用 `.venv`，先 `python -m venv .venv` 并激活）。
 
-> 跨平台提示：`python -m venv .venv` 与 `pip install` 在三平台一致，激活命令区分 `source .venv/bin/activate`（macOS / Linux）与 `.venv\Scripts\activate`（Windows）。
-
 ### 步骤 2 读懂待测函数
 
 1. 打开 `starter/main.py`，阅读其中提供的待测函数（如 `format_duration`、`normalize_text`、`chunk_list`）的签名、类型标注与 docstring，明确入参与返回值的约束。

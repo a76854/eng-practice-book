@@ -18,7 +18,7 @@
 2. 阅读 [第11章 11.3 Docker Compose 编排](../../part4_advanced_engineering/chapter11_deploy_cicd/11.3_docker_compose_orchestration.md) 与 [11.4 CI/CD 流水线](../../part4_advanced_engineering/chapter11_deploy_cicd/11.4_cicd_pipeline.md)，重点关注声明式 YAML 如何表达服务拓扑，以及 GitHub Actions 的工作流、作业与步骤模型。
 3. 打开 `labs/lab08_fullstack_container/starter/Dockerfile` 与 `starter/docker-compose.yml`，逐行对照第11章的层缓存与编排讲解，明确本实验的起点是“最小两服务”形态。
 
-> 跨平台提示：Dockerfile 与 Compose 的路径统一为 Linux 风格 `/app`、`/data`，在 Windows 宿主机上构建时同样生成 Linux 镜像。所有校验均可用纯文本解析完成，无需启动 Docker 守护进程，详见 `starter/README.md` 的本地预演命令。
+> 环境约定：本书面向 Linux，Dockerfile 与 Compose 的路径统一为 Linux 风格 `/app`、`/data`，所有校验均可用纯文本解析完成，无需启动 Docker 守护进程，详见 `starter/README.md` 的本地预演命令。
 
 ### 步骤 2 读懂起手骨架
 

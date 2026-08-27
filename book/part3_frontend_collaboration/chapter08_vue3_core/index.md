@@ -29,7 +29,7 @@ kernelspec:
 
 此外，本章所有可执行示例均可在书仓 `.venv` 环境中复现；涉及 MeetingToText 的片段复用 `m2t` 教学包，前端契约以通用内联示例呈现（如 `fetch('/mock.json')` 与 `v-for` 渲染的最小闭环），无需启动真实服务。
 
-> **跨平台约定**：本章所有涉及路径与环境激活的命令均标注 Windows / macOS / Linux 差异，详见各小节对照表；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第7章 前端概况](../chapter07_frontend_overview/index.md)。
+> **环境约定**：本书面向 Linux，本章命令均面向 Linux，路径与环境激活统一使用 `source .venv/bin/activate` 与 `/` 分隔符；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第7章 前端概况](../chapter07_frontend_overview/index.md)。
 
 文件 `book/part3_frontend_collaboration/chapter08_vue3_core/demo_index.py`（验证本章环境与 Vue 3 核心概念的最小协作闭环，本地可复现）：
 
@@ -94,8 +94,6 @@ print("prefix:", pathlib.Path(sys.prefix).name)
 ```
 
 ```bash
-# 本章所有 code-cell 均用 .venv 中的 Python 执行（macOS / Linux）
+# 本章所有 code-cell 均用 .venv 中的 Python 执行
 .venv/bin/python -c "import m2t, json, pathlib; print(m2t.__version__)"
-# Windows 需用
-.venv\Scripts\python.exe -c "import m2t, json, pathlib; print(m2t.__version__)"
 ```

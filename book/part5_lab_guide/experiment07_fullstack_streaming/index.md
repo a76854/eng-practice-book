@@ -18,7 +18,7 @@
 2. 阅读 [第9章 9.2 语音识别接入](../../part4_advanced_engineering/chapter09_external_integration/9.2_asr_integration.md) 与 [9.3 大模型接口设计](../../part4_advanced_engineering/chapter09_external_integration/9.3_llm_api_design.md)，重点关注音频格式归一、结果多形状归一、结构化输出与 SSE 增量解析。
 3. 打开 `m2t/asr.py` 与 `m2t/llm.py`，阅读 `normalize_result` 对三种结果形状的归一与 `LLMClient` 的懒创建、超时与脱敏逻辑，明确本实验可只读复用这些 mock 能力，无需真实模型与密钥。
 
-> 跨平台提示：本实验的前后端命令在 Windows / macOS / Linux 上一致，路径示例统一写 `/`，`pathlib.Path` 自动适配 `\`。启动后端时默认 `http://127.0.0.1:8000`，跨域由后端 CORS 放开，前端静态页直接用 `file://` 或同源 `http://` 打开皆可。
+> 环境约定：本书面向 Linux，本实验的前后端命令在 Linux 上一致，路径示例统一写 `/`，`pathlib.Path` 自动适配 `\`。启动后端时默认 `http://127.0.0.1:8000`，跨域由后端 CORS 放开，前端静态页直接用 `file://` 或同源 `http://` 打开皆可。
 
 ### 步骤 2 读懂起手骨架
 

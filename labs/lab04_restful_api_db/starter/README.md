@@ -13,7 +13,7 @@
 ## 运行命令
 
 ```bash
-# 安装依赖（任选其一，macOS / Linux 与 Windows 一致）
+# 安装依赖（任选其一）
 pip install -r requirements.txt
 # 或
 pip install -e .
@@ -50,11 +50,10 @@ python -c "from fastapi.testclient import TestClient; from main import app; c=Te
 
 可在 `main.py` 中用注释标记 `MIGRATION v1 -> v2: add status column`，并在内存存储或 SQLite 中演示一次升级。后续实验再接入 Alembic 时，这段思考可直接复用。
 
-## 跨平台说明
+## 环境说明
 
-- 路径与端口参数在三平台一致，示例中统一写 `/`。
-- 虚拟环境激活：`source .venv/bin/activate`（macOS / Linux）与 `.venv\Scripts\activate`（Windows）。
-- `uvicorn` 的 `--reload` 在三平台均可用，生产环境建议去掉。
+- 路径与端口参数一致，示例中统一写 `/`。
+- `uvicorn` 的 `--reload` 在 Linux 环境可用，生产环境建议去掉。
 
 ## 下一步
 

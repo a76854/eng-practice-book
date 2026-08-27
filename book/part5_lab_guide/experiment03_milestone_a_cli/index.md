@@ -18,8 +18,6 @@
 2. 阅读 [第9章 9.1 第三方服务集成模式](../../part4_advanced_engineering/chapter09_external_integration/9.1_third_party_service_integration.md) 与 [9.2 语音识别接入](../../part4_advanced_engineering/chapter09_external_integration/9.2_asr_integration.md)，留意音频格式归一、结果多形状归一与错误脱敏的思想。
 3. 在书仓根目录尝试 `python -c "from m2t.audio import load_audio; print(load_audio.__doc__[:80])"`，确认只读导入可用，无需启动真实 ASR 服务。
 
-> 跨平台提示：本实验所有路径操作使用 `pathlib.Path`，示例中统一写 `/`。虚拟环境激活区分 `source .venv/bin/activate`（macOS / Linux）与 `.venv\Scripts\activate`（Windows）。
-
 ### 步骤 2 读懂起手骨架
 
 1. 打开 `labs/lab03_milestone_a_cli/starter/main.py`，运行 `python main.py --help` 与 `python main.py transcribe --help`，观察子命令、选项与帮助文本的组织方式。

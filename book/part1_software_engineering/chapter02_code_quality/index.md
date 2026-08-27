@@ -30,7 +30,7 @@ kernelspec:
 
 此外，本章所有示例均可通过教学包 `m2t` 复用（如 `m2t/audio.py`、`m2t/store.py`、`m2t/export.py` 的真实签名），无需启动真实服务。
 
-> **跨平台约定**：本章涉及路径与环境激活的命令均标注 Windows / macOS / Linux 差异；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../chapter01_dev_meta_skills/index.md)。
+> **环境约定**：本书面向 Linux，本章命令均面向 Linux，路径与环境激活统一使用 `source .venv/bin/activate` 与 `/` 分隔符；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../chapter01_dev_meta_skills/index.md)。
 
 文件 `book/part1_software_engineering/chapter02_code_quality/demo_index.py`（验证本章环境与 `m2t` 教学包可用）：
 
@@ -60,8 +60,6 @@ print("export:", export.__name__)
 ```
 
 ```bash
-# 本章所有 code-cell 均用 .venv 中的 Python 执行（macOS / Linux）
+# 本章所有 code-cell 均用 .venv 中的 Python 执行
 .venv/bin/python -c "import m2t; print(m2t.__version__)"
-# Windows 需用
-.venv\Scripts\python.exe -c "import m2t; print(m2t.__version__)"
 ```

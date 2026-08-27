@@ -18,8 +18,6 @@
 2. 阅读 [第6章 6.5 性能剖析方法论](../../part2_backend_development/chapter06_concurrency_perf/6.5_performance_profiling.md) 中关于 `cProfile`、`timeit` 与压测度量的讨论，理解为何必须先度量再优化。
 3. 回顾实验四的任务接口与存储层，明确本实验的改造对象是其中的同步查询或写入路径。
 
-> 跨平台提示：`asyncio`、`time`、`cProfile` 均为标准库，Windows / macOS / Linux 行为一致。路径示例统一写 `/`，`pathlib.Path` 自动适配 `\`。虚拟环境激活为 `source .venv/bin/activate`（macOS / Linux）与 `.venv\Scripts\activate`（Windows）。
-
 ### 步骤 2 读懂起手骨架
 
 1. 打开 `labs/lab05_async_refactor_load_test/starter/main.py`，运行 `python main.py` 与 `python main.py --help`，观察同步与异步两条路径的耗时对比输出。

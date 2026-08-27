@@ -18,7 +18,7 @@
 2. 阅读 [第8章 8.1 响应式原理](../../part3_frontend_collaboration/chapter08_vue3_core/8.1_reactivity_principles.md) 至 [8.4 跨组件状态管理 Pinia](../../part3_frontend_collaboration/chapter08_vue3_core/8.4_cross_component_state_pinia.md)，重点关注组合式 API、路由守卫执行顺序与 Pinia 的 State / Getter / Action 三层。
 3. 在本地打开 `labs/lab06_frontend_routing_state/starter/`，运行 `cat package.json` 与 `cat src/App.vue`，观察其 `fetch('/mock.json')` 回退与 `v-for` 渲染的最小闭环。
 
-> 跨平台提示：`npm` / `vite` 在 Windows / macOS / Linux 上命令一致，路径示例统一写 `/`。虚拟环境与 Node 环境相互独立，前端依赖通过 `package.json` 声明。
+> 环境约定：本书面向 Linux，`npm` / `vite` 在 Linux 上命令一致，路径示例统一写 `/`。虚拟环境与 Node 环境相互独立，前端依赖通过 `package.json` 声明。
 
 ### 步骤 2 读懂起手骨架
 

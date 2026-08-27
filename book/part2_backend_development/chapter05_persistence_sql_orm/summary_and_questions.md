@@ -113,8 +113,6 @@ print("贯通校验通过：事务/建模/SQL 进阶/迁移在同一库中可回
 ```
 
 ```bash
-# 贯通验证（macOS / Linux）
+# 贯通验证
 .venv/bin/python -c "from m2t.store import TaskStore; print('summary demo ok')"
-# Windows 需用
-.venv\Scripts\python.exe -c "from m2t.store import TaskStore; print('summary demo ok')"
 ```

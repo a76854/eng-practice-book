@@ -29,7 +29,7 @@ kernelspec:
 
 此外，本章所有可执行示例均可在书仓 `.venv` 环境中复现；涉及 MeetingToText 的片段复用 `m2t` 教学包（见 [m2t 源码](../../../m2t/store.py) 的精简实现），部署与 CI 片段以通用内联示例呈现，并在实验八 `labs/lab08_fullstack_container/starter/` 提供可对照的 Dockerfile 与 Compose 脚手架，仅做文本与 YAML 解析，不依赖容器运行时。
 
-> **跨平台约定**：本章所有涉及路径与环境激活的命令均标注 Windows / macOS / Linux 差异，详见各小节对照表；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第10章 健壮性与安全底线](../chapter10_robustness_security/index.md)。
+> **环境约定**：本书面向 Linux，本章命令均面向 Linux，路径与环境激活统一使用 `source .venv/bin/activate` 与 `/` 分隔符；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第10章 健壮性与安全底线](../chapter10_robustness_security/index.md)。
 
 文件 `book/part4_advanced_engineering/chapter11_deploy_cicd/demo_index.py`（验证本章环境与教学包可访问）：
 
@@ -55,8 +55,6 @@ print("index 校验通过：环境与教学包均可访问")
 ```
 
 ```bash
-# 本章所有 code-cell 均用 .venv 中的 Python 执行（macOS / Linux）
+# 本章所有 code-cell 均用 .venv 中的 Python 执行
 .venv/bin/python -c "import m2t, yaml; print(m2t.__version__, yaml.__version__)"
-# Windows 需用
-.venv\Scripts\python.exe -c "import m2t, yaml; print(m2t.__version__, yaml.__version__)"
 ```

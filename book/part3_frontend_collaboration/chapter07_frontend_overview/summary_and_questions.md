@@ -96,7 +96,7 @@ assert "vue" in imps
 print("ESM 静态分析通过：无需执行即可得依赖图")
 print()
 
-# ---- 4) 跨平台与协作：pathlib 统一路径，前后端通过契约协作 ----
+# ---- 4) 环境与协作：pathlib 统一路径，前后端通过契约协作 ----
 dist = pathlib.Path("frontend/dist/index.html")
 print("产物路径 (POSIX):", dist.as_posix())
 print("协作闭环：后端 JSON → 前端响应式过滤 → ESM 产物可部署为静态资源")
@@ -114,11 +114,7 @@ print("本章贯通校验通过")
 # 本章贯通校验通过
 ```
 
-> **跨平台提示**：本章所有涉及路径与虚拟环境的命令，均提供 Windows 与 macOS / Linux 对照（`source .venv/bin/activate` vs `.venv\Scripts\activate`，`/` vs `\` 由 `pathlib` 屏蔽）；正文跨章引用一律使用相对链接，如 [第1章 元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第3章 后端全景](../../part2_backend_development/chapter03_backend_essence/index.md)。
-
 ```bash
-# 本章贯通校验（macOS / Linux）
+# 本章贯通校验
 .venv/bin/python -c "import m2t, json; pkg={'type': 'module'}; print(m2t.__version__); print(pkg['type'])"
-# Windows 需用
-.venv\Scripts\python.exe -c "import m2t, json; pkg={'type': 'module'}; print(m2t.__version__); print(pkg['type'])"
 ```

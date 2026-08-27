@@ -21,7 +21,7 @@
 ## 运行命令
 
 ```bash
-# 安装依赖（Windows / macOS / Linux 一致）
+# 安装依赖
 npm install
 
 # 启动开发服务
@@ -50,9 +50,9 @@ node --check src/stores/records.js
 
 后续替换真实接口时，只需把 `records` Store 的 `load` 与 `addRecord` 中的 `fetch('/mock.json')` 改为真实 `fetch('/api/records')`，视图无需改动。
 
-## 跨平台说明
+## 环境说明
 
-- `npm` / `vite` 命令三平台一致，路径示例统一写 `/`。
+- `npm` / `vite` 命令一致，路径示例统一写 `/`。
 - `index.html` 的 `type="module"` 固定写法，`pathlib.Path` 自动适配 `\`。
 
 ## 下一步

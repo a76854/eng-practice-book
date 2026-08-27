@@ -146,8 +146,6 @@ tmpdir.cleanup()
 ```
 
 ```bash
-# 贯通验证（macOS / Linux）
+# 贯通验证
 .venv/bin/python -c "from m2t.store import TaskStore; print('summary demo ok')"
-# Windows 需用
-.venv\Scripts\python.exe -c "from m2t.store import TaskStore; print('summary demo ok')"
 ```

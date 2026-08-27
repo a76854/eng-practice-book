@@ -28,16 +28,14 @@
 3. 参考本章示例与 `labs/lab01_project_init/starter/pyproject.toml` 中的最小声明，保持字段可解释。
 4. 执行 `pip install -e .`，验证在任意目录 `python -c "import demo_pkg; print(demo_pkg.__file__)"` 能定位到 `src` 下的包。
 
-> 跨平台提示：`pip install -e .` 在 macOS 与 Linux 上相同，Windows 上亦相同。路径分隔符在展示时用 `/`，`pathlib.Path` 会自动适配 `\`。
+> 环境约定：本书面向 Linux，`pip install -e .` 在 Linux 环境执行。路径分隔符在展示时用 `/`，`pathlib.Path` 处理路径。
 
 ### 步骤 3 创建虚拟环境并验证隔离
 
 1. 执行 `python -m venv .venv` 创建环境。
 2. 激活环境：
    ```bash
-   source .venv/bin/activate  # macOS / Linux
-   .venv\Scripts\activate     # Windows CMD
-   .venv\Scripts\Activate.ps1 # Windows PowerShell
+   source .venv/bin/activate  # Linux
    ```
 3. 运行 `python -c "import sys; print(sys.prefix != sys.base_prefix)"`，确认输出 `True` 表示已在虚拟环境中。
 4. 在环境内执行 `pip install -e .`，并用 `pip freeze` 观察 `demo_pkg` 是否可复现安装。

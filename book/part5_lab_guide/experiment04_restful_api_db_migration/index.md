@@ -18,7 +18,7 @@
 2. 阅读 [第5章 5.3 Python 操作数据库三境界](../../part2_backend_development/chapter05_persistence_sql_orm/5.3_python_db_three_levels.md) 与 [5.4 数据库迁移 Alembic](../../part2_backend_development/chapter05_persistence_sql_orm/5.4_db_migration_alembic.md)，理解参数化查询与版本化迁移的必要性。
 3. 在书仓根目录运行 `python -c "import fastapi, pydantic; print(fastapi.__version__, pydantic.__version__)"`，确认 FastAPI 与 Pydantic 可用。
 
-> 跨平台提示：`uvicorn` 与 `pytest` 在三平台行为一致，路径分隔符在展示时统一写 `/`，`pathlib.Path` 自动适配 `\`。
+> 环境约定：本书面向 Linux，`uvicorn` 与 `pytest` 在行为一致，路径分隔符在展示时统一写 `/`，`pathlib.Path` 自动适配 `\`。
 
 ### 步骤 2 读懂起手骨架
 

@@ -30,7 +30,7 @@ kernelspec:
 
 此外，本章所有可执行示例均可在书仓 `.venv` 环境中复现；涉及 MeetingToText 的片段复用 `m2t.store.TaskStore`（见 [m2t 源码](../../../m2t/store.py) 的精简实现），无需启动真实的 ASR 或 LLM 服务。
 
-> **跨平台约定**：本章所有涉及路径与环境激活的命令均标注 Windows / macOS / Linux 差异，详见各小节对照表；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第4章 HTTP 与 RESTful 架构](../chapter04_http_restful/index.md)。
+> **环境约定**：本书面向 Linux，本章命令均面向 Linux，路径与环境激活统一使用 `source .venv/bin/activate` 与 `/` 分隔符；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第4章 HTTP 与 RESTful 架构](../chapter04_http_restful/index.md)。
 
 文件 `book/part2_backend_development/chapter05_persistence_sql_orm/demo_index.py`（验证本章环境与 `m2t.store.TaskStore` 可用）：
 
@@ -64,8 +64,6 @@ print("prefix:", pathlib.Path(sys.prefix).name)
 ```
 
 ```bash
-# 本章所有 code-cell 均用 .venv 中的 Python 执行（macOS / Linux）
+# 本章所有 code-cell 均用 .venv 中的 Python 执行
 .venv/bin/python -c "import sqlite3; print(sqlite3.sqlite_version)"
-# Windows 需用
-.venv\Scripts\python.exe -c "import sqlite3; print(sqlite3.sqlite_version)"
 ```

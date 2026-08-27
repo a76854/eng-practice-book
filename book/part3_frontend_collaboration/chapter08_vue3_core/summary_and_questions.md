@@ -161,11 +161,7 @@ print("贯通校验通过：响应式→组件→路由→Pinia 在 MeetingToTex
 # 贯通校验通过
 ```
 
-> **跨平台提示**：本章贯通示例与操作系统无关；本地验证用 `pathlib.Path` 处理路径，虚拟环境激活为 `source .venv/bin/activate`（macOS / Linux）与 `.venv\Scripts\activate`（Windows）。
-
 ```bash
-# 本章贯通校验（macOS / Linux）
+# 本章贯通校验
 .venv/bin/python -c "import pathlib; print(pathlib.Path('book/part3_frontend_collaboration/chapter08_vue3_core/demo_summary.py').exists())"
-# Windows 需用
-.venv\Scripts\python.exe -c "import pathlib; print(pathlib.Path('book/part3_frontend_collaboration/chapter08_vue3_core/demo_summary.py').exists())"
 ```

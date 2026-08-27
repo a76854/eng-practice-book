@@ -32,7 +32,7 @@
 > **预计理论学时**：X学时
 ```
 
-- 章组成：`index.md` + 若干 `<N.N>_<中文名>.md` 正文小节 + 章末 `summary_and_questions.md`。章内节数量以内容需要为准，不凑数也不遗漏。
+- 章组成：`index.md` + 若干 `<N.N>_<english_name>.md` 正文小节 + 章末 `summary_and_questions.md`。章内节数量以内容需要为准，不凑数也不遗漏。
 - 章标题与节标题由 MyST 自动编号，写作时不手写编号前缀。
 
 ## 4 正文小节 .md 契约
@@ -81,18 +81,18 @@ python m2t/demo.py
 - 涉及技术选型、性能对比、安全取舍时，必须给出客观依据，如官方文档、基准数据、适用场景与代价分析，不偏袒任一技术栈。
 - 有数据说数据，无数据说 trade-off。避免绝对化表述，明确前置条件与边界。
 
-## 8 跨平台差异标注
+## 8 环境约定（Linux-only）
 
-- 所有命令行、路径、环境相关示例必须标注 Windows / macOS / Linux 差异，至少覆盖路径分隔符、激活虚拟环境命令等典型分歧点。
-- 示例写法：`source .venv/bin/activate`（macOS / Linux）与 `.venv\Scripts\activate`（Windows）；路径示例同时说明 `/` 与 `\` 差异。
-- 不假设读者操作系统，关键操作给出多平台对照或明确说明适用平台。
+- 全书所有命令行、路径、环境相关示例均面向 **Linux**（以 Ubuntu / Debian 系为例），统一使用 `bash` 与 `/` 分隔符，不再提供多平台对照。
+- 虚拟环境统一为 `.venv`，激活命令为 `source .venv/bin/activate`，解释器路径为 `.venv/bin/python`，代码中涉及路径一律用 `pathlib.Path` 与 `/` 书写。
+- 不假设读者使用其他操作系统，关键操作仅给出 Linux 写法；如需强调可移植性，通过 Python 抽象（`pathlib` / `shutil` / `subprocess` 列表形式）说明，而非罗列多平台命令。
 
-## 9 目录、命名与引用
+## 9 目录、命名与引用（Linux-only）
 
 - 正文小节文件命名：`<N.N>_<english_name>.md`（全英文小写下划线），如 `1.1_engineering_project_structure.md`、`4.3_fastapi_routing.md`。章末固定项为 `summary_and_questions.md`。
 - 章与节的编号由 `myst.yml` 的 `numbering: { headings: true }` 统一管理，文件命名仅作排序与可读性。
-- 跨章引用一律使用相对链接（从引用文件所在目录出发），如 `[](../chapter04_http_restful/4.1_http_protocol_essence.md)`，不使用绝对路径或硬编码 URL。
-- 资源与样例置于 `book/samples/` 等约定目录，引用时保持相对路径一致。
+- 跨章引用一律使用相对链接（从引用文件所在目录出发），如 `[](../chapter04_http_restful/4.1_http_protocol_essence.md)`（以第 3 章目录引用第 4 章第 1 节为例，兄弟章之间用 `../` 上跳一级），不使用绝对路径或硬编码 URL。
+- 全书命令与路径统一为 Linux 语法（`bash`、`/` 分隔符、`source .venv/bin/activate`、`.venv/bin/python`），不提供其他平台变体。
 
 ## 10 明令禁止
 
@@ -112,4 +112,4 @@ python m2t/demo.py
 
 ## 12 作者自检清单
 
-提交章节前逐项确认：`index.md` 骨架完整且含学习目标、为什么需要掌握本章、预计理论学时；正文小节含可运行的 `{code-cell} ipython3` 且标注路径与预期输出；Shell 仅用 `bash` 围栏；章末为 `summary_and_questions.md` 且含本章小结与思考题；已标注 Windows / macOS / Linux 差异；跨章引用为相对链接；未出现第 10 节禁止内容。
+提交章节前逐项确认：`index.md` 骨架完整且含学习目标、为什么需要掌握本章、预计理论学时；正文小节含可运行的 `{code-cell} ipython3` 且标注路径与预期输出；Shell 仅用 `bash` 围栏；章末为 `summary_and_questions.md` 且含本章小结与思考题；已遵循 Linux-only 约定（`source .venv/bin/activate`、`.venv/bin/python`、`/` 分隔符）；跨章引用为相对链接；未出现第 10 节禁止内容。

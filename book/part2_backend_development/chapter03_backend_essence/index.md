@@ -30,7 +30,7 @@ kernelspec:
 
 此外，本章所有示例均可在书仓 `.venv` 环境中复现；涉及 MeetingToText 的片段统一通过教学包 `m2t` 复用（如 `m2t/store.py` 的 `TaskStore`），无需启动真实服务。
 
-> **跨平台约定**：本章所有涉及路径与环境激活的命令均标注 Windows / macOS / Linux 差异，详见各小节对照表；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第2章 构筑代码质量的护城河](../../part1_software_engineering/chapter02_code_quality/index.md)。
+> **环境约定**：本书面向 Linux，本章命令均面向 Linux，路径与环境激活统一使用 `source .venv/bin/activate` 与 `/` 分隔符；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第2章 构筑代码质量的护城河](../../part1_software_engineering/chapter02_code_quality/index.md)。
 
 文件 `book/part2_backend_development/chapter03_backend_essence/demo_index.py`（验证本章环境与核心依赖可用）：
 
@@ -47,7 +47,7 @@ print("python:", sys.version.split()[0])
 print("fastapi:", fastapi.__version__)
 print("pydantic:", pydantic.__version__)
 print("TaskStore:", TaskStore.__name__)
-# 验证 .venv 前缀（跨平台：.venv 目录名一致，路径分隔符由 pathlib 处理）
+# 验证 .venv 前缀（环境：.venv 目录名一致，路径分隔符由 pathlib 处理）
 print("prefix:", pathlib.Path(sys.prefix).name)
 # 预期输出:
 # m2t version: 0.1.0
@@ -59,8 +59,6 @@ print("prefix:", pathlib.Path(sys.prefix).name)
 ```
 
 ```bash
-# 本章所有 code-cell 均用 .venv 中的 Python 执行（macOS / Linux）
+# 本章所有 code-cell 均用 .venv 中的 Python 执行
 .venv/bin/python -c "import m2t, fastapi, pydantic; print(m2t.__version__, fastapi.__version__)"
-# Windows 需用
-.venv\Scripts\python.exe -c "import m2t, fastapi, pydantic; print(m2t.__version__, fastapi.__version__)"
 ```

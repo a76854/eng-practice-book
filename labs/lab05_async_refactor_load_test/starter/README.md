@@ -43,11 +43,10 @@ python -m py_compile main.py bench.py
 
 可在分析报告中用表格记录两组对照的耗时与吞吐，并讨论“何时异步有效、何时需托底到线程池”。
 
-## 跨平台说明
+## 环境说明
 
-- `asyncio`、`time`、`argparse` 均为标准库，Windows / macOS / Linux 行为一致。
+- `asyncio`、`time`、`argparse` 均为标准库，在 Linux 环境行为一致。
 - 路径示例统一写 `/`，`pathlib.Path` 自动适配 `\`。
-- 虚拟环境激活：`source .venv/bin/activate`（macOS / Linux）与 `.venv\Scripts\activate`（Windows）。
 
 ## 下一步
 

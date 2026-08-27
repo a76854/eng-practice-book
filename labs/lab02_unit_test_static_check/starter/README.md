@@ -55,10 +55,9 @@ def test_write_summary_with_tmp_path(tmp_path: pathlib.Path):
 
 更多用例按正常、边界、异常三类自行扩展，至少一个用例使用 `tmp_path` 或 `unittest.mock`。
 
-## 跨平台说明
+## 环境说明
 
 - 路径操作使用 `pathlib.Path`，示例中统一写 `/`。
-- 虚拟环境激活：`source .venv/bin/activate`（macOS / Linux）与 `.venv\Scripts\activate`（Windows）。
 
 ## 下一步
 

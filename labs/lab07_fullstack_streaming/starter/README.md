@@ -13,7 +13,7 @@
 ## 运行命令
 
 ```bash
-# 安装依赖（Windows / macOS / Linux 一致）
+# 安装依赖
 pip install -r requirements.txt
 
 # 终端 SSE 仿真，不启动服务，可直接校验 wire 格式与拼回
@@ -58,10 +58,9 @@ python -m http.server 5173
 - 错误不透传原始堆栈与密钥，经 `m2t.llm.map_llm_error` 或固定文案脱敏，前端仅展示可读提示。
 - 跨域由后端 `CORSMiddleware` 放开，前端可用 `http://127.0.0.1:8000` 的显式 URL，静态文件亦可同源部署。
 
-## 跨平台说明
+## 环境说明
 
-- `pip install -r requirements.txt` 与 `python main.py` 三平台一致，激活虚拟环境为 `source .venv/bin/activate`（macOS / Linux）与 `.venv\Scripts\activate`（Windows）。
-- 路径示例统一写 `/`，`pathlib.Path` 自动适配 `\`，`curl -N` 在 Windows 上需用 `curl.exe -N` 或改用浏览器验证。
+- 路径示例统一写 `/`，`pathlib.Path` 处理路径，`curl -N` 在 Linux 上验证。
 
 ## 下一步
 
