@@ -1,6 +1,6 @@
 # 实验二 单元测试与静态检查实战
 
-> 对应理论 [第2章 构筑代码质量的护城河](../../book/part1_软件工程筑基/chapter02_构筑代码质量的护城河/index.md) · 2 学时 · 任务说明与验收标准同 `book/part5_实验指导书/experiment02_单元测试与静态检查实战/index.md`
+> 对应理论 [第2章 构筑代码质量的护城河](../../book/part1_software_engineering/chapter02_code_quality/index.md) · 2 学时 · 任务说明与验收标准同 `book/part5_lab_guide/experiment02_unit_test_static_check/index.md`
 
 ## 实验目标
 

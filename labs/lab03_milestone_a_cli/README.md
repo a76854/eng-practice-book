@@ -1,6 +1,6 @@
 # 实验三 里程碑A CLI 音频转写工具
 
-> 对应理论 [第1章 开发者的元技能](../../book/part1_软件工程筑基/chapter01_开发者的元技能/index.md) 与 [第9章 与外部世界的集成](../../book/part4_现代工程进阶与交付/chapter09_与外部世界的集成/index.md) · 4 学时 · 任务说明与验收标准同 `book/part5_实验指导书/experiment03_里程碑A_CLI转写工具/index.md`
+> 对应理论 [第1章 开发者的元技能](../../book/part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第9章 与外部世界的集成](../../book/part4_advanced_engineering/chapter09_external_integration/index.md) · 4 学时 · 任务说明与验收标准同 `book/part5_lab_guide/experiment03_milestone_a_cli/index.md`
 
 ## 实验目标
 

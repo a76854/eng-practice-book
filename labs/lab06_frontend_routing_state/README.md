@@ -1,6 +1,6 @@
 # 实验六 前端页面开发与路由状态管理
 
-> 对应理论 [第7章 前端开发概况与工程化演进](../../book/part3_前端协作与现代前端基础/chapter07_前端开发概况与工程化演进/index.md) 与 [第8章 Vue3 核心机制与状态设计](../../book/part3_前端协作与现代前端基础/chapter08_Vue3核心机制与状态设计/index.md) · 6 学时 · 任务说明与验收标准同 `book/part5_实验指导书/experiment06_前端页面与路由状态管理/index.md`
+> 对应理论 [第7章 前端开发概况与工程化演进](../../book/part3_frontend_collaboration/chapter07_frontend_overview/index.md) 与 [第8章 Vue3 核心机制与状态设计](../../book/part3_frontend_collaboration/chapter08_vue3_core/index.md) · 6 学时 · 任务说明与验收标准同 `book/part5_lab_guide/experiment06_frontend_routing_state/index.md`
 
 ## 实验目标
 

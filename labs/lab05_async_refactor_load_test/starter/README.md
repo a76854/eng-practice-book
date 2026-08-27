@@ -1,6 +1,6 @@
 # Lab05 starter 说明
 
-本目录是实验五的起点骨架，对应 `book/part5_实验指导书/experiment05_异步改造与压力测试/index.md`。
+本目录是实验五的起点骨架，对应 `book/part5_lab_guide/experiment05_async_refactor_load_test/index.md`。
 
 ## 包含内容
 

@@ -1,6 +1,6 @@
 # Lab01 starter 说明
 
-本目录是实验一的起点骨架，对应 `book/part5_实验指导书/experiment01_工程初始化与自动化脚本/index.md`。
+本目录是实验一的起点骨架，对应 `book/part5_lab_guide/experiment01_project_init_automation/index.md`。
 
 ## 包含内容
 

@@ -1,6 +1,6 @@
 # 实验一 工程初始化与自动化脚本
 
-> 对应理论 [第1章 开发者的元技能](../../book/part1_软件工程筑基/chapter01_开发者的元技能/index.md) · 2 学时 · 任务说明与验收标准同 `book/part5_实验指导书/experiment01_工程初始化与自动化脚本/index.md`
+> 对应理论 [第1章 开发者的元技能](../../book/part1_software_engineering/chapter01_dev_meta_skills/index.md) · 2 学时 · 任务说明与验收标准同 `book/part5_lab_guide/experiment01_project_init_automation/index.md`
 
 ## 实验目标
 

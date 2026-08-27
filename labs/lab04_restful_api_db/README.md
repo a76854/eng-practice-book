@@ -1,6 +1,6 @@
 # 实验四 RESTful API 构建与数据库迁移
 
-> 对应理论 [第4章 HTTP 与 RESTful 架构](../../book/part2_后端开发全景与核心基石/chapter04_HTTP与RESTful架构/index.md) 与 [第5章 数据持久化：从 SQL 到 ORM](../../book/part2_后端开发全景与核心基石/chapter05_数据持久化从SQL到ORM/index.md) · 4 学时 · 任务说明与验收标准同 `book/part5_实验指导书/experiment04_RESTful_API与数据库迁移/index.md`
+> 对应理论 [第4章 HTTP 与 RESTful 架构](../../book/part2_backend_development/chapter04_http_restful/index.md) 与 [第5章 数据持久化：从 SQL 到 ORM](../../book/part2_backend_development/chapter05_persistence_sql_orm/index.md) · 4 学时 · 任务说明与验收标准同 `book/part5_lab_guide/experiment04_restful_api_db_migration/index.md`
 
 ## 实验目标
 

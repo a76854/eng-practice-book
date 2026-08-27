@@ -1,6 +1,6 @@
 # 实验八 里程碑 B 与 C 全栈容器化与答辩
 
-> 对应理论 [第11章 部署、容器化与持续集成](../../book/part4_现代工程进阶与交付/chapter11_部署容器化与持续集成/index.md) · 4 学时 · 任务说明与验收标准同 `book/part5_实验指导书/experiment08_里程碑BC_全栈容器化与答辩/index.md`
+> 对应理论 [第11章 部署、容器化与持续集成](../../book/part4_advanced_engineering/chapter11_deploy_cicd/index.md) · 4 学时 · 任务说明与验收标准同 `book/part5_lab_guide/experiment08_milestone_bc_container/index.md`
 
 ## 实验目标
 

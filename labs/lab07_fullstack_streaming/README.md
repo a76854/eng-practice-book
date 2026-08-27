@@ -1,6 +1,6 @@
 # 实验七 前后端联调与流式响应集成
 
-> 对应理论 [第9章 与外部世界的集成](../../book/part4_现代工程进阶与交付/chapter09_与外部世界的集成/index.md) · 6 学时 · 任务说明与验收标准同 `book/part5_实验指导书/experiment07_前后端联调与流式响应/index.md`
+> 对应理论 [第9章 与外部世界的集成](../../book/part4_advanced_engineering/chapter09_external_integration/index.md) · 6 学时 · 任务说明与验收标准同 `book/part5_lab_guide/experiment07_fullstack_streaming/index.md`
 
 ## 实验目标
 

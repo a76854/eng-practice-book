@@ -1,6 +1,6 @@
 # Lab02 starter 说明
 
-本目录是实验二的起点骨架，对应 `book/part5_实验指导书/experiment02_单元测试与静态检查实战/index.md`。
+本目录是实验二的起点骨架，对应 `book/part5_lab_guide/experiment02_unit_test_static_check/index.md`。
 
 ## 包含内容
 

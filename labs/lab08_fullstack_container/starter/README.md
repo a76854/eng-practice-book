@@ -1,6 +1,6 @@
 # Lab08 starter 说明
 
-本目录是实验八的起点骨架，对应 `book/part5_实验指导书/experiment08_里程碑BC_全栈容器化与答辩/index.md`，把全栈应用容器化并用 Compose 完成联调预演与答辩准备。
+本目录是实验八的起点骨架，对应 `book/part5_lab_guide/experiment08_milestone_bc_container/index.md`，把全栈应用容器化并用 Compose 完成联调预演与答辩准备。
 
 ## 包含内容
 
