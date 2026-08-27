@@ -1,46 +1,118 @@
 version: 1
 project:
-  numbering:
-    title:
-      enabled: true
-    headings: true
   title: 算法编程与工程实践
-  description: 以 MeetingToText 为贯穿演示项目、用真实代码展示各项工程实践的螺旋课纲教科书
-  authors:
-    - name:
-        literal: huiguo
-  # Exclude contributor reference docs and non-book content from implicit scanning
+  numbering: { headings: true }
   exclude:
-    - book/STYLE.md
-    - book/ai_policy.md
-    - book/forum_topics.md
-    - book/samples/**
+    - labs/**
+    - m2t/**
+    - m2t_tests/**
+    - deploy-demo/**
     - .venv/**
     - _build/**
-    - book/_build/**
     - node_modules/**
     - evidence/**
-    - milestones/**
-    - answers/**
-    - m2t/**
+    - book/samples/**
   toc:
-    - file: book/intro.md
-    - file: book/chapter01_环境与项目骨架.md
-    - file: book/chapter02_Shell与脚本自动化.md
-    - file: book/chapter03_Git与协作工作流.md
-    - file: book/chapter04_代码质量类型与静态检查.md
-    - file: book/chapter05_测试的思维与工程.md
-    - file: book/chapter06_里程碑M1_CLI转写工具.md
-    - file: book/chapter07_HTTP与REST_API.md
-    - file: book/chapter08_数据持久化与SQL.md
-    - file: book/chapter09_调试与性能剖析.md
-    - file: book/chapter10_并发与异步.md
-    - file: book/chapter11_里程碑M2_WebAPI.md
-    - file: book/chapter12_前端基础Vue3.md
-    - file: book/chapter13_外部服务集成ASR与LLM.md
-    - file: book/chapter14_打包部署与CI.md
-    - file: book/chapter15_健壮性与安全基础.md
-    - file: book/chapter16_里程碑M3_全栈应用与答辩.md
-site:
-  title: 算法编程与工程实践
-  template: book-theme
+    - file: book/前言.md
+    - file: book/part1_软件工程筑基/index.md
+      children:
+        - file: book/part1_软件工程筑基/chapter01_开发者的元技能/index.md
+          children:
+            - file: book/part1_软件工程筑基/chapter01_开发者的元技能/1.1_工程化项目结构.md
+            - file: book/part1_软件工程筑基/chapter01_开发者的元技能/1.2_依赖与虚拟环境.md
+            - file: book/part1_软件工程筑基/chapter01_开发者的元技能/1.3_Shell文件系统进程管道.md
+            - file: book/part1_软件工程筑基/chapter01_开发者的元技能/1.4_Python自动化脚本.md
+            - file: book/part1_软件工程筑基/chapter01_开发者的元技能/1.5_Git核心模型与工作流.md
+            - file: book/part1_软件工程筑基/chapter01_开发者的元技能/小结与思考题.md
+        - file: book/part1_软件工程筑基/chapter02_构筑代码质量的护城河/index.md
+          children:
+            - file: book/part1_软件工程筑基/chapter02_构筑代码质量的护城河/2.1_类型系统与防御性编程.md
+            - file: book/part1_软件工程筑基/chapter02_构筑代码质量的护城河/2.2_静态检查与代码风格.md
+            - file: book/part1_软件工程筑基/chapter02_构筑代码质量的护城河/2.3_测试的工程思维.md
+            - file: book/part1_软件工程筑基/chapter02_构筑代码质量的护城河/2.4_Pytest进阶.md
+            - file: book/part1_软件工程筑基/chapter02_构筑代码质量的护城河/2.5_测试覆盖率与质量门禁.md
+            - file: book/part1_软件工程筑基/chapter02_构筑代码质量的护城河/小结与思考题.md
+    - file: book/part2_后端开发全景与核心基石/index.md
+      children:
+        - file: book/part2_后端开发全景与核心基石/chapter03_后端开发到底是什么/index.md
+          children:
+            - file: book/part2_后端开发全景与核心基石/chapter03_后端开发到底是什么/3.1_职责边界.md
+            - file: book/part2_后端开发全景与核心基石/chapter03_后端开发到底是什么/3.2_语言横向对比.md
+            - file: book/part2_后端开发全景与核心基石/chapter03_后端开发到底是什么/3.3_框架生态谱系.md
+            - file: book/part2_后端开发全景与核心基石/chapter03_后端开发到底是什么/3.4_为何选择FastAPI.md
+            - file: book/part2_后端开发全景与核心基石/chapter03_后端开发到底是什么/3.5_分层架构落地.md
+            - file: book/part2_后端开发全景与核心基石/chapter03_后端开发到底是什么/小结与思考题.md
+        - file: book/part2_后端开发全景与核心基石/chapter04_HTTP与RESTful架构/index.md
+          children:
+            - file: book/part2_后端开发全景与核心基石/chapter04_HTTP与RESTful架构/4.1_HTTP协议精髓.md
+            - file: book/part2_后端开发全景与核心基石/chapter04_HTTP与RESTful架构/4.2_RESTful成熟度模型.md
+            - file: book/part2_后端开发全景与核心基石/chapter04_HTTP与RESTful架构/4.3_FastAPI路由设计.md
+            - file: book/part2_后端开发全景与核心基石/chapter04_HTTP与RESTful架构/4.4_异常处理与全局响应.md
+            - file: book/part2_后端开发全景与核心基石/chapter04_HTTP与RESTful架构/4.5_OpenAPI契约测试.md
+            - file: book/part2_后端开发全景与核心基石/chapter04_HTTP与RESTful架构/小结与思考题.md
+        - file: book/part2_后端开发全景与核心基石/chapter05_数据持久化从SQL到ORM/index.md
+          children:
+            - file: book/part2_后端开发全景与核心基石/chapter05_数据持久化从SQL到ORM/5.1_关系型数据库原理.md
+            - file: book/part2_后端开发全景与核心基石/chapter05_数据持久化从SQL到ORM/5.2_SQL进阶.md
+            - file: book/part2_后端开发全景与核心基石/chapter05_数据持久化从SQL到ORM/5.3_Python操作数据库三境界.md
+            - file: book/part2_后端开发全景与核心基石/chapter05_数据持久化从SQL到ORM/5.4_数据库迁移Alembic.md
+            - file: book/part2_后端开发全景与核心基石/chapter05_数据持久化从SQL到ORM/5.5_数据建模原则.md
+            - file: book/part2_后端开发全景与核心基石/chapter05_数据持久化从SQL到ORM/小结与思考题.md
+        - file: book/part2_后端开发全景与核心基石/chapter06_并发模型与性能工程/index.md
+          children:
+            - file: book/part2_后端开发全景与核心基石/chapter06_并发模型与性能工程/6.1_并发并行异步.md
+            - file: book/part2_后端开发全景与核心基石/chapter06_并发模型与性能工程/6.2_Python_GIL.md
+            - file: book/part2_后端开发全景与核心基石/chapter06_并发模型与性能工程/6.3_异步编程核心.md
+            - file: book/part2_后端开发全景与核心基石/chapter06_并发模型与性能工程/6.4_FastAPI异步陷阱.md
+            - file: book/part2_后端开发全景与核心基石/chapter06_并发模型与性能工程/6.5_性能剖析方法论.md
+            - file: book/part2_后端开发全景与核心基石/chapter06_并发模型与性能工程/小结与思考题.md
+    - file: book/part3_前端协作与现代前端基础/index.md
+      children:
+        - file: book/part3_前端协作与现代前端基础/chapter07_前端开发概况与工程化演进/index.md
+          children:
+            - file: book/part3_前端协作与现代前端基础/chapter07_前端开发概况与工程化演进/7.1_前端在架构中的角色.md
+            - file: book/part3_前端协作与现代前端基础/chapter07_前端开发概况与工程化演进/7.2_框架三驾马车.md
+            - file: book/part3_前端协作与现代前端基础/chapter07_前端开发概况与工程化演进/7.3_为何选择Vue3_Vite.md
+            - file: book/part3_前端协作与现代前端基础/chapter07_前端开发概况与工程化演进/7.4_前端工程化基石.md
+            - file: book/part3_前端协作与现代前端基础/chapter07_前端开发概况与工程化演进/小结与思考题.md
+        - file: book/part3_前端协作与现代前端基础/chapter08_Vue3核心机制与状态设计/index.md
+          children:
+            - file: book/part3_前端协作与现代前端基础/chapter08_Vue3核心机制与状态设计/8.1_响应式原理.md
+            - file: book/part3_前端协作与现代前端基础/chapter08_Vue3核心机制与状态设计/8.2_组件化设计.md
+            - file: book/part3_前端协作与现代前端基础/chapter08_Vue3核心机制与状态设计/8.3_路由管理.md
+            - file: book/part3_前端协作与现代前端基础/chapter08_Vue3核心机制与状态设计/8.4_跨组件状态管理Pinia.md
+            - file: book/part3_前端协作与现代前端基础/chapter08_Vue3核心机制与状态设计/小结与思考题.md
+    - file: book/part4_现代工程进阶与交付/index.md
+      children:
+        - file: book/part4_现代工程进阶与交付/chapter09_与外部世界的集成/index.md
+          children:
+            - file: book/part4_现代工程进阶与交付/chapter09_与外部世界的集成/9.1_第三方服务集成模式.md
+            - file: book/part4_现代工程进阶与交付/chapter09_与外部世界的集成/9.2_语音识别接入.md
+            - file: book/part4_现代工程进阶与交付/chapter09_与外部世界的集成/9.3_大模型接口设计.md
+            - file: book/part4_现代工程进阶与交付/chapter09_与外部世界的集成/9.4_异步任务队列Celery.md
+            - file: book/part4_现代工程进阶与交付/chapter09_与外部世界的集成/小结与思考题.md
+        - file: book/part4_现代工程进阶与交付/chapter10_健壮性与安全底线/index.md
+          children:
+            - file: book/part4_现代工程进阶与交付/chapter10_健壮性与安全底线/10.1_认证与授权JWT.md
+            - file: book/part4_现代工程进阶与交付/chapter10_健壮性与安全底线/10.2_数据校验与防注入.md
+            - file: book/part4_现代工程进阶与交付/chapter10_健壮性与安全底线/10.3_日志系统设计.md
+            - file: book/part4_现代工程进阶与交付/chapter10_健壮性与安全底线/10.4_错误边界与优雅降级.md
+            - file: book/part4_现代工程进阶与交付/chapter10_健壮性与安全底线/小结与思考题.md
+        - file: book/part4_现代工程进阶与交付/chapter11_部署容器化与持续集成/index.md
+          children:
+            - file: book/part4_现代工程进阶与交付/chapter11_部署容器化与持续集成/11.1_部署演进史.md
+            - file: book/part4_现代工程进阶与交付/chapter11_部署容器化与持续集成/11.2_Dockerfile最佳实践.md
+            - file: book/part4_现代工程进阶与交付/chapter11_部署容器化与持续集成/11.3_DockerCompose编排.md
+            - file: book/part4_现代工程进阶与交付/chapter11_部署容器化与持续集成/11.4_CICD流水线.md
+            - file: book/part4_现代工程进阶与交付/chapter11_部署容器化与持续集成/小结与思考题.md
+    - file: book/part5_实验指导书/index.md
+      children:
+        - file: book/part5_实验指导书/experiment01_工程初始化与自动化脚本/index.md
+        - file: book/part5_实验指导书/experiment02_单元测试与静态检查实战/index.md
+        - file: book/part5_实验指导书/experiment03_里程碑A_CLI转写工具/index.md
+        - file: book/part5_实验指导书/experiment04_RESTful_API与数据库迁移/index.md
+        - file: book/part5_实验指导书/experiment05_异步改造与压力测试/index.md
+        - file: book/part5_实验指导书/experiment06_前端页面与路由状态管理/index.md
+        - file: book/part5_实验指导书/experiment07_前后端联调与流式响应/index.md
+        - file: book/part5_实验指导书/experiment08_里程碑BC_全栈容器化与答辩/index.md
+    - file: book/appendix/附录A_课程设计大作业选题.md
