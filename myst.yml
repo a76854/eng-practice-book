@@ -6,12 +6,10 @@ project:
     - labs/**
     - m2t/**
     - m2t_tests/**
-    - deploy-demo/**
     - .venv/**
     - _build/**
     - node_modules/**
     - evidence/**
-    - book/samples/**
   toc:
     - file: book/preface.md
     - file: book/part1_software_engineering/index.md

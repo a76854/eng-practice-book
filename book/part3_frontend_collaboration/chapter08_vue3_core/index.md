@@ -27,7 +27,7 @@ kernelspec:
 - [8.3 路由管理](8.3_routing_management.md) —— Vue Router 4 历史模式、路由守卫与懒加载
 - [8.4 跨组件状态管理 Pinia](8.4_cross_component_state_pinia.md) —— Store / Action / Getters 模块化；与后端状态的边界
 
-此外，本章所有可执行示例均可在书仓 `.venv` 环境中复现；涉及 MeetingToText 的片段复用 `m2t` 教学包与 `book/samples/vue-min/` 最小前端样例（见 [vue-min 源码](../../samples/vue-min/src/App.vue) 的 `fetch('/mock.json')` 与 `v-for` 渲染），无需启动真实服务。
+此外，本章所有可执行示例均可在书仓 `.venv` 环境中复现；涉及 MeetingToText 的片段复用 `m2t` 教学包，前端契约以通用内联示例呈现（如 `fetch('/mock.json')` 与 `v-for` 渲染的最小闭环），无需启动真实服务。
 
 > **跨平台约定**：本章所有涉及路径与环境激活的命令均标注 Windows / macOS / Linux 差异，详见各小节对照表；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第7章 前端概况](../chapter07_frontend_overview/index.md)。
 
@@ -70,14 +70,16 @@ store_tasks = [{"id": "1", "filename": "meeting.wav", "status": "done"}]
 for path, label in routes.items():
     print(f"路由 {path} → {label} (数据 {len(store_tasks)} 条)")
 
-# 3) 工程契约：vue-min 的存在即前后端协作契约
-vue_min_pkg = pathlib.Path("book/samples/vue-min/package.json")
-if vue_min_pkg.exists():
-    data = json.loads(vue_min_pkg.read_text(encoding="utf-8"))
-    print("vue-min deps:", list(data.get("dependencies", {}).keys()))
-    print("vue-min scripts:", list(data.get("scripts", {}).keys()))
-else:
-    print("vue-min package.json not found (fallback)")
+# 3) 工程契约：内联 package.json 即前后端协作契约
+pkg = {
+    "name": "frontend-min",
+    "type": "module",
+    "dependencies": {"vue": "^3.4.0"},
+    "devDependencies": {"vite": "^5.0.0", "vue-tsc": "^2.0.0"},
+    "scripts": {"dev": "vite", "build": "vue-tsc -b && vite build", "preview": "vite preview"},
+}
+print("frontend deps:", list(pkg.get("dependencies", {}).keys()))
+print("frontend scripts:", list(pkg.get("scripts", {}).keys()))
 print("prefix:", pathlib.Path(sys.prefix).name)
 # 预期输出:
 # m2t version: 0.1.0
@@ -86,8 +88,8 @@ print("prefix:", pathlib.Path(sys.prefix).name)
 # 响应式: ['filter:meeting', 'filter:*']
 # 路由 /tasks → 任务列表 (数据 1 条)
 # 路由 /tasks/1 → 任务详情 (数据 1 条)
-# vue-min deps: ['vue']
-# vue-min scripts: ['dev', 'build', 'preview']
+# frontend deps: ['vue']
+# frontend scripts: ['dev', 'build', 'preview']
 # prefix: .venv 或系统前缀
 ```
 

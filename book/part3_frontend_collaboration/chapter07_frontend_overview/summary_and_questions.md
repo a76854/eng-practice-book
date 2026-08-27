@@ -78,20 +78,13 @@ assert len(views[-1]) == 3
 print("响应式校验通过：改数据即改视图")
 
 # ---- 3) 工程契约：package.json 的脚本与 ESM 静态可分析（对接 7.4） ----
-def _find_pkg_summary() -> pathlib.Path:
-    for cand in [pathlib.Path("book/samples/vue-min/package.json"), pathlib.Path.cwd() / "book/samples/vue-min/package.json"]:
-        if cand.exists():
-            return cand
-    cur = pathlib.Path.cwd()
-    for _ in range(6):
-        cand = cur / "book/samples/vue-min/package.json"
-        if cand.exists():
-            return cand
-        cur = cur.parent
-    return pathlib.Path("book/samples/vue-min/package.json")
-
-_pkg_path = _find_pkg_summary()
-pkg = json.loads(_pkg_path.read_text(encoding="utf-8"))
+pkg = {
+    "name": "frontend-min",
+    "type": "module",
+    "dependencies": {"vue": "^3.5.13"},
+    "devDependencies": {"vite": "^6.0.0", "vue-tsc": "^2.0.0"},
+    "scripts": {"dev": "vite", "build": "vue-tsc --noEmit && vite build", "preview": "vite preview"},
+}
 assert pkg["type"] == "module"
 assert "dev" in pkg["scripts"] and "build" in pkg["scripts"]
 print("工程契约：type=module 且 dev/build 存在")
@@ -104,7 +97,7 @@ print("ESM 静态分析通过：无需执行即可得依赖图")
 print()
 
 # ---- 4) 跨平台与协作：pathlib 统一路径，前后端通过契约协作 ----
-dist = pathlib.Path("book/samples/vue-min/dist/index.html")
+dist = pathlib.Path("frontend/dist/index.html")
 print("产物路径 (POSIX):", dist.as_posix())
 print("协作闭环：后端 JSON → 前端响应式过滤 → ESM 产物可部署为静态资源")
 print("本章贯通校验通过")
@@ -116,7 +109,7 @@ print("本章贯通校验通过")
 # 工程契约：type=module 且 dev/build 存在
 # ESM 静态导入: ['vue', './utils/format.js']
 # ESM 静态分析通过：无需执行即可得依赖图
-# 产物路径 (POSIX): book/samples/vue-min/dist/index.html
+# 产物路径 (POSIX): frontend/dist/index.html
 # 协作闭环：后端 JSON → 前端响应式过滤 → ESM 产物可部署为静态资源
 # 本章贯通校验通过
 ```
@@ -125,7 +118,7 @@ print("本章贯通校验通过")
 
 ```bash
 # 本章贯通校验（macOS / Linux）
-.venv/bin/python -c "import m2t, json, pathlib; print(m2t.__version__); print(json.loads(pathlib.Path('book/samples/vue-min/package.json').read_text())['type'])"
+.venv/bin/python -c "import m2t, json; pkg={'type': 'module'}; print(m2t.__version__); print(pkg['type'])"
 # Windows 需用
-.venv\Scripts\python.exe -c "import m2t, json, pathlib; print(m2t.__version__); print(json.loads(pathlib.Path('book/samples/vue-min/package.json').read_text())['type'])"
+.venv\Scripts\python.exe -c "import m2t, json; pkg={'type': 'module'}; print(m2t.__version__); print(pkg['type'])"
 ```

@@ -1,6 +1,6 @@
 # 实验六 前端页面开发与路由状态管理
 
-本实验对应理论 [第7章 前端开发概况与工程化演进](../../part3_frontend_collaboration/chapter07_frontend_overview/index.md) 与 [第8章 Vue3 核心机制与状态设计](../../part3_frontend_collaboration/chapter08_vue3_core/index.md)。建议先通读第7章 7.2 至 7.4 节的框架选型与工程基石，再通读第8章 8.1 至 8.4 节的响应式、组件化、路由与 Pinia，最后参考 `book/samples/vue-min/` 的最小实现，再动手。你会在本实验中用 Vue3 + Pinia + Vue Router 完成会议记录管理面板、登录态保持与路由拦截的闭环。
+本实验对应理论 [第7章 前端开发概况与工程化演进](../../part3_frontend_collaboration/chapter07_frontend_overview/index.md) 与 [第8章 Vue3 核心机制与状态设计](../../part3_frontend_collaboration/chapter08_vue3_core/index.md)。建议先通读第7章 7.2 至 7.4 节的框架选型与工程基石，再通读第8章 8.1 至 8.4 节的响应式、组件化、路由与 Pinia，最后参考 `labs/lab06_frontend_routing_state/starter/` 的起手骨架，再动手。你会在本实验中用 Vue3 + Pinia + Vue Router 完成会议记录管理面板、登录态保持与路由拦截的闭环。
 
 ## 实验目标
 
@@ -16,7 +16,7 @@
 
 1. 阅读 [第7章 7.2 框架三驾马车](../../part3_frontend_collaboration/chapter07_frontend_overview/7.2_framework_troika.md) 至 [7.4 前端工程化基石](../../part3_frontend_collaboration/chapter07_frontend_overview/7.4_frontend_engineering_foundation.md)，理解 Vue3 在本课程中的选型理由与 `package.json` 的工程化作用。
 2. 阅读 [第8章 8.1 响应式原理](../../part3_frontend_collaboration/chapter08_vue3_core/8.1_reactivity_principles.md) 至 [8.4 跨组件状态管理 Pinia](../../part3_frontend_collaboration/chapter08_vue3_core/8.4_cross_component_state_pinia.md)，重点关注组合式 API、路由守卫执行顺序与 Pinia 的 State / Getter / Action 三层。
-3. 在本地打开 `book/samples/vue-min/`，运行 `cat package.json` 与 `cat src/App.vue`，观察其 `fetch('/mock.json')` 回退与 `v-for` 渲染的最小闭环。
+3. 在本地打开 `labs/lab06_frontend_routing_state/starter/`，运行 `cat package.json` 与 `cat src/App.vue`，观察其 `fetch('/mock.json')` 回退与 `v-for` 渲染的最小闭环。
 
 > 跨平台提示：`npm` / `vite` 在 Windows / macOS / Linux 上命令一致，路径示例统一写 `/`。虚拟环境与 Node 环境相互独立，前端依赖通过 `package.json` 声明。
 

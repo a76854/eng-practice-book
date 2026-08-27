@@ -1,10 +1,10 @@
 # 实验八 里程碑 B 与 C 全栈容器化与答辩
 
-本实验对应理论 [第11章 部署、容器化与持续集成](../../part4_advanced_engineering/chapter11_deploy_cicd/index.md)。建议先通读第11章 11.1 至 11.4 节的部署演进、Dockerfile 最佳实践、Compose 编排与 CI 流水线，再阅读 `deploy-demo/Dockerfile.backend` 与 `deploy-demo/docker-compose.yml` 的教学样例，最后动手。你会在本实验中把全栈应用容器化，用 Compose 在本地完成联调预演，并整理答辩材料，完成从可运行到可交付的收口。
+本实验对应理论 [第11章 部署、容器化与持续集成](../../part4_advanced_engineering/chapter11_deploy_cicd/index.md)。建议先通读第11章 11.1 至 11.4 节的部署演进、Dockerfile 最佳实践、Compose 编排与 CI 流水线，再对照 `labs/lab08_fullstack_container/starter/` 的 Dockerfile 与 Compose 起手骨架，最后动手。你会在本实验中把全栈应用容器化，用 Compose 在本地完成联调预演，并整理答辩材料，完成从可运行到可交付的收口。
 
 ## 实验目标
 
-- 能编写层缓存友好的 Dockerfile，解释 COPY 顺序与多阶段对镜像体积与构建速度的影响，并读懂 `deploy-demo/Dockerfile.backend` 的选择性 COPY。
+- 能编写层缓存友好的 Dockerfile，解释 COPY 顺序与多阶段对镜像体积与构建速度的影响，并读懂 `labs/lab08_fullstack_container/starter/Dockerfile` 的选择性 COPY。
 - 能用 `docker-compose.yml` 描述前后端与持久化的联动，理解 `depends_on`、健康检查与端口映射如何表达启动依赖。
 - 能在不依赖真实构建的前提下，用纯文本与 YAML 解析完成交付预演，解释为何该方法能在无 Docker 守护进程时仍可验证拓扑与配置。
 - 能把 MeetingToText 的“构建镜像、编排联调、自动化门禁”串为最小交付闭环，并说清环境固化与可回滚的价值。
@@ -16,7 +16,7 @@
 
 1. 阅读 [第11章 11.1 部署演进史](../../part4_advanced_engineering/chapter11_deploy_cicd/11.1_deployment_evolution.md) 至 [11.2 Dockerfile 最佳实践](../../part4_advanced_engineering/chapter11_deploy_cicd/11.2_dockerfile_best_practices.md)，理解镜像分层、层缓存键与选择性 COPY 的权衡。
 2. 阅读 [第11章 11.3 Docker Compose 编排](../../part4_advanced_engineering/chapter11_deploy_cicd/11.3_docker_compose_orchestration.md) 与 [11.4 CI/CD 流水线](../../part4_advanced_engineering/chapter11_deploy_cicd/11.4_cicd_pipeline.md)，重点关注声明式 YAML 如何表达服务拓扑，以及 GitHub Actions 的工作流、作业与步骤模型。
-3. 打开 `deploy-demo/Dockerfile.backend` 与 `deploy-demo/docker-compose.yml`，逐行对照第11章的层缓存与编排讲解，明确本实验的起点是该教学资产的“最小两服务”形态。
+3. 打开 `labs/lab08_fullstack_container/starter/Dockerfile` 与 `starter/docker-compose.yml`，逐行对照第11章的层缓存与编排讲解，明确本实验的起点是“最小两服务”形态。
 
 > 跨平台提示：Dockerfile 与 Compose 的路径统一为 Linux 风格 `/app`、`/data`，在 Windows 宿主机上构建时同样生成 Linux 镜像。所有校验均可用纯文本解析完成，无需启动 Docker 守护进程，详见 `starter/README.md` 的本地预演命令。
 
@@ -24,7 +24,7 @@
 
 1. 进入 `labs/lab08_fullstack_container/starter`，阅读 `README.md`、`Dockerfile` 与 `docker-compose.yml`，梳理“后端镜像、前端静态托管、健康检查、启动依赖”四层的声明关系。
 2. 运行 `python -c "import yaml; yaml.safe_load(open('docker-compose.yml', encoding='utf-8')); print('compose yaml ok')"` 确认 YAML 可解析，运行 `python -m py_compile` 思路的 Dockerfile 逐行检查，理解每条指令的缓存语义。
-3. 对照 `deploy-demo/ci.yml` 的校验与测试链路，明确 CI 如何把 ruff、mypy、pytest 与 `docker compose config -q` 串为门禁。
+3. 对照 [11.4 节的内联工作流示例](../../part4_advanced_engineering/chapter11_deploy_cicd/11.4_cicd_pipeline.md) 的校验与测试链路，明确 CI 如何把 ruff、mypy、pytest 与 `docker compose config -q` 串为门禁。
 
 ### 步骤 3 编写 Dockerfile
 
@@ -34,7 +34,7 @@
    - 先 `COPY pyproject.toml README.md` 再 `RUN pip install`，后 `COPY m2t/ ./m2t/`，避免业务代码的频繁变动使依赖层失效。
    - 安装用 `pip install --no-cache-dir -e .`，不保留 wheel 缓存，产物仅含 `m2t` 与运行时依赖。
 2. 保持选择性 COPY，不 `COPY . .`，避免把 `labs/`、`book/`、`.venv`、模型权重误入镜像，产物可通过文本解析验证。
-3. 启动命令用 `CMD ["python", "-m", "m2t.cli", "serve", "--host", "0.0.0.0", "--port", "8000"]` 或等价的 FastAPI 启动，保持与 `deploy-demo/Dockerfile.backend` 的意图对齐。
+3. 启动命令用 `CMD ["python", "-m", "m2t.cli", "serve", "--host", "0.0.0.0", "--port", "8000"]` 或等价的 FastAPI 启动，保持与 `starter/Dockerfile` 的意图对齐。
 
 ### 步骤 4 编排 docker compose
 

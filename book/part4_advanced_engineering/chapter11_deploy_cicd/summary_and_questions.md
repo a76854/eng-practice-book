@@ -8,7 +8,7 @@ kernelspec:
 
 - **部署演进以隔离边界为尺度**：物理机独占但笨重，虚拟机用 Hypervisor 换强隔离，容器用命名空间、控制组与联合文件系统换轻量可复现；Python 虚拟环境仅隔离 `site-packages`，容器则把系统库、文件布局、环境变量与端口一并固化，二者叠加才得到“在任何机器上可复现”的交付物。
 - **Dockerfile 的艺术是排序与分层**：`FROM` 定基座、`COPY` 顺序定缓存命中率、`RUN` 合并与清理定镜像体积；把不常变的 `pyproject.toml` 置于常变的 `m2t/` 之前并配合 `--no-cache-dir` / `rm -rf /var/lib/apt/lists/*`，让业务改动仅使最后一层失效；多阶段则把构建时工具与运行时镜像解耦，体积与攻击面同步下降。
-- **Compose 把多容器拓扑声明化**：`services` 声明如何构建与运行，`healthcheck` 定义何时就绪，`depends_on: {condition: service_healthy}` 把“启动先后”升级为“就绪先后”；`deploy-demo` 的 Nginx(:80) 与后端(:8000) 二服务已足以演示“静态+动态”的最小联动，扩展 DB 时仅需在拓扑中增加健康依赖边。
+- **Compose 把多容器拓扑声明化**：`services` 声明如何构建与运行，`healthcheck` 定义何时就绪，`depends_on: {condition: service_healthy}` 把“启动先后”升级为“就绪先后”；内联示例的 Nginx(:80) 与后端(:8000) 二服务已足以演示“静态+动态”的最小联动，扩展 DB 时仅需在拓扑中增加健康依赖边。
 - **流水线的价值是固化门禁而非多跑命令**：GitHub Actions 以工作流、作业、步骤三层组织“检出→装环境→装依赖→四道门禁”，`ruff` / `mypy` / `pytest` / `docker compose config -q` 分别守风格、类型、行为与拓扑；`push` + `pull_request` 双事件触发覆盖推送与合入窗口，失败早暴露且本地可等价复现，迟早在回归中收回成本。
 - **贯穿启示**：本章把 MeetingToText 的“可运行”升级为“可交付”——用容器固化环境、用编排声明拓扑、用流水线固化门禁；与第 10 章的安全与健壮性底线共同构成上线的双重前提：先守住输入与故障的底线，再让每一次提交都自动经过可复现的构建与联调预检，全书理论篇至此收束。
 
@@ -17,7 +17,7 @@ kernelspec:
 1. **隔离的代价**：容器复用宿主机内核带来轻量，但也让“内核漏洞影响所有容器”与“强隔离需虚拟机”的权衡显现。在多租户场景中，你会如何论证“容器+虚拟机”混合方案的合理性？
 2. **缓存的脆弱性**：`COPY . .` 为何会让依赖层的缓存频繁失效？若项目中既有 `pyproject.toml` 又有 `uv.lock`，二者的 `COPY` 顺序与缓存键有何差异？
 3. **多阶段的取舍**：多阶段构建减小了运行时镜像，但也让构建脚本更复杂。何时值得引入多阶段，何时保持单阶段更利于团队维护？
-4. **健康检查的设计**：`deploy-demo` 用 `urllib.request` 探测 `api/health` 作为健康标准，该端点应由谁实现、返回何种语义？若健康检查过于宽松或过于严格，会分别带来什么风险？
+4. **健康检查的设计**：内联示例用 `urllib.request` 探测 `api/health` 作为健康标准，该端点应由谁实现、返回何种语义？若健康检查过于宽松或过于严格，会分别带来什么风险？
 5. **就绪与启动的辨析**：`depends_on` 的普通形式与 `service_healthy` 形式在故障注入下有何不同表现？若后端健康检查在启动后 30 秒才通过，前端的重试策略应如何配合以避免 502？
 6. **编排的边界**：Compose 适合单机声明式编排，Kubernetes 则面向多机与弹性伸缩。以 MeetingToText 的“上传→转写→摘要”链路为例，何种规模下需要从 Compose 迁移到 Kubernetes？
 7. **门禁的分层与成本**：`ruff` / `mypy` / `pytest` 的执行成本差异显著，先快后慢的排序如何节省 CI 时间？若某次提交仅改动文档，是否应让所有门禁全量执行？
@@ -33,18 +33,44 @@ import pathlib, yaml, sys, hashlib, tempfile
 
 from m2t.store import TaskStore
 
-def _find(rel: str) -> pathlib.Path:
-    cand = pathlib.Path(rel)
-    if cand.exists():
-        return cand
-    for base in [pathlib.Path.cwd(), *pathlib.Path.cwd().parents]:
-        p = base / rel
-        if p.exists():
-            return p
-    abs_p = pathlib.Path("/home/huiguo/tools/eng-practice-book") / rel
-    if abs_p.exists():
-        return abs_p
-    return cand
+# 内联教学样例（与 11.1–11.4 正文一致，无需依赖仓库中的真实文件）
+DOCKERFILE = """\
+FROM python:3.12-slim
+RUN apt-get update && apt-get install -y --no-install-recommends libsndfile1 && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY pyproject.toml ./
+COPY m2t/ ./m2t/
+RUN pip install --no-cache-dir -e ".[dev]"
+EXPOSE 8000
+CMD ["python", "-m", "m2t.cli", "serve", "--host", "0.0.0.0", "--port", "8000"]
+"""
+COMPOSE_YAML = """\
+services:
+  backend:
+    build: { context: ., dockerfile: Dockerfile }
+    environment: { MTT_DATA_DIR: /data }
+    healthcheck: { test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"], interval: 30s }
+    ports: ["8000:8000"]
+  frontend:
+    image: nginx:alpine
+    ports: ["80:80"]
+    depends_on: { backend: { condition: service_healthy } }
+"""
+CI_YAML = """\
+name: CI
+on: { push: {}, pull_request: {} }
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+      - run: pip install -e ".[dev]" && pip install pyyaml
+      - run: ruff check .
+      - run: mypy m2t --ignore-missing-imports
+      - run: python -m pytest -q
+      - run: docker compose -f docker-compose.yml config -q
+"""
 
 print("=== Chapter 11 贯通校验 ===")
 
@@ -53,8 +79,7 @@ print("\n[1] 隔离与可复现")
 import sysconfig
 print("  purelib:", sysconfig.get_paths()["purelib"])
 assert "site-packages" in sysconfig.get_paths()["purelib"]
-dockerfile = _find("deploy-demo/Dockerfile.backend")
-content = dockerfile.read_text(encoding="utf-8")
+content = DOCKERFILE
 assert "FROM python:3.12-slim" in content
 assert "libsndfile1" in content
 print("  Dockerfile 固化 OK：含 base image + 系统库")
@@ -71,7 +96,7 @@ print("  层序 OK：COPY 清单在 pip install 之前（缓存友好）")
 
 # 3) Compose 拓扑校验（11.3）
 print("\n[3] Compose 拓扑")
-compose = yaml.safe_load(_find("deploy-demo/docker-compose.yml").read_text(encoding="utf-8"))
+compose = yaml.safe_load(COMPOSE_YAML)
 services = compose["services"]
 assert "backend" in services and "frontend" in services
 assert services["frontend"]["depends_on"]["backend"]["condition"] == "service_healthy"
@@ -82,7 +107,7 @@ print("  拓扑 OK：frontend --service_healthy--> backend")
 
 # 4) CI 流水线校验（11.4）
 print("\n[4] CI 流水线")
-ci = yaml.safe_load(_find("deploy-demo/ci.yml").read_text(encoding="utf-8"))
+ci = yaml.safe_load(CI_YAML)
 on_ci = ci.get("on", ci.get(True, {}))
 assert isinstance(on_ci, dict) and "push" in on_ci and "pull_request" in on_ci
 steps = ci["jobs"]["verify"]["steps"]
@@ -113,7 +138,6 @@ print("\n贯通结论：隔离思想 → Dockerfile 层缓存 → Compose 就绪
 #   purelib: .../site-packages
 #   Dockerfile 固化 OK：含 base image + 系统库
 #   Dockerfile sha256: <16位十六进制>
-# [1] 隔离与可复现
 # [2] Dockerfile 层序
 #   COPY 行索引: [...] , pip install 行索引: [...]
 #   层序 OK：COPY 清单在 pip install 之前（缓存友好）

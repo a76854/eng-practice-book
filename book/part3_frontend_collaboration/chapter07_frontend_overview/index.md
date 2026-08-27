@@ -27,7 +27,7 @@ kernelspec:
 - [7.3 为何选择 Vue 3 + Vite](7.3_why_vue3_vite.md) —— 组合式 API、Proxy 响应式与构建速度：本课程前端栈的选型依据
 - [7.4 前端工程化基石](7.4_frontend_engineering_foundation.md) —— Node.js、npm/pnpm、ES Module：前端如何拥有自己的“运行时 + 包管理 + 模块系统”
 
-此外，本章所有可执行示例均可在书仓 `.venv` 环境中复现；涉及 MeetingToText 的片段复用 `m2t` 教学包与 `book/samples/vue-min/` 最小前端样例（见 [vue-min 源码](../../samples/vue-min/src/App.vue) 的 `fetch('/mock.json')` 与 `v-for` 渲染），无需启动真实服务。
+此外，本章所有可执行示例均可在书仓 `.venv` 环境中复现；涉及 MeetingToText 的片段复用 `m2t` 教学包，前端契约以通用内联示例呈现（如 `fetch('/mock.json')` 与 `v-for` 渲染的最小闭环），无需启动真实服务。
 
 > **跨平台约定**：本章所有涉及路径与环境激活的命令均标注 Windows / macOS / Linux 差异，详见各小节对照表；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第3章 后端开发到底是什么](../../part2_backend_development/chapter03_backend_essence/index.md)。
 
@@ -54,14 +54,16 @@ for t in sample_tasks:
     label = f"{t['filename']} — {t['status']}"
     print(label)
 
-# 验证 vue-min 样例的 package.json 可被 Python 解析（工程化协作点）
-vue_min_pkg = pathlib.Path("book/samples/vue-min/package.json")
-if vue_min_pkg.exists():
-    data = json.loads(vue_min_pkg.read_text(encoding="utf-8"))
-    print("vue-min deps:", list(data.get("dependencies", {}).keys()))
-    print("vue-min scripts:", list(data.get("scripts", {}).keys()))
-else:
-    print("vue-min package.json not found (fallback check)")
+# 前端工程契约：用 Python 解析内联 package.json（工程化协作点）
+pkg = {
+    "name": "frontend-min",
+    "type": "module",
+    "dependencies": {"vue": "^3.4.0"},
+    "devDependencies": {"vite": "^5.0.0", "vue-tsc": "^2.0.0"},
+    "scripts": {"dev": "vite", "build": "vue-tsc -b && vite build", "preview": "vite preview"},
+}
+print("frontend deps:", list(pkg.get("dependencies", {}).keys()))
+print("frontend scripts:", list(pkg.get("scripts", {}).keys()))
 
 print("prefix:", pathlib.Path(sys.prefix).name)
 # 预期输出:
@@ -70,8 +72,8 @@ print("prefix:", pathlib.Path(sys.prefix).name)
 # TaskStore: TaskStore
 # meeting.wav — done
 # interview.mp3 — processing
-# vue-min deps: ['vue']
-# vue-min scripts: ['dev', 'build', 'preview']
+# frontend deps: ['vue']
+# frontend scripts: ['dev', 'build', 'preview']
 # prefix: .venv 或系统前缀
 ```
 
