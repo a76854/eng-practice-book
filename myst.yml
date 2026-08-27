@@ -116,3 +116,6 @@ project:
         - file: book/part5_实验指导书/experiment07_前后端联调与流式响应/index.md
         - file: book/part5_实验指导书/experiment08_里程碑BC_全栈容器化与答辩/index.md
     - file: book/appendix/附录A_课程设计大作业选题.md
+site:
+  title: 算法编程与工程实践
+  template: book-theme
