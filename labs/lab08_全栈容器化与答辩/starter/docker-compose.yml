@@ -1,0 +1,27 @@
+# Lab08 starter, minimal two-service compose (hermetic, validates with yaml.safe_load)
+# Mirrors deploy-demo/docker-compose.yml: nginx static on :80 + backend on :8000
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      MTT_DATA_DIR: /data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: "no"
+    ports:
+      - "8000:8000"
+
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: "no"
