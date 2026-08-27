@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lab07 联调与流式演示</title>
+    <style>
+      body { font-family: sans-serif; max-width: 760px; margin: 32px auto; padding: 0 16px; color: #222; }
+      h1 { font-size: 20px; }
+      h2 { font-size: 16px; margin-top: 24px; }
+      button { padding: 8px 14px; cursor: pointer; }
+      #segments, #summary, #log { border: 1px solid #ddd; padding: 12px; min-height: 48px; margin-top: 8px; background: #fafafa; }
+      #summary { white-space: pre-wrap; }
+      .meta { color: #666; font-size: 13px; }
+      .ok { color: #0a7a0a; }
+      .err { color: #a00; }
+    </style>
+  </head>
+  <body>
+    <h1>Lab07 前后端联调与流式响应集成</h1>
+    <p class="meta">后端默认 http://127.0.0.1:8000，前端纯静态单文件，EventSource 订阅 /api/summary/stream 逐 delta 渲染。启动后端后用下方按钮联调，或用 curl 对照同一流。</p>
+
+    <h2>1 录音上传到实时转写（mock）</h2>
+    <button id="btn-transcribe">触发转写 mock</button>
+    <span id="transcribe-status" class="meta"></span>
+    <div id="segments">(未请求)</div>
+
+    <h2>2 AI 总结流式渲染（SSE）</h2>
+    <button id="btn-stream">开始流式总结</button>
+    <button id="btn-stop">停止</button>
+    <span id="stream-status" class="meta"></span>
+    <div id="summary">(等待流式)</div>
+    <p class="meta">curl 对照: <code>curl -N http://127.0.0.1:8000/api/summary/stream</code></p>
+
+    <h2>3 请求日志</h2>
+    <div id="log">(空)</div>
+
+    <script>
+      const $segments = document.getElementById("segments");
+      const $summary = document.getElementById("summary");
+      const $log = document.getElementById("log");
+      const $tStatus = document.getElementById("transcribe-status");
+      const $sStatus = document.getElementById("stream-status");
+      let es = null;
+      let deltas = 0;
+      let startedAt = 0;
+
+      function log(msg) {
+        const line = document.createElement("div");
+        line.textContent = new Date().toLocaleTimeString() + " " + msg;
+        $log.prepend(line);
+      }
+
+      // 转写 mock：POST /api/transcribe，展示归一后的段结构
+      document.getElementById("btn-transcribe").addEventListener("click", async () => {
+        $tStatus.textContent = "请求中";
+        $segments.textContent = "加载中";
+        try {
+          const res = await fetch("http://127.0.0.1:8000/api/transcribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ filename: "sample.wav", language: "auto" }),
+          });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const data = await res.json();
+          const segs = data.segments || [];
+          if (segs.length === 0) {
+            $segments.textContent = "(空结果)";
+          } else {
+            $segments.innerHTML = segs
+              .map((s) => `<div>[${s.speaker || " "}] ${s.text} <span class=meta>(${s.start}s到${s.end}s)</span></div>`)
+              .join("");
+          }
+          $tStatus.textContent = "完成 " + segs.length + " 段";
+          $tStatus.className = "meta ok";
+          log("transcribe ok: " + segs.length + " segments");
+        } catch (e) {
+          $segments.textContent = "转写失败，请检查后端是否在 http://127.0.0.1:8000 启动";
+          $tStatus.textContent = "失败";
+          $tStatus.className = "meta err";
+          log("transcribe fail: " + e.message);
+        }
+      });
+
+      // 流式总结：EventSource 订阅 SSE，逐 delta 追加
+      document.getElementById("btn-stream").addEventListener("click", () => {
+        if (es) es.close();
+        $summary.textContent = "";
+        deltas = 0;
+        startedAt = Date.now();
+        $sStatus.textContent = "连接中";
+        $sStatus.className = "meta";
+        log("stream start");
+
+        // 优先用同源相对路径，开发时也可显式跨域到 127.0.0.1:8000
+        const url = "http://127.0.0.1:8000/api/summary/stream";
+        es = new EventSource(url);
+
+        es.onopen = () => {
+          $sStatus.textContent = "已连接，等待首字";
+          log("stream open");
+        };
+
+        es.onmessage = (ev) => {
+          if (ev.data === "[DONE]") {
+            es.close();
+            es = null;
+            $sStatus.textContent = "完成，共 " + deltas + " 块，耗时 " + (Date.now() - startedAt) + "ms";
+            $sStatus.className = "meta ok";
+            log("stream done: " + deltas + " chunks");
+            return;
+          }
+          try {
+            const obj = JSON.parse(ev.data);
+            const delta = obj.delta || "";
+            if (deltas === 0) {
+              log("first delta: " + delta + " (首字时延 " + (Date.now() - startedAt) + "ms)");
+              $sStatus.textContent = "首字已到，增量渲染中";
+            }
+            $summary.textContent += delta;
+            deltas += 1;
+          } catch (e) {
+            log("parse fail: " + e.message);
+          }
+        };
+
+        es.onerror = () => {
+          $sStatus.textContent = "连接中断，可点开始重试";
+          $sStatus.className = "meta err";
+          log("stream error or closed");
+          if (es) {
+            es.close();
+            es = null;
+          }
+        };
+      });
+
+      document.getElementById("btn-stop").addEventListener("click", () => {
+        if (es) {
+          es.close();
+          es = null;
+          $sStatus.textContent = "已手动停止";
+          log("stream stopped manually");
+        }
+      });
+    </script>
+  </body>
+</html>
