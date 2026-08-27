@@ -30,7 +30,7 @@ kernelspec:
 
 此外，本章所有示例均可在书仓根目录的 `.venv` 环境中复现；涉及 MeetingToText 的片段统一通过教学包 `m2t` 复用（见 [m2t 源码](../../..//m2t/audio.py) 的精简实现），无需启动真实的 ASR 或 LLM 服务。
 
-> **跨平台约定**：本章所有涉及路径与环境激活的命令均标注 Windows / macOS / Linux 差异，详见各小节对照表；正文跨章引用一律使用相对链接，如 [第2章 构筑代码质量的护城河](../chapter02_code_quality/index.md)。
+> **环境约定**：全书命令均面向 **Linux**（以 Ubuntu / Debian 系为例）。路径与环境激活命令统一使用 Linux 语法与 `/` 分隔符；正文示例均可在书仓根目录的 `.venv` 环境中直接复现。正文跨章引用一律使用相对链接，如 [第2章 构筑代码质量的护城河](../chapter02_code_quality/index.md)。
 
 文件 `book/part1_software_engineering/chapter01_dev_meta_skills/demo_index.py`（验证本章环境与 m2t 教学包可用）：
 
@@ -50,8 +50,6 @@ print("platform sys.prefix:", pathlib.Path(sys.prefix).name)
 ```
 
 ```bash
-# 本章所有 code-cell 均用 .venv 中的 Python 执行（macOS / Linux）
+# 本章所有 code-cell 均用 .venv 中的 Python 执行
 .venv/bin/python -c "import m2t; print(m2t.__version__)"
-# Windows 需用
-.venv\Scripts\python.exe -c "import m2t; print(m2t.__version__)"
 ```
