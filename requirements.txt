@@ -6,3 +6,4 @@ jupyter-client==8.9.1
 jupyter-server==2.20.0
 PyYAML==6.0.2
 fastapi==0.141.1  # week07+ 后端章节运行依赖（FastAPI 入门 + TestClient 演示）
+PyJWT==2.13.0  # chapter10 JWT 库调用（替代手写 HMAC）
