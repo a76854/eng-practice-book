@@ -114,6 +114,7 @@ project:
         - file: book/part5_lab_guide/experiment07_fullstack_streaming/index.md
         - file: book/part5_lab_guide/experiment08_milestone_bc_container/index.md
     - file: book/appendix/appendix_a_course_design.md
+    - file: book/appendix/appendix_b_references.md
 site:
   title: 算法编程与工程实践
   template: book-theme
