@@ -10,10 +10,10 @@ kernelspec:
 - **依赖与虚拟环境的本质是隔离**：`venv` / `conda` / `uv` 的差异在于“是否管理 Python 版本与原生依赖”以及“解析速度”，选型应基于项目特征而非偏好；隔离的本质是独立的解释器、`site-packages` 与 `sys.prefix`，激活与否可通过 `sys.prefix != sys.base_prefix` 可靠判断。
 - **Shell 的核心是可组合的文本流水线**：文件系统提供统一的路径抽象，进程提供隔离的执行上下文，管道提供“单件工具 + 文本流”的组合能力；`pathlib` / `subprocess` / 生成器表达式可用 Python 复刻这些思想，便于在脚本与 CI 中保持一致行为。
 - **自动化脚本把操作变成代码**：`subprocess` 负责进程调用（避免 `shell=True`）、`shutil` 负责可移植文件操作、`argparse`（或 `click`）负责命令行封装；“参数解析与业务逻辑分离”是脚本可测试的关键。
-- **Git 是内容寻址的 DAG**：`blob` / `tree` / `commit` 的哈希寻址解释了分支、合并与重放的本质；`Git Flow` 适合多版本并行，`GitHub Flow` 适合持续交付，选择取决于发布节奏与团队规模，而非技术潮流。
+- **Git 工作流让协作可预期**：用分支隔离并行开发、用小步提交让历史可读、用 PR 承载 Review 与 CI 校验；`Git Flow` 适合多版本并行，`GitHub Flow` 适合持续交付，选择取决于发布节奏与团队规模，而非技术潮流。
 - **贯穿启示**：本章所有能力共同服务于“可复现、可协作、可审计”的工程底座；后续章节的质量门禁、测试、容器化与 CI/CD 都建立在这一底座之上。
 
-> **贯穿案例 — MeetingToText**：本章的通用模式在 MeetingToText 中均有对应。教学包 `m2t` 与真实项目的 `backend/app` 分层是项目结构的两种落地，`TaskStore` 与 `export` 的组合演示了存储与导出的可测试闭环，而 Git 的内容寻址思想也被用于任务快照的追溯设计。具体映射详见各节末尾案例框。
+> **贯穿案例 — MeetingToText**：本章的通用模式在 MeetingToText 中均有对应。教学包 `m2t` 与真实项目的 `backend/app` 分层是项目结构的两种落地，`TaskStore` 与 `export` 的组合演示了存储与导出的可测试闭环，而 Git 的分支与 PR 工作流则对应“短命分支、PR 驱动、CI 校验后合入主线”的协作实践。具体映射详见各节末尾案例框。
 
 ## 思考题
 
@@ -22,7 +22,7 @@ kernelspec:
 3. **管道与函数**：Shell 管道 `find | xargs | sort` 与 Python 的生成器管道各有何优劣？在一个“上传 → 预处理 → 分析 → 导出”四段流水线中，哪一段更适合用管道思维，哪一段更适合用函数调用？可结合 MeetingToText 的“上传 → 切片 → 转写 → 纪要”对照思考。
 4. **自动化粒度**：`Makefile` 与 Python 脚本在自动化中的分工应如何界定？当一个自动化任务需要在不同 Linux 环境（本机、CI、服务器）间保持一致时，你会如何决定用 `Makefile`、`Shell` 还是 `Python` 实现？
 5. **Git 工作流演进**：假设一个单人课程项目演进为 10 人团队的持续交付产品，你会如何从 GitHub Flow 逐步引入 `release` 分支或 feature flag？分支策略的变更会对 CI 流水线与发布流程带来哪些连锁影响？
-6. **对象模型的启发**：Git 用 `SHA-1(头部 + 内容)` 做内容寻址，`m2t.store.TaskStore` 用 SQLite 做任务持久化。能否为任务存储设计一种类似 Git 的“不可变快照”机制？这种机制会如何影响“任务回滚”与“审计追溯”能力？
+6. **提交粒度的启发**：Git 提倡“一个提交只做一件事”以便回退与 Review，`m2t.store.TaskStore` 用 SQLite 做任务持久化。能否为任务设计类似的“小步快照”机制？这种机制会如何影响“任务回滚”与“审计追溯”能力？
 7. **工具选型**：`uv` 声称比 `pip` 快 10–100 倍，但引入新工具也有学习与迁移成本。结合你所在团队的 CI 时长与成员熟悉度，讨论何时值得引入 `uv`，何时应保持 `venv + pip` 的简单方案。
 
 示例（本章贯通校验：用教学包串联“存储 → 导出”最小闭环）：
@@ -48,7 +48,7 @@ with tempfile.TemporaryDirectory() as td:
             "duration": 10,
             "segments": [{"speaker": "说话人1", "text": task["full_text"], "start": 0, "end": 2}],
         },
-        "minutes": "要点：环境隔离、管道组合、Git DAG",
+        "minutes": "要点：环境隔离、管道组合、分支协作",
     }
     md = export(fake_task, "md")
     print(md.splitlines()[0])
@@ -56,6 +56,6 @@ with tempfile.TemporaryDirectory() as td:
     print("闭环校验通过：store -> export 可独立测试与组合")
 # 预期输出:
 # stored: demo.wav pending
-# # 会议转录 — demo.wav
+# # 会议转录
 # 闭环校验通过：store -> export 可独立测试与组合
 ```

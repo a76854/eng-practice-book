@@ -22,7 +22,7 @@
 
 | 书名 | 类型 | 推荐理由 |
 |---|---|---|
-| 《Pro Git》（Scott Chacon，免费） | 核心 | `blob / tree / commit` 对象模型的权威讲解，对照本章 1.5 节的 Git 原理 |
+| 《Pro Git》（Scott Chacon，免费） | 核心 | 分支与 PR 工作流的权威讲解，对照本章 1.5 节的 Git 协作实践 |
 | 《Effective Python（第2版，Brett Slatkin）》 | 核心 | `pyproject.toml` / `venv` / `pathlib` / `subprocess` 的 Pythonic 实践 |
 | 《The Pragmatic Programmer》（Hunt & Thomas） | 进阶 | “自动化一切”“不要重复自己”与本章脚本自动化的思想底座 |
 

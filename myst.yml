@@ -20,7 +20,7 @@ project:
             - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.2_dependencies_virtualenv.md
             - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.3_shell_fs_process_pipe.md
             - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.4_python_automation_scripts.md
-            - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.5_git_core_model_workflow.md
+            - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.5_git_workflow.md
             - file: book/part1_software_engineering/chapter01_dev_meta_skills/summary_and_questions.md
         - file: book/part1_software_engineering/chapter02_code_quality/index.md
           children:
