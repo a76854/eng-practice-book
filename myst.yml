@@ -26,7 +26,7 @@ project:
             - file: book/part1_software_engineering/chapter01_dev_meta_skills/summary_and_questions.md
         - file: book/part1_software_engineering/chapter02_code_quality/index.md
           children:
-            - file: book/part1_software_engineering/chapter02_code_quality/2.1_type_system_defensive_programming.md
+            - file: book/part1_software_engineering/chapter02_code_quality/2.1_type_system.md
             - file: book/part1_software_engineering/chapter02_code_quality/2.2_static_check_code_style.md
             - file: book/part1_software_engineering/chapter02_code_quality/2.3_testing_engineering_mindset.md
             - file: book/part1_software_engineering/chapter02_code_quality/2.4_pytest_advanced.md
