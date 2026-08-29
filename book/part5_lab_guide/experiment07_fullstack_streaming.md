@@ -1,4 +1,4 @@
-# 实验七 前后端联调与流式响应集成
+# 前后端联调与流式响应集成
 
 本实验对应理论 [第9章 与外部世界的集成](../../part4_advanced_engineering/chapter09_external_integration/index.md)。建议先通读第9章 9.1 至 9.3 节的第三方集成模式、语音识别接入与大模型流式接口，再阅读 `m2t/asr.py` 的 `normalize_result` 与 `m2t/llm.py` 的 `LLMClient` / `map_llm_error`，最后参考 `book/part4_advanced_engineering/chapter09_external_integration/demo_llm_stream.py` 的 SSE 仿真思路，再动手。你会在本实验中用 FastAPI 打通录音上传、实时转写与 AI 总结的完整链路，用 EventSource 在前端做流式渲染，并在本机用 mock 完成可演示的联调闭环。
 

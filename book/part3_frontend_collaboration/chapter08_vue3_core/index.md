@@ -4,7 +4,7 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-# 第8章 Vue3 核心机制与状态设计
+# Vue3 核心机制与状态设计
 
 > **本章学习目标**
 > - 能够用 Proxy 与发布-订阅解释 Vue 3 响应式的本质，区分 `ref` / `reactive` / `computed` / `watch` 的适用边界，并说清组合式 API 生命周期的执行时机

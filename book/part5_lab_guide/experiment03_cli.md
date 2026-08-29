@@ -1,4 +1,4 @@
-# 实验三 里程碑A CLI 音频转写工具
+# CLI 音频转写工具
 
 本实验对应理论 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第9章 与外部世界的集成](../../part4_advanced_engineering/chapter09_external_integration/index.md)。建议先通读第1章 1.4 节的自动化脚本与第9章 9.1 至 9.2 节的第三方服务集成与音频归一，再动手。你会在本实验中以纯命令行形态完成 MeetingToText 的首个可交付切片，体会不依赖 Web 框架时如何把业务逻辑与输入输出干净分开。
 
@@ -14,7 +14,7 @@
 
 ### 步骤 1 阅读理论与现状
 
-1. 阅读 [第1章 1.4 Python 自动化脚本](../../part1_software_engineering/chapter01_dev_meta_skills/1.4_python_automation_scripts.md) 中关于 `argparse`、`subprocess` 与脚本封装的讨论，理解为何超过 10 行的自动化一律用 Python 而非 Shell。
+1. 阅读 [第1章 1.5 Python 自动化脚本](../../part1_software_engineering/chapter01_dev_meta_skills/1.5_python_automation_scripts.md) 中关于 `argparse`、`subprocess` 与脚本封装的讨论，理解为何超过 10 行的自动化一律用 Python 而非 Shell。
 2. 阅读 [第9章 9.1 第三方服务集成模式](../../part4_advanced_engineering/chapter09_external_integration/9.1_third_party_service_integration.md) 与 [9.2 语音识别接入](../../part4_advanced_engineering/chapter09_external_integration/9.2_asr_integration.md)，留意音频格式归一、结果多形状归一与错误脱敏的思想。
 3. 在书仓根目录尝试 `python -c "from m2t.audio import load_audio; print(load_audio.__doc__[:80])"`，确认只读导入可用，无需启动真实 ASR 服务。
 

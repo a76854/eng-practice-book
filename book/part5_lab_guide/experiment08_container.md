@@ -1,4 +1,4 @@
-# 实验八 里程碑 B 与 C 全栈容器化与答辩
+# 全栈容器化
 
 本实验对应理论 [第11章 部署、容器化与持续集成](../../part4_advanced_engineering/chapter11_deploy_cicd/index.md)。建议先通读第11章 11.1 至 11.4 节的部署演进、Dockerfile 最佳实践、Compose 编排与 CI 流水线，再对照 `labs/lab08_fullstack_container/starter/` 的 Dockerfile 与 Compose 起手骨架，最后动手。你会在本实验中把全栈应用容器化，用 Compose 在本地完成联调预演，并整理答辩材料，完成从可运行到可交付的收口。
 

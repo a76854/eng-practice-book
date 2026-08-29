@@ -1,4 +1,4 @@
-# 实验六 前端页面开发与路由状态管理
+# 前端页面开发与路由状态管理
 
 本实验对应理论 [第7章 前端开发概况与工程化演进](../../part3_frontend_collaboration/chapter07_frontend_overview/index.md) 与 [第8章 Vue3 核心机制与状态设计](../../part3_frontend_collaboration/chapter08_vue3_core/index.md)。建议先通读第7章 7.2 至 7.4 节的框架选型与工程基石，再通读第8章 8.1 至 8.4 节的响应式、组件化、路由与 Pinia，最后参考 `labs/lab06_frontend_routing_state/starter/` 的起手骨架，再动手。你会在本实验中用 Vue3 + Pinia + Vue Router 完成会议记录管理面板、登录态保持与路由拦截的闭环。
 

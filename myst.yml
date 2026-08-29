@@ -1,7 +1,9 @@
 version: 1
 project:
   title: 算法编程与工程实践
-  numbering: { headings: true }
+  numbering:
+    title: true
+    headings: true
   exclude:
     - labs/**
     - m2t/**
@@ -18,9 +20,9 @@ project:
           children:
             - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.1_engineering_project_structure.md
             - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.2_dependencies_virtualenv.md
-            - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.3_shell_fs_process_pipe.md
-            - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.4_python_automation_scripts.md
-            - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.5_git_workflow.md
+            - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.3_git_workflow.md
+            - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.4_shell.md
+            - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.5_python_automation_scripts.md
             - file: book/part1_software_engineering/chapter01_dev_meta_skills/summary_and_questions.md
         - file: book/part1_software_engineering/chapter02_code_quality/index.md
           children:
@@ -105,16 +107,19 @@ project:
             - file: book/part4_advanced_engineering/chapter11_deploy_cicd/summary_and_questions.md
     - file: book/part5_lab_guide/index.md
       children:
-        - file: book/part5_lab_guide/experiment01_project_init_automation/index.md
-        - file: book/part5_lab_guide/experiment02_unit_test_static_check/index.md
-        - file: book/part5_lab_guide/experiment03_milestone_a_cli/index.md
-        - file: book/part5_lab_guide/experiment04_restful_api_db_migration/index.md
-        - file: book/part5_lab_guide/experiment05_async_refactor_load_test/index.md
-        - file: book/part5_lab_guide/experiment06_frontend_routing_state/index.md
-        - file: book/part5_lab_guide/experiment07_fullstack_streaming/index.md
-        - file: book/part5_lab_guide/experiment08_milestone_bc_container/index.md
-    - file: book/appendix/appendix_a_course_design.md
-    - file: book/appendix/appendix_b_references.md
+        - file: book/part5_lab_guide/experiment01_homework_organizer.md
+        - file: book/part5_lab_guide/experiment02_unit_test_static_check.md
+        - file: book/part5_lab_guide/experiment03_cli.md
+        - file: book/part5_lab_guide/experiment04_restful_api_db_migration.md
+        - file: book/part5_lab_guide/experiment05_async_refactor_load_test.md
+        - file: book/part5_lab_guide/experiment06_frontend_routing_state.md
+        - file: book/part5_lab_guide/experiment07_fullstack_streaming.md
+        - file: book/part5_lab_guide/experiment08_container.md
+    - file: book/appendix/index.md
+      children:
+        - file: book/appendix/appendix_a_course_design.md
+        - file: book/appendix/appendix_b_references.md
+        - file: book/appendix/appendix_c_usage_of__init__.py.md
 site:
   title: 算法编程与工程实践
   template: book-theme

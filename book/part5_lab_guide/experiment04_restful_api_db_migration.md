@@ -1,4 +1,4 @@
-# 实验四 RESTful API 构建与数据库迁移
+# RESTful API 构建与数据库迁移
 
 本实验对应理论 [第4章 HTTP 与 RESTful 架构](../../part2_backend_development/chapter04_http_restful/index.md) 与 [第5章 数据持久化：从 SQL 到 ORM](../../part2_backend_development/chapter05_persistence_sql_orm/index.md)。建议先通读第4章 4.1 至 4.4 节的 HTTP 语义与 FastAPI 路由，再通读第5章 5.3 至 5.4 节的数据库访问三境界与迁移思想，再动手。你会在本实验中用 FastAPI 实现会议记录的增删改查接口，并用版本化思想管理表结构演进。
 

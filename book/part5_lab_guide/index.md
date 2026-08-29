@@ -8,13 +8,13 @@
 
 本篇包含以下 8 个实验：
 
-- [实验一 工程初始化与自动化脚本](experiment01_project_init_automation/index.md)，从 `src` 布局与虚拟环境到 Shell 与 Python 自动化，建立可复现的工程起点
-- [实验二 单元测试与静态检查实战](experiment02_unit_test_static_check/index.md)，用类型检查、Ruff 与 pytest 为项目加上质量护城河
-- [实验三 里程碑 A，CLI 转写工具](experiment03_milestone_a_cli/index.md)，以命令行形态完成 MeetingToText 的首个可交付切片，贯通音频处理与导出
-- [实验四 RESTful API 与数据库迁移](experiment04_restful_api_db_migration/index.md)，用 FastAPI 与 SQLAlchemy 实现任务接口与持久化，并通过 Alembic 管理演进
-- [实验五 异步改造与压力测试](experiment05_async_refactor_load_test/index.md)，将同步逻辑异步化，处理 GIL 与事件循环陷阱，并通过压测验证改进
-- [实验六 前端页面与路由状态管理](experiment06_frontend_routing_state/index.md)，用 Vue 3 与 Pinia 完成页面、路由与跨组件状态的协作
-- [实验七 前后端联调与流式响应](experiment07_fullstack_streaming/index.md)，通过 OpenAPI 契约完成联调，实现流式返回与进度反馈
-- [实验八 里程碑 B/C，全栈容器化与答辩](experiment08_milestone_bc_container/index.md)，以前后端联调为基础，完成容器编排、持续集成与项目答辩的完整交付
+- [实验一 课程作业整理工具](experiment01_homework_organizer.md)，按 8 位学号与 Excel 名单重命名 20 份作业并按班级归档，贯通 `uv` / `argparse` / `pathlib` / `Makefile` / Git 分支
+- [实验二 单元测试与静态检查实战](experiment02_unit_test_static_check.md)，用类型检查、Ruff 与 pytest 为项目加上质量护城河
+- [实验三 CLI 转写工具](experiment03_cli.md)，以命令行形态完成 MeetingToText 的首个可交付切片，贯通音频处理与导出
+- [实验四 RESTful API 与数据库迁移](experiment04_restful_api_db_migration.md)，用 FastAPI 与 SQLAlchemy 实现任务接口与持久化，并通过 Alembic 管理演进
+- [实验五 异步改造与压力测试](experiment05_async_refactor_load_test.md)，将同步逻辑异步化，处理 GIL 与事件循环陷阱，并通过压测验证改进
+- [实验六 前端页面与路由状态管理](experiment06_frontend_routing_state.md)，用 Vue 3 与 Pinia 完成页面、路由与跨组件状态的协作
+- [实验七 前后端联调与流式响应](experiment07_fullstack_streaming.md)，通过 OpenAPI 契约完成联调，实现流式返回与进度反馈
+- [实验八 全栈容器化](experiment08__container.md)，以前后端联调为基础，完成容器编排、持续集成与项目答辩的完整交付
 
 建议将本篇与理论篇交叉推进，每学完一章即完成对应实验，让概念在动手中有落脚点。所有实验均可在书仓根目录的 `.venv` 环境中复现，环境约定为 Linux，详见各实验文档。

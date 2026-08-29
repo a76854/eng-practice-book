@@ -1,4 +1,0 @@
-# Lab01 starter has no third-party dependencies; stdlib only.
-# Keep empty to emphasize isolation. Optional dev tools:
-# ruff>=0.9
-# pre-commit>=3.0

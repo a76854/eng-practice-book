@@ -4,7 +4,7 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-# 第5章 数据持久化：从 SQL 到 ORM
+# 数据持久化：从 SQL 到 ORM
 
 > **本章学习目标**
 > - 能够用 ER 图完成数据建模并映射为关系表结构，用 `sqlite3` 与 `SQLAlchemy` 的 DDL 将 ER 落成 `students / courses / enrollments` 三张可运行库表，并说明主键、外键与索引的声明方式

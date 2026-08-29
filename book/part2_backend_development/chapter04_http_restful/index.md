@@ -4,7 +4,7 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-# 第4章 HTTP 与 RESTful 架构
+# HTTP 与 RESTful 架构
 
 > **本章学习目标**
 > - 能够用方法语义、幂等性、状态码与 Header 四要素解释 HTTP 的设计意图，并在 FastAPI 中用契约化方式表达这些语义
