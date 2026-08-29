@@ -34,7 +34,7 @@ project:
       children:
         - file: book/part2_backend_development/chapter03_backend_essence/index.md
           children:
-            - file: book/part2_backend_development/chapter03_backend_essence/3.1_responsibility_boundary.md
+            - file: book/part2_backend_development/chapter03_backend_essence/3.1_what_is_backend.md
             - file: book/part2_backend_development/chapter03_backend_essence/3.2_language_comparison.md
             - file: book/part2_backend_development/chapter03_backend_essence/3.3_framework_ecosystem.md
             - file: book/part2_backend_development/chapter03_backend_essence/3.4_why_fastapi.md
@@ -50,8 +50,8 @@ project:
             - file: book/part2_backend_development/chapter04_http_restful/summary_and_questions.md
         - file: book/part2_backend_development/chapter05_persistence_sql_orm/index.md
           children:
-            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.1_relational_db_principles.md
-            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.2_sql_advanced.md
+            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.1_database_modeling_er.md
+            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.2_building_database.md
             - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.3_python_db_three_levels.md
             - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.4_db_migration_alembic.md
             - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.5_data_modeling_principles.md

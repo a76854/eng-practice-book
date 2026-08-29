@@ -1,6 +1,6 @@
 # 《算法编程与工程实践》
 
-本仓库是《算法编程与工程实践》教科书的源文件，以 MeetingToText 为贯穿演示项目，用真实代码串联工程实践，基于 MyST (`mystmd` v1) 构建。全书采用五篇结构，正文 11 章 + 实验 8 个，配套 8 个 `labs/` 动手实验（README + starter 脚手架，无标准答案、无自动判分）。
+本仓库是《算法编程与工程实践》教科书的源文件，以MeetingtoText案例串联工程实践，基于 MyST (`mystmd` v1) 构建。全书采用五篇结构，正文 11 章 + 实验 8 个，配套 8 个 `labs/` 动手实验（README + starter 脚手架，无标准答案、无自动判分）。
 
 ## 目录结构
 
@@ -116,7 +116,7 @@ ls labs/lab01_project_init/starter/
 
 ## 可复用资产
 
-- `m2t/`：教学辅助包，精简实现 MeetingToText 核心能力（`asr` / `store` / `export` / `llm` / `audio`），`pip install -e ".[dev]"` 后可 `import m2t`。
+- `m2t/`：教学辅助包，精简实现音频处理、任务存储、导出等最小能力（`asr` / `store` / `export` / `llm` / `audio`），`pip install -e ".[dev]"` 后可 `import m2t`。
 - `deploy-demo/`：部署演示资产（`Dockerfile.backend`、`docker-compose.yml`、`ci.yml`），供第 11 章与实验 08 参考。
 - `book/samples/vue-min`：前端最小可运行样例。
 - `requirements.txt`：MyST 执行链依赖（`nbclient`/`ipykernel`/`jupyter-server`/`fastapi`）；`myst.yml` 的 `project.exclude` 已排除 `labs/**`、`m2t/**` 等非正文路径。
@@ -129,7 +129,7 @@ ls labs/lab01_project_init/starter/
 | 全量执行构建 | `myst clean --execute -y && myst build --html --execute --strict` |
 | 增量构建 | `myst build --html` |
 | 查看内核 | `jupyter kernelspec list` |
-| 只读检查（演示项目） | `git -C /home/huiguo/tools/MeetingToText status --porcelain \| wc -l` |
+| 构建检查 | `myst build --html --execute --strict 2>&1 | tail -n 20` |
 
 ---
 

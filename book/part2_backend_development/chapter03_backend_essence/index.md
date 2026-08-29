@@ -14,7 +14,7 @@ kernelspec:
 > - 能够用 Controller-Service-Repository 三层在 Python 中落地一个可测试、可替换存储的最小后端切片
 
 > **为什么需要掌握本章**
-> 会写接口不等于理解后端。真实的 MeetingToText 从“上传音频”到“返回纪要”要穿越网关、鉴权、校验、业务编排、持久化、外部服务集成与可观测性——每一步都在考验你对职责边界的判断。本章是第二篇的起点，也是全书从“代码质量”迈向“系统设计”的转折点：先把后端的版图与选型逻辑讲透，后续的 HTTP、存储、并发与部署才有落脚点。
+> 会写接口不等于理解后端。真实业务从“上传音频”到“返回纪要”要穿越网关、鉴权、校验、业务编排、持久化、外部服务集成与可观测性——每一步都在考验你对职责边界的判断。本章是第二篇的起点，也是全书从“代码质量”迈向“系统设计”的转折点：先把后端的版图与选型逻辑讲透，后续的 HTTP、存储、并发与部署才有落脚点。
 
 > **预计理论学时**：3学时
 
@@ -22,13 +22,13 @@ kernelspec:
 
 章内结构如下：
 
-- [3.1 职责边界](3.1_responsibility_boundary.md) —— 后端的四条职责线：API 设计、业务逻辑、数据流转、安全防护，以及一条请求如何穿过它们
+- [3.1 后端是什么：为什么前后端分离](3.1_what_is_backend.md) —— 前端—后端—存储一句话定位后端、模板直出 vs JSON API、`/api` 前缀的职责分界与四条边界
 - [3.2 语言横向对比](3.2_language_comparison.md) —— Java / C# / Go / PHP 与 Python 的客观对比：适用场景、生态与代价，而非“谁更好”
 - [3.3 框架生态谱系](3.3_framework_ecosystem.md) —— 从全栈 Django 到微架构 Flask 再到高性能 FastAPI，谱系如何形成
 - [3.4 为何选择 FastAPI](3.4_why_fastapi.md) —— 异步原生、自动文档、类型安全：FastAPI + Pydantic 的组合为什么适合本课程
 - [3.5 分层架构落地](3.5_layered_architecture.md) —— Controller-Service-Repository 在 Python 中的一种朴素落地，让每一层可独立测试与替换
 
-此外，本章所有示例均可在书仓 `.venv` 环境中复现；涉及 MeetingToText 的片段统一通过教学包 `m2t` 复用（如 `m2t/store.py` 的 `TaskStore`），无需启动真实服务。
+此外，本章所有示例均可在书仓 `.venv` 环境中复现；涉及示例的片段统一通过教学包 `m2t` 复用（如 `m2t/store.py` 的 `TaskStore`），无需启动真实服务。
 
 > **环境约定**：本书面向 Linux，本章命令均面向 Linux，路径与环境激活统一使用 `source .venv/bin/activate` 与 `/` 分隔符；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../part1_software_engineering/chapter01_dev_meta_skills/index.md) 与 [第2章 构筑代码质量的护城河](../../part1_software_engineering/chapter02_code_quality/index.md)。
 

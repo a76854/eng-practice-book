@@ -20,5 +20,5 @@ kernelspec:
 2. **GIL 边界辨析**：有人说“Python 多线程没用，应该全部用异步”。请结合 GIL 在 I/O 时释放与 `asyncio` 单线程协作的特性，辨析该说法的适用边界与反例。
 3. **事件循环阻塞的定位**：线上 FastAPI 服务在高并发下 P99 延迟突增，怀疑某 `async def` 路由阻塞了事件循环。你会如何用日志、剖析或最小复现脚本定位是哪一行阻塞？定位后会选择哪种修复（线程池 / 改同步路由 / 异步客户端）并说明理由？
 4. **剖析与优化的可验证性**：你用 `cProfile` 发现 `slow_path` 占 80% 时间，用 `timeit` 验证某优化使该函数快 30%，但端到端请求仅快 5%。请解释可能的原因（Amdahl 定律、非热点瓶颈、数据库侧等），并设计一个“度量—优化—回归”的验证步骤。
-5. **数据库并发与性能的权衡**：`m2t/store.py` 的 `idx_tasks_status` 能加速按状态查询，但会拖慢写入。若任务表的读写比从 10:1 变为 1:10，你是否仍保留该索引？请结合 [第5章 索引代价](../chapter05_persistence_sql_orm/5.1_relational_db_principles.md) 说明判断依据，并思考如何用 `EXPLAIN QUERY PLAN` 验证。
+5. **数据库并发与性能的权衡**：`m2t/store.py` 的 `idx_tasks_status` 能加速按状态查询，但会拖慢写入。若任务表的读写比从 10:1 变为 1:10，你是否仍保留该索引？请结合 [第5章 索引代价](../chapter05_persistence_sql_orm/5.1_database_modeling_er.md) 说明判断依据，并思考如何用 `EXPLAIN QUERY PLAN` 验证。
 6. **异步与同步的协作设计**：若 MeetingToText 的转写流水线中，ASR 调用是 I/O 密集而重采样是 CPU 密集，你会如何设计一个“`asyncio` 负责 I/O 重叠 + 进程池负责计算”的混合流水线？需要考虑任务切分、结果汇合与错误传播的哪些细节？

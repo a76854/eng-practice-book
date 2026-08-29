@@ -14,7 +14,7 @@ kernelspec:
 > - 能够利用 FastAPI 自动生成的 OpenAPI/Swagger 契约完成前后端契约测试，理解“契约即代码”对协作的保障作用
 
 > **为什么需要掌握本章**
-> 后端的第一触点就是 HTTP：前端、网关、可观测与外部集成都通过它对话。把 HTTP 当作“发送 JSON 的管道”会让状态码随意、幂等性丢失、错误格式各异，调试与联调成本随之上扬。本章以 MeetingToText 的 `backend/app/routers`（`upload` / `transcribe` / `export` / `health`）为贯穿案例，把 HTTP 语义、RESTful 成熟度、FastAPI 路由、统一响应与 OpenAPI 契约串成一条可验证的协作闭环——让契约在代码中可执行，而非文档中可漂移。
+> 后端的第一触点就是 HTTP：前端、网关、可观测与外部集成都通过它对话。把 HTTP 当作“发送 JSON 的管道”会让状态码随意、幂等性丢失、错误格式各异，调试与联调成本随之上扬。本章以示例后端路由（如 `upload` / `transcribe` / `export` / `health`）为例，把 HTTP 语义、RESTful 成熟度、FastAPI 路由、统一响应与 OpenAPI 契约串成一条可验证的协作闭环——让契约在代码中可执行，而非文档中可漂移。
 
 > **预计理论学时**：3学时
 
@@ -22,8 +22,8 @@ kernelspec:
 
 章内结构如下：
 
-- [4.1 HTTP 协议精髓](4.1_http_protocol_essence.md) —— 方法、幂等性、状态码语义与 Header 设计：HTTP 为什么这样设计
-- [4.2 RESTful 成熟度模型](4.2_restful_maturity_model.md) —— 从 RPC-style 到 Hypermedia：Richardson 四级的演进与选型
+- [4.1 HTTP 协议精髓](4.1_http_protocol_essence.md) —— HTTP 方法/状态码用法：方法语义、幂等性与状态码的契约化表达
+- [4.2 RESTful 成熟度模型](4.2_restful_maturity_model.md) —— RESTful API 设计入门：从 RPC-style 到资源的演进与选型
 - [4.3 FastAPI 路由设计](4.3_fastapi_routing.md) —— 路径/查询/请求体参数的声明式校验与依赖注入
 - [4.4 异常处理与全局响应](4.4_exception_global_response.md) —— 统一返回格式与全局异常处理的协作价值
 - [4.5 OpenAPI 契约测试](4.5_openapi_contract_test.md) —— 自动生成 Swagger 与前后端契约测试
