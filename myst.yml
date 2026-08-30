@@ -28,9 +28,7 @@ project:
           children:
             - file: book/part1_software_engineering/chapter02_code_quality/2.1_type_system.md
             - file: book/part1_software_engineering/chapter02_code_quality/2.2_static_check_code_style.md
-            - file: book/part1_software_engineering/chapter02_code_quality/2.3_testing_engineering_mindset.md
-            - file: book/part1_software_engineering/chapter02_code_quality/2.4_pytest_advanced.md
-            - file: book/part1_software_engineering/chapter02_code_quality/2.5_test_coverage_quality_gate.md
+            - file: book/part1_software_engineering/chapter02_code_quality/2.3_testing_coverage_and_ci.md
             - file: book/part1_software_engineering/chapter02_code_quality/summary_and_questions.md
     - file: book/part2_backend_development/index.md
       children:

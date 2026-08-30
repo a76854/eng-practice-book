@@ -18,47 +18,10 @@ kernelspec:
 
 > **预计理论学时**：3学时
 
-本章延续“先动机、后定义、再可运行示例”的节奏：每一节都先讲清工程痛点，再给出最小可用定义，最后用一段可在本机复现的 `{code-cell}` 把概念固定到 `m2t` 真实代码上。与第 1 章相同，所有示例均在书仓根目录的 `.venv` 环境中可复现，无需真实的 ASR 模型或 LLM 网络调用。
+本章延续“先动机、后定义、再可运行示例”的节奏：每一节都先讲清工程痛点，再给出最小可用定义。
 
 章内结构如下：
 
-- [2.1 类型系统与防御性编程](2.1_type_system_defensive_programming.md) —— 为什么需要类型标注，`mypy` 严格模式如何把“约定”变成“检查”，防御性编程如何让错误尽早失败
+- [2.1 类型系统](2.1_type_system.md) —— 为什么需要类型标注，`mypy` 严格模式如何把“约定”变成“检查”，防御性编程如何让错误尽早失败
 - [2.2 静态检查与代码风格](2.2_static_check_code_style.md) —— `Ruff` 如何一站式替代 `Flake8` / `Black` / `isort`，工程化配置与自动修复的落地路径
-- [2.3 测试的工程思维](2.3_testing_engineering_mindset.md) —— 测试金字塔、AAA 模式与边界条件，`pytest` 断言与最简可信用例
-- [2.4 Pytest 进阶](2.4_pytest_advanced.md) —— `fixture` 作用域、工厂与 `unittest.mock` 对外部依赖的隔离
-- [2.5 测试覆盖率与质量门禁](2.5_test_coverage_quality_gate.md) —— 覆盖率的度量、解读与 CI 红线，避免“为数字而测试”
-
-此外，本章所有示例均可通过教学包 `m2t` 复用（如 `m2t/audio.py`、`m2t/store.py`、`m2t/export.py` 的真实签名），无需启动真实服务。
-
-> **环境约定**：本书面向 Linux，本章命令均面向 Linux，路径与环境激活统一使用 `source .venv/bin/activate` 与 `/` 分隔符；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../chapter01_dev_meta_skills/index.md)。
-
-示例（验证本章环境与 `m2t` 教学包可用）：
-
-```{code-cell} ipython3
-import sys, pathlib
-
-import m2t
-from m2t.audio import load_audio
-from m2t.store import TaskStore
-from m2t.export import export
-
-print("m2t version:", m2t.__version__)
-print("python:", sys.version.split()[0])
-print("m2t modules:", [m for m in dir(m2t) if not m.startswith("_")][:5])
-# 验证核心 API 可导入（无需真实模型/网络）
-print("load_audio:", load_audio.__name__)
-print("TaskStore:", TaskStore.__name__)
-print("export:", export.__name__)
-# 预期输出:
-# m2t version: 0.1.0
-# python: 3.12.x
-# m2t modules: [...]
-# load_audio: load_audio
-# TaskStore: TaskStore
-# export: export
-```
-
-```bash
-# 本章所有 code-cell 均用 .venv 中的 Python 执行
-.venv/bin/python -c "import m2t; print(m2t.__version__)"
-```
+- [2.3 测试、覆盖率和CI](./2.3_testing_coverage_and_ci.md) —— 测试金字塔、AAA 模式与边界条件，`pytest` 断言与最简可信用例
