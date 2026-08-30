@@ -11,7 +11,7 @@
 
 ## 背景故事
 
-你是一个班级的助教。期末考试结束了，同学们通过网盘或邮箱提交了课程作业。你下载了全班 20 位同学的作业，文件命名五花八门：
+你是一门公选课的助教（课程代号 `6942083555982`）。期末作业收齐了，共 120 份，来自 4 个自然班：`261041` / `261042`（软件工程）/`260851` / `260852`（人工智能），每班 30 人。文件名五花八门：
 
 ```
 作业1.pdf
@@ -22,14 +22,15 @@ exp3_李四.zip
 ...
 ```
 
-同时你有一份 Excel 选课名单待生成（见“辅助工具”一节），你的任务是：**按名单把 20 份作业重命名为统一格式，再按班级分类存放**。
+同时你有一份 Excel 选课名单（使用辅助工具生成），你的任务是：**按名单把 120 份作业重命名为统一格式，再按班级分类存放**。
 
-## 辅助工具：生成 20 份作业与统计表
+## 辅助工具：生成 120 份作业与统计表
 
-本工具由教师提供[generate_roster.py](../../labs/lab01_project_init/generate_roster.py)，用于生成后续整理所需的数据，直接运行即可，无需实现。
+本工具由教师提供 [generate_roster.py](../../labs/lab01/generate_roster.py)，用于生成后续整理所需的数据，直接运行即可，无需实现。
 
 ```bash
-python tools/generate_roster.py --output data/roster.xlsx --source data/source --seed 42
+python labs/lab01/generate_roster.py --output data/roster.xlsx --source data/source --seed 42
+# 生成 120 行（4班×30）+ 120 个作业文件
 ```
 
 ## 项目需求
@@ -41,13 +42,14 @@ python tools/generate_roster.py --output data/roster.xlsx --source data/source -
 - 支持 `--dry-run` 模式（仅预览，不实际执行；不写文件、不改表）
 - 仅暴露 4 个 CLI 参数：`--roster`、`--source`、`--output`、`--dry-run`（另含自动 `--help`）
 
-**示例 Excel 格式**（`roster.xlsx`，由生成工具产出）：
+**示例 Excel 格式**（`roster.xlsx`，由生成工具产出，120 行，按学号排序，班级为全量 `261041` 四位）：
 
 | 学号 | 姓名 | 班级 | 原始作业文件名 | 修改后作业文件名 |
 |------|------|------|---------------|-----------------|
-| 26104101 | 张三 | 1 |  |  |
-| 26104202 | 李四 | 2 |  |  |
-| 26104103 | 王五 | 1 |  |  |
+| 26104101 | 张三 | 261041 |  |  |
+| 26104215 | 李四 | 261042 |  |  |
+| 26085108 | 王五 | 260851 |  |  |
+| 26085222 | 赵六 | 260852 |  |  |
 
 ## 实验步骤
 
@@ -146,7 +148,6 @@ git merge feat/organize-homework
 help:
 	@echo "可用命令:"
 	@echo "  make install  - 安装依赖"
-	@echo "  make generate - 生成 20 份作业与 roster.xlsx"
 	@echo "  make run      - 运行作业整理脚本"
 	@echo "  make clean    - 清理临时文件"
 
@@ -206,7 +207,7 @@ git push origin --delete feat/organize-homework
 | 验收项 | 具体要求 |
 |--------|----------|
 | **项目结构** | 使用 `src/` 布局，`pyproject.toml` 完整，依赖通过 `uv add` 添加 |
-| **核心功能** | 能正确读取 Excel、按姓名匹配文件、按表格学号重命名为 `学号_姓名_班级.扩展名` 并按班级分类，且**回填** `roster.xlsx` 的 `原始作业文件名` / `修改后作业文件名` 两列 |
+| **核心功能** | 能正确读取 120 行 Excel、按姓名匹配 120 个文件、按表格学号重命名为 `学号_姓名_班级.扩展名` 并按 4 班级分类，且**回填** `roster.xlsx` 的 `原始作业文件名` / `修改后作业文件名` 两列 |
 | **参数支持** | 仅 `--roster`、`--source`、`--output`、`--dry-run`、`--help`，无多余参数 |
 | **表头定位** | 定位“学号/姓名/班级” |
 | **未识别处理** | 无法匹配的文件放入 `未识别/` 目录，并在 roster 中对应行留空或标记 |
@@ -233,12 +234,22 @@ python -m homework_organizer.organizer --roster data/roster.xlsx --source data/s
 python -m homework_organizer.organizer --roster data/roster.xlsx --source data/source --output data/output
 
 # 自测结果
-- [x] 正确读取 20 行 roster，按表头名定位
+- [x] 正确读取 120 行 roster（4班×30），按表头名定位
 - [x] 重命名符合 8 位规则且回填后两列一一对应
 - [x] --dry-run 只预览不执行
 - [x] --help 仅显示 4 参数
-- [x] 未识别文件放入未识别目录
+- [x] 未识别文件放入未识别目录（本次 120 份应全部命中）
 
 # 运行记录
 贴上 tree 输出
 ```
+
+### 评分参考
+
+| 部分 | 分值 | 说明 |
+|------|------|------|
+| 项目结构与依赖管理 | 20% | `uv init`、`pyproject.toml`、`.gitignore` |
+| 脚本功能实现 | 30% | 核心逻辑完整，姓名提取支持 3 种模式 |
+| 命令行参数 | 15% | `argparse` 实现所有参数 |
+| Git 使用 | 20% | 分支、提交、PR 流程规范 |
+| Makefile | 15% | 三个目标可用，运行正确 |

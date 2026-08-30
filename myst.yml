@@ -26,11 +26,9 @@ project:
             - file: book/part1_software_engineering/chapter01_dev_meta_skills/summary_and_questions.md
         - file: book/part1_software_engineering/chapter02_code_quality/index.md
           children:
-            - file: book/part1_software_engineering/chapter02_code_quality/2.1_type_system_defensive_programming.md
+            - file: book/part1_software_engineering/chapter02_code_quality/2.1_type_system.md
             - file: book/part1_software_engineering/chapter02_code_quality/2.2_static_check_code_style.md
-            - file: book/part1_software_engineering/chapter02_code_quality/2.3_testing_engineering_mindset.md
-            - file: book/part1_software_engineering/chapter02_code_quality/2.4_pytest_advanced.md
-            - file: book/part1_software_engineering/chapter02_code_quality/2.5_test_coverage_quality_gate.md
+            - file: book/part1_software_engineering/chapter02_code_quality/2.3_testing_coverage_and_ci.md
             - file: book/part1_software_engineering/chapter02_code_quality/summary_and_questions.md
     - file: book/part2_backend_development/index.md
       children:
@@ -108,7 +106,7 @@ project:
     - file: book/part5_lab_guide/index.md
       children:
         - file: book/part5_lab_guide/experiment01_homework_organizer.md
-        - file: book/part5_lab_guide/experiment02_unit_test_static_check.md
+        - file: book/part5_lab_guide/experiment02_grade_analysis.md
         - file: book/part5_lab_guide/experiment03_cli.md
         - file: book/part5_lab_guide/experiment04_restful_api_db_migration.md
         - file: book/part5_lab_guide/experiment05_async_refactor_load_test.md

@@ -4,69 +4,27 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-## 本章小结
+# 本章小结
 
-- **类型是协作的书面合同**：Python 类型标注把“形状假设”显式化，`mypy`（尤其是严格模式）把“约定”变为“可检查的契约”；对 `m2t.audio` / `m2t.store` 等真实签名标注后，空值、联合类型与容器形状的错误可在提交前被捕获，而非在线上静默失败。
-- **防御性编程让非法状态尽早失败**：在边界处校验输入、显式处理 `None` 分支、用 `Literal` 与 `dataclass` 让非法状态不可表示，比“深入调用栈后才抛错”更易定位与修复。
-- **静态检查与格式化是协作噪声的收敛器**：`Ruff` 以单一配置一站式替代 `Flake8` / `Black` / `isort`，`pyproject.toml` 的 `select` 与 `line-length` 成为全仓单一事实源；`check --fix` 与 `format` 让风格与低级缺陷在提交前自动闭环，`git diff` 只承载业务变更。
-- **测试金字塔与 AAA 让验证可分层、可回归**：单元测试覆盖纯函数与边界（如 `m2t.export`、`normalize_result`），集成测试验证 `store` 与 `export` 的协作，`E2E` 按需保留；AAA 模式让每个用例的准备、执行与断言清晰可溯，边界条件（空输入、单/多元素、非法格式、负时间戳）是真实用户输入而非额外负担。
-- **Fixture 与 Mock 降低测试的成本与波动**：`fixture` 按 `function` / `module` / `session` 作用域复用准备逻辑与清理，`unittest.mock` 对 `ASR` / `LLM` / 文件系统等不稳定依赖提供替身；在“可观测行为”上断言，而非过度绑定实现细节。
-- **覆盖率与门禁让信任可度量、可自动化**：行覆盖与分支覆盖是后视镜，揭示盲区但不保证正确；CI 中的 `ruff` / `mypy` / `pytest --cov --cov-fail-under` 构成质量门禁，本地与 CI 共用 `pyproject.toml`，阈值按“缺陷成本 × 变更频率”设定，避免为数字而测试。
-- **贯穿启示**：类型、风格、测试与覆盖率四道工序共同服务于“可信交付”。`m2t` 教学包（`audio` / `asr` / `store` / `export` / `llm`）在各节中被反复复用，正是为了展示“同一套护城河如何在不同章节的真实代码上持续生效”。
+- **类型系统：从"口头约定"到"书面合同"**。`typing` 标注锁住函数形状，`dataclass` 固化数据结构，`pydantic` 在边界做运行时校验。三者是递进关系——从编辑期检查到运行时拦截，层层加固，让 Python 代码兼具灵活性与可靠性。
 
-## 思考题
+- **静态检查与类型检查：两道自动化的防线**。Ruff 一站式覆盖 Flake8 + Black + isort，管风格、管逻辑异味、管自动修复；mypy 管类型标注是否与实际使用一致。Ruff 能自动修，mypy 不能——这正是"规范"与"正确"的本质区别。二者在 `pyproject.toml` 中统一配置，在提交前与 CI 中自动化执行。
 
-1. **标注的取舍**：`m2t.export` 的 `task` 参数既接受 `dict` 也接受对象，若用 `Any` 放行最省事，用 `TypedDict` + `Protocol` 精确约束则更安全。结合“标注维护成本 × 调用方多样性”，讨论何时应收窄、何时可适度放宽。
-2. **严格模式的引入路径**：`mypy --strict` 对既有代码会产生大量告警。若你接手一个 2 万行的存量项目，会如何分阶段引入严格检查（按目录、按新文件、按 CI 增量门禁）而不过度阻塞迭代？
-3. **Ruff 规则的团队共识**：`select = ["E", "F", "W", "I", "B", "UP", "SIM"]` 并非唯一答案。若团队对 `line-length` 与 `UP`（自动升级语法）存在分歧，你会如何通过数据（diff 噪声、CI 时长、成员反馈）而非偏好来达成一致？
- 4. **金字塔的变形**：音视频链路中，端到端测试成本高但信心强，单元测试快但离用户远。讨论在“无真实 ASR 模型”的教学环境中，如何用 `FakeModel` 与 `Mock` 把部分 E2E 信心下沉到集成层，以及这种下沉的边界在哪里。
-5. **Mock 的度**：对 `LLMClient.generate` 的测试中，`assert_called_with` 能验证消息形状，但也会让测试与实现细节耦合。辨析“验证可观测输出”与“验证内部调用”的 trade-off，什么情况下应保留调用断言，什么情况下应移除。
-6. **覆盖率的误用**：某次提交将行覆盖从 78% 提升到 92%，但新增用例仅让代码“被执行”而未断言关键分支（如 `TaskStore.get` 返回 `None` 的处理）。讨论如何通过“分支覆盖 + 关键路径清单”而非单一数字来评估测试充分性。
- 7. **门禁的演进**：假设演示项目从单人课程项目演进为多人协作的持续交付产品，CI 门禁从“本地可跑”扩展到“PR 必须通过 `ruff` / `mypy` / `pytest --cov-fail-under=80`”。这种变更会对开发者体验与合并节奏带来哪些影响？如何通过增量门禁与缓存来平衡安全与效率？
+- **测试与 CI：让"跑得对"成为可验证的契约**。测试金字塔给出策略（单元 70% / 集成 20% / E2E 10%），pytest 提供工具（`parametrize` / `fixture` / `mock`），覆盖率提供度量，CI 提供自动化门禁。Ruff → mypy → pytest → coverage 串成完整流水线，任何一步失败代码即被阻断。
 
-示例（本章贯通校验：用 `m2t` 串联“类型 → 风格 → 测试 → 覆盖率”最小闭环）：
+- **三条防线，层层递进**：类型系统审"形状对不对"，静态检查审"写得规范吗"，测试审"跑得对吗"。三者合一，才构成"可审查、可回归、可部署"的工程基线。
 
-```{code-cell} ipython3
-import tempfile, pathlib
+# 思考题
 
-from m2t.store import TaskStore
-from m2t.export import export
-from m2t.asr import normalize_result
+1. **类型系统的边界**：`dataclass` 和 `pydantic.BaseModel` 都能"定义数据结构"，它们的核心区别是什么？在什么场景下你会选择 `dataclass` 而不是 `pydantic`，反过来什么时候用 `pydantic` 而不必用 `dataclass`？请从"运行时校验"和"序列化能力"两个维度分析。
 
-with tempfile.TemporaryDirectory() as td:
-    db = pathlib.Path(td) / "summary.db"
-    store = TaskStore(db)
+2. **自动修复的代价**：Ruff 的 `--fix` 能自动修复大量风格问题，这让代码格式化变得极其轻松。但 `mypy` 不能自动修复类型错误——为什么？类型错误和风格错误的本质区别是什么？如果存在一个"自动修复类型错误"的工具，你认为它可能引入什么样的新问题？
 
-    # 1) 类型与防御：创建任务（显式处理 None 分支）
-    store.create("s1", "demo.wav", full_text="本章讲述类型、风格、测试与覆盖率")
-    row = store.get("s1")
-    assert row is not None
-    print("stored:", row["filename"], row["status"])
+3. **测试替身的边界**：单元测试要求隔离外部依赖（数据库、网络、文件系统），所以需要 `mock`。但过度使用 `mock` 也会带来问题——测试可能变成"测试 Mock 本身的行为"，而非真实代码的行为。你如何判断"该 Mock"与"不该 Mock"的边界？请结合测试金字塔的不同层级说明。
 
-    # 2) 测试思维：ASR 归一的边界（空结果与正常结果）
-    assert normalize_result([]) == []
-    segs = normalize_result([{"sentence_info": [{"text": row["full_text"], "start": 0, "end": 2000, "spk": 0}]}])
-    assert len(segs) == 1
-    assert segs[0]["speaker"] == "说话人1"
-    print("normalize:", segs[0])
+4. **覆盖率的陷阱**：一个项目的测试覆盖率达到 95%，但生产环境仍然出了严重 bug。请分析可能的场景：覆盖率数字掩盖了什么问题？除了"行覆盖率"之外，还有哪些维度可以衡量测试质量？
 
-    # 3) 导出：复用 m2t.export 的纯函数能力（与存储解耦，便于单测）
-    fake_task = {
-        "id": row["id"],
-        "filename": row["filename"],
-        "result": {"duration": 2, "segments": segs},
-        "minutes": "要点：护城河让重构有底气",
-    }
-    # txt / srt / md 三种格式均可回归
-    assert "说话人1" in export(fake_task, "txt")
-    assert "00:00:00,000" in export(fake_task, "srt")
-    md = export(fake_task, "md")
-    print(md.splitlines()[0])
-    assert "demo.wav" in md
-    print("闭环校验通过：store -> asr.normalize -> export 可独立测试与组合")
-# 预期输出:
-# stored: demo.wav pending
-# normalize: {'speaker': '说话人1', 'text': '本章讲述类型、风格、测试与覆盖率', 'start': 0.0, 'end': 2.0}
-# # 会议转录 — demo.wav
-# 闭环校验通过：store -> asr.normalize -> export 可独立测试与组合
-```
+5. **CI 的断点**：你的 CI 流水线包含 Ruff、mypy、pytest（含覆盖率）三个阶段。有一天，mypy 阶段报了 3 个新的类型错误，但 Ruff 和 pytest 都通过了。这个 PR 该不该被合入？如果团队有人建议"先用 `# type: ignore` 把报错压住，后面再修"，你会怎么回应？
+
+6. **测试与重构的互惠关系**：有经验的工程师常说"没有测试就不敢重构"。请结合你自己的代码经验，描述一次"有测试保护下的重构"和"没有测试的手动修改"在体验上的差异。测试在重构中具体扮演了什么角色？
+
