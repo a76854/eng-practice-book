@@ -11,7 +11,7 @@ kernelspec:
 - **FastAPI 路由是声明式契约**：路径参数定位资源、查询参数修饰集合、请求体承载载荷，三者在函数签名与 `BaseModel` 中以类型标注声明，`Field` 约束在边界自动校验并以 `422` 暴露，`Depends` 让分页、鉴权与存在性检查可复用、可测试。
 - **统一信封让协作可收敛**：`code/data/msg` 的成功/失败信封叠加 `@app.exception_handler` 对 `HTTPException / RequestValidationError / Exception` 的三类收敛，使校验错误、业务冲突与未捕获异常在同一形状下被前端可靠消费，日志与监控亦可按 `code` 聚合。
 - **OpenAPI 让文档即真相**：`openapi.json` 由 Pydantic 与路由签名自动生成，`TestClient` 对该契约的路径、方法、请求体与响应形状做本地断言即是契约测试，文档漂移在 CI 中即被捕获，前端可据此生成类型与客户端，实现契约驱动的并行开发。
-- **贯穿启示**：本章的“HTTP 语义—成熟度—路由校验—统一响应—契约测试”五步，把 [第3章的分层思想](../chapter03_backend_essence/3.5_layered_architecture.md) 落到可执行的协作闭环——契约在代码中可验证，在文档中不漂移，在联调中不猜测。
+- **贯穿启示**：本章的“HTTP 语义—成熟度—路由校验—统一响应—契约测试”五步，把 [第3章的分层思想](../chapter03_backend_essence/3.3_fastapi_and_layered_architecture.md) 落到可执行的协作闭环——契约在代码中可验证，在文档中不漂移，在联调中不猜测。
 
 ## 思考题
 

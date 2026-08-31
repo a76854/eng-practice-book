@@ -35,10 +35,8 @@ project:
         - file: book/part2_backend_development/chapter03_backend_essence/index.md
           children:
             - file: book/part2_backend_development/chapter03_backend_essence/3.1_what_is_backend.md
-            - file: book/part2_backend_development/chapter03_backend_essence/3.2_language_comparison.md
-            - file: book/part2_backend_development/chapter03_backend_essence/3.3_framework_ecosystem.md
-            - file: book/part2_backend_development/chapter03_backend_essence/3.4_why_fastapi.md
-            - file: book/part2_backend_development/chapter03_backend_essence/3.5_layered_architecture.md
+            - file: book/part2_backend_development/chapter03_backend_essence/3.2_language_and_framework.md
+            - file: book/part2_backend_development/chapter03_backend_essence/3.3_fastapi_and_layered_architecture.md
             - file: book/part2_backend_development/chapter03_backend_essence/summary_and_questions.md
         - file: book/part2_backend_development/chapter04_http_restful/index.md
           children:
