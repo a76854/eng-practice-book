@@ -22,11 +22,11 @@ kernelspec:
 
 章内结构如下：
 
-- [4.1 HTTP 协议精髓](4.1_http_protocol_essence.md) —— HTTP 方法/状态码用法：方法语义、幂等性与状态码的契约化表达
-- [4.2 RESTful 成熟度模型](4.2_restful_maturity_model.md) —— RESTful API 设计入门：从 RPC-style 到资源的演进与选型
-- [4.3 FastAPI 路由设计](4.3_fastapi_routing.md) —— 路径/查询/请求体参数的声明式校验与依赖注入
-- [4.4 异常处理与全局响应](4.4_exception_global_response.md) —— 统一返回格式与全局异常处理的协作价值
-- [4.5 OpenAPI 契约测试](4.5_openapi_contract_test.md) —— 自动生成 Swagger 与前后端契约测试
+- [4.1 HTTP 协议精髓](4.1_http_protocol_essence.md) —— 用方法、幂等性、状态码与 Header 让请求意图、结果与追踪线索可被共同理解
+- [4.2 RESTful 成熟度模型](4.2_restful_maturity_model.md) —— 从 RPC-style 到资源、动词与状态码，理解 Level 2 的收益与 Level 3 的适用边界
+- [4.3 FastAPI 路由设计](4.3_fastapi_routing.md) —— 用路径、查询、请求体与 Depends 分别表达定位、修饰、载荷与可复用守门规则
+- [4.4 异常处理与全局响应](4.4_exception_global_response.md) —— 统一信封与全局异常处理器如何收敛校验、业务与未知错误
+- [4.5 OpenAPI 契约测试](4.5_openapi_contract_test.md) —— 从路由和模型自动生成 OpenAPI，并用契约测试守住前后端协作边界
 
 此外，本章所有示例均可在书仓 `.venv` 环境中复现；涉及 MeetingToText 的片段复用 `m2t.store.TaskStore` 与 FastAPI 的 `TestClient`（见 [m2t 源码](../../../m2t/store.py) 的精简实现），无需启动真实服务。
 
