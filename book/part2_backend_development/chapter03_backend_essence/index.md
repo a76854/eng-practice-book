@@ -22,11 +22,11 @@ kernelspec:
 
 章内结构如下：
 
-- [3.1 后端是什么：为什么前后端分离](3.1_what_is_backend.md) —— 前端—后端—存储一句话定位后端、模板直出 vs JSON API、`/api` 前缀的职责分界与四条边界
-- [3.2 语言横向对比](3.2_language_comparison.md) —— Java / C# / Go / PHP 与 Python 的客观对比：适用场景、生态与代价，而非“谁更好”
-- [3.3 框架生态谱系](3.3_framework_ecosystem.md) —— 从全栈 Django 到微架构 Flask 再到高性能 FastAPI，谱系如何形成
-- [3.4 为何选择 FastAPI](3.4_why_fastapi.md) —— 异步原生、自动文档、类型安全：FastAPI + Pydantic 的组合为什么适合本课程
-- [3.5 分层架构落地](3.5_layered_architecture.md) —— Controller-Service-Repository 在 Python 中的一种朴素落地，让每一层可独立测试与替换
+- [3.1 后端是什么](3.1_what_is_backend.md) —— 从展示、业务与存储混杂的痛点出发，用 JSON API、`/api` 前缀和四条职责线建立稳定边界
+- [3.2 语言横向对比](3.2_language_comparison.md) —— 用负载、团队、存量、生态和运维约束客观比较 Java / C# / Go / PHP 与 Python
+- [3.3 框架生态谱系](3.3_framework_ecosystem.md) —— 比较 Django、Flask、FastAPI 分别替团队承担哪些工程责任，以及各自的适用代价
+- [3.4 为何选择 FastAPI](3.4_why_fastapi.md) —— 将 I/O 等待、前后端契约与边界校验映射到异步、OpenAPI 和 Pydantic
+- [3.5 分层架构落地](3.5_layered_architecture.md) —— 用可替换 Repository 与可独立测试的 Service 落地 Controller—Service—Repository 单向依赖
 
 此外，本章所有示例均可在书仓 `.venv` 环境中复现；涉及示例的片段统一通过教学包 `m2t` 复用（如 `m2t/store.py` 的 `TaskStore`），无需启动真实服务。
 

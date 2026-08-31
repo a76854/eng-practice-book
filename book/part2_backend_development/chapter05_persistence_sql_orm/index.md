@@ -4,7 +4,7 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-# 数据持久化：从 SQL 到 ORM
+# 数据持久化
 
 > **本章学习目标**
 > - 能够用 ER 图完成数据建模并映射为关系表结构，用 `sqlite3` 与 `SQLAlchemy` 的 DDL 将 ER 落成 `students / courses / enrollments` 三张可运行库表，并说明主键、外键与索引的声明方式
@@ -22,10 +22,10 @@ kernelspec:
 
 章内结构如下：
 
-- [5.1 数据建模：从 ER 图到表结构](5.1_database_modeling_er.md) —— 实体/属性/关系与 ER 图的 Mermaid 表达：从 ER 到 CREATE TABLE 的映射与约束验证
-- [5.2 用 SQLite 与 SQLAlchemy 建库](5.2_building_database.md) —— 标准库 `sqlite3` 的 DDL 建库与 `SQLAlchemy` 声明式建库：从 ER 到可运行库表
-- [5.3 Python 操作数据库三境界](5.3_python_db_three_levels.md) —— 原生 `sqlite3` / 驱动层 `asyncpg` / ORM 层 `SQLAlchemy 2.0` 的分层与选型
-- [5.4 数据库迁移 Alembic](5.4_db_migration_alembic.md) —— 版本控制与回滚思想：用 SQLite 模拟 Alembic 的迁移步骤
+- [5.1 数据建模](5.1_database_modeling_er.md) —— 实体、属性、关系与 ER 图如何映射为表、主键、外键和约束
+- [5.2 构建数据库](5.2_building_database.md) —— 用标准库 `sqlite3` 与 SQLAlchemy 声明式模型表达同一套数据库结构
+- [5.3 Python 操作数据库](5.3_python_db_three_levels.md) —— 原生 `sqlite3`、驱动层 `asyncpg` 与 ORM 层 SQLAlchemy 的职责和取舍
+- [5.4 数据库迁移](5.4_db_migration_alembic.md) —— 用 revision、升级、降级和版本表管理结构演进
 - [5.5 数据建模原则](5.5_data_modeling_principles.md) —— 范式化与反范式化：何时拆表、何时冗余
 
 此外，本章所有可执行示例均可在书仓 `.venv` 环境中复现；涉及示例的片段复用 `m2t.store.TaskStore`（见 [m2t 源码](../../../m2t/store.py) 的精简实现），无需启动真实的 ASR 或 LLM 服务。
@@ -35,7 +35,7 @@ kernelspec:
 示例（验证本章环境与 `m2t.store.TaskStore` 可用）：
 
 ```{code-cell} ipython3
-import sys, pathlib, sqlite3
+import gc, sys, pathlib, sqlite3
 
 import m2t
 from m2t.store import TaskStore
@@ -51,6 +51,8 @@ store = TaskStore(pathlib.Path(tmpdir.name) / "index_check.db")
 store.create("demo-index", "demo.wav")
 row = store.get("demo-index")
 print("store get:", row["id"], row["filename"], row["status"])
+del store
+gc.collect()  # Windows 上先回收尚未显式关闭的 SQLite 连接，再删除临时文件
 tmpdir.cleanup()
 print("prefix:", pathlib.Path(sys.prefix).name)
 # 预期输出:

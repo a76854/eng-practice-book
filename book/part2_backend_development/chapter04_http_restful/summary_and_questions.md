@@ -6,11 +6,11 @@ kernelspec:
 
 ## 本章小结
 
-- **HTTP 是语义契约，而非传输管道**：方法（GET/POST/PUT/PATCH/DELETE）承载安全性与幂等性，状态码（200/201/204/400/404/409/422/500）划分责任，Header 承载内容协商、缓存与追踪。幂等性直接决定重试与网关策略，状态码让调用方“按码决策”而非猜测。
-- **RESTful 成熟度是约束的叠加**：Level 0（单一入口）到 Level 1（资源）解决可寻址，到 Level 2（动词+状态码）让基础设施可理解语义，到 Level 3（Hypermedia）提供运行时自发现。本书以 MeetingToText 的 `backend/app/routers` 为例，选择 Level 2 为默认水位，Level 3 按“是否需向第三方提供可发现 API”按需取舍。
+- **HTTP 是语义契约，而非传输管道**：方法（GET/POST/PUT/PATCH/DELETE）表达安全性与幂等性等语义，状态码（200/201/204/400/404/409/422/500）表达结果，Header 承载内容协商、缓存与追踪。方法的幂等语义是制定重试策略的重要依据，但客户端仍需结合具体接口契约、请求体和重试键判断能否自动重发。
+- **Richardson 模型描述 HTTP API 的演进阶梯**：Level 0（单一入口）到 Level 1（资源）解决可寻址，到 Level 2（方法+状态码）让基础设施更容易理解语义，到 Level 3（Hypermedia）提供运行时自发现。本书的示例以 Level 2 为主要水位，Level 3 按是否需要运行时发现流程来取舍；层级本身不等于完整 REST 的合规认证。
 - **FastAPI 路由是声明式契约**：路径参数定位资源、查询参数修饰集合、请求体承载载荷，三者在函数签名与 `BaseModel` 中以类型标注声明，`Field` 约束在边界自动校验并以 `422` 暴露，`Depends` 让分页、鉴权与存在性检查可复用、可测试。
 - **统一信封让协作可收敛**：`code/data/msg` 的成功/失败信封叠加 `@app.exception_handler` 对 `HTTPException / RequestValidationError / Exception` 的三类收敛，使校验错误、业务冲突与未捕获异常在同一形状下被前端可靠消费，日志与监控亦可按 `code` 聚合。
-- **OpenAPI 让文档即真相**：`openapi.json` 由 Pydantic 与路由签名自动生成，`TestClient` 对该契约的路径、方法、请求体与响应形状做本地断言即是契约测试，文档漂移在 CI 中即被捕获，前端可据此生成类型与客户端，实现契约驱动的并行开发。
+- **OpenAPI 让契约可生成、可验证**：`openapi.json` 由 Pydantic 模型与路由声明生成，`TestClient` 再对路径、方法、请求体与响应形状做本地断言。只有被声明并被测试覆盖的契约变化，才能在 CI 中被可靠发现；前端也可据此生成类型与客户端，实现契约驱动的并行开发。
 - **贯穿启示**：本章的“HTTP 语义—成熟度—路由校验—统一响应—契约测试”五步，把 [第3章的分层思想](../chapter03_backend_essence/3.5_layered_architecture.md) 落到可执行的协作闭环——契约在代码中可验证，在文档中不漂移，在联调中不猜测。
 
 ## 思考题
@@ -34,6 +34,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 from pydantic import BaseModel, Field
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from m2t.store import TaskStore
 
 tmpdir = tempfile.TemporaryDirectory()
@@ -59,9 +60,13 @@ def ok(data: Any, msg: str = "ok") -> dict:
 
 app = FastAPI(title="Chapter04 Summary", version="0.1.0")
 
-@app.exception_handler(HTTPException)
-async def http_handler(request: Request, exc: HTTPException):
-    return JSONResponse(status_code=exc.status_code, content=Envelope(code=exc.status_code, data=None, msg=str(exc.detail)).model_dump())
+@app.exception_handler(StarletteHTTPException)
+async def http_handler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=Envelope(code=exc.status_code, data=None, msg=str(exc.detail)).model_dump(),
+        headers=exc.headers,
+    )
 
 @app.exception_handler(RequestValidationError)
 async def val_handler(request: Request, exc: RequestValidationError):
