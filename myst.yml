@@ -48,9 +48,8 @@ project:
           children:
             - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.1_database_modeling_er.md
             - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.2_building_database.md
-            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.3_python_db_three_levels.md
-            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.4_db_migration_alembic.md
-            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.5_data_modeling_principles.md
+            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.3_accessing_database.md
+            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.4_orm.md
             - file: book/part2_backend_development/chapter05_persistence_sql_orm/summary_and_questions.md
         - file: book/part2_backend_development/chapter06_concurrency_perf/index.md
           children:
