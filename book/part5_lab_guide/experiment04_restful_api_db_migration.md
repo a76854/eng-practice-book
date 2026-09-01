@@ -14,8 +14,8 @@
 
 ### 步骤 1 阅读理论与现状
 
-1. 阅读 [第4章 4.1 HTTP 协议精髓](../../part2_backend_development/chapter04_http_restful/4.1_http_protocol_essence.md) 至 [4.4 异常处理与全局响应](../../part2_backend_development/chapter04_http_restful/4.4_exception_global_response.md)，留意方法语义、状态码与统一响应的协作价值。
-2. 阅读 [第5章 5.3 Python 操作数据库三境界](../../part2_backend_development/chapter05_persistence_sql_orm/5.3_python_db_three_levels.md) 与 [5.4 数据库迁移 Alembic](../../part2_backend_development/chapter05_persistence_sql_orm/5.4_db_migration_alembic.md)，理解参数化查询与版本化迁移的必要性。
+1. 阅读 [第4章 4.1 HTTP 与 RESTful](../../part2_backend_development/chapter04_http_restful/4.1_http_and_restful.md) 至 [4.3 统一响应与契约](../../part2_backend_development/chapter04_http_restful/4.3_error_and_contract.md)，留意方法语义、状态码与统一响应的协作价值。
+2. 阅读 [第5章 5.3 SQL](../../part2_backend_development/chapter05_persistence_sql_orm/5.3_accessing_database.md) 与 [5.4 ORM](../../part2_backend_development/chapter05_persistence_sql_orm/5.4_orm.md)，理解参数化查询与 ORM 配合迁移的必要性。
 3. 在书仓根目录运行 `python -c "import fastapi, pydantic; print(fastapi.__version__, pydantic.__version__)"`，确认 FastAPI 与 Pydantic 可用。
 
 > 环境约定：本书面向 Linux，`uvicorn` 与 `pytest` 在行为一致，路径分隔符在展示时统一写 `/`，`pathlib.Path` 自动适配 `\`。

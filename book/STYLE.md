@@ -89,9 +89,9 @@ python m2t/demo.py
 
 ## 9 目录、命名与引用（Linux-only）
 
-- 正文小节文件命名：`<N.N>_<english_name>.md`（全英文小写下划线），如 `1.1_engineering_project_structure.md`、`4.3_fastapi_routing.md`。章末固定项为 `summary_and_questions.md`。
+- 正文小节文件命名：`<N.N>_<english_name>.md`（全英文小写下划线），如 `1.1_engineering_project_structure.md`、`4.2_fastapi_routing.md`。章末固定项为 `summary_and_questions.md`。
 - 章与节的编号由 `myst.yml` 的 `numbering: { headings: true }` 统一管理，文件命名仅作排序与可读性。
-- 跨章引用一律使用相对链接（从引用文件所在目录出发），如 `[](../chapter04_http_restful/4.1_http_protocol_essence.md)`（以第 3 章目录引用第 4 章第 1 节为例，兄弟章之间用 `../` 上跳一级），不使用绝对路径或硬编码 URL。
+- 跨章引用一律使用相对链接（从引用文件所在目录出发），如 `[](../chapter04_http_restful/4.1_http_and_restful.md)`（以第 3 章目录引用第 4 章第 1 节为例，兄弟章之间用 `../` 上跳一级），不使用绝对路径或硬编码 URL。
 - 全书命令与路径统一为 Linux 语法（`bash`、`/` 分隔符、`source .venv/bin/activate`、`.venv/bin/python`），不提供其他平台变体。
 
 ## 10 明令禁止
