@@ -35,26 +35,21 @@ project:
         - file: book/part2_backend_development/chapter03_backend_essence/index.md
           children:
             - file: book/part2_backend_development/chapter03_backend_essence/3.1_what_is_backend.md
-            - file: book/part2_backend_development/chapter03_backend_essence/3.2_language_comparison.md
-            - file: book/part2_backend_development/chapter03_backend_essence/3.3_framework_ecosystem.md
-            - file: book/part2_backend_development/chapter03_backend_essence/3.4_why_fastapi.md
-            - file: book/part2_backend_development/chapter03_backend_essence/3.5_layered_architecture.md
+            - file: book/part2_backend_development/chapter03_backend_essence/3.2_language_and_framework.md
+            - file: book/part2_backend_development/chapter03_backend_essence/3.3_fastapi_and_layered_architecture.md
             - file: book/part2_backend_development/chapter03_backend_essence/summary_and_questions.md
         - file: book/part2_backend_development/chapter04_http_restful/index.md
           children:
-            - file: book/part2_backend_development/chapter04_http_restful/4.1_http_protocol_essence.md
-            - file: book/part2_backend_development/chapter04_http_restful/4.2_restful_maturity_model.md
-            - file: book/part2_backend_development/chapter04_http_restful/4.3_fastapi_routing.md
-            - file: book/part2_backend_development/chapter04_http_restful/4.4_exception_global_response.md
-            - file: book/part2_backend_development/chapter04_http_restful/4.5_openapi_contract_test.md
+            - file: book/part2_backend_development/chapter04_http_restful/4.1_http_and_restful.md
+            - file: book/part2_backend_development/chapter04_http_restful/4.2_fastapi_routing.md
+            - file: book/part2_backend_development/chapter04_http_restful/4.3_error_and_contract.md
             - file: book/part2_backend_development/chapter04_http_restful/summary_and_questions.md
         - file: book/part2_backend_development/chapter05_persistence_sql_orm/index.md
           children:
             - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.1_database_modeling_er.md
             - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.2_building_database.md
-            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.3_python_db_three_levels.md
-            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.4_db_migration_alembic.md
-            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.5_data_modeling_principles.md
+            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.3_accessing_database.md
+            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.4_orm.md
             - file: book/part2_backend_development/chapter05_persistence_sql_orm/summary_and_questions.md
         - file: book/part2_backend_development/chapter06_concurrency_perf/index.md
           children:

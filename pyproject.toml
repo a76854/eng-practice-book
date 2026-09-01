@@ -11,6 +11,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+book = [
+    "nbclient==0.10.1",
+    "ipykernel==6.29.5",
+    "jupyter-client==8.9.1",
+    "jupyter-server==2.20.0",
+    "PyYAML==6.0.2",
+    "fastapi==0.141.1",
+    "PyJWT==2.13.0",
+    "sqlalchemy==2.0.52",
+]
 dev = [
     "pytest>=8.0",
     "ruff>=0.9",
