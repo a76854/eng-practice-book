@@ -35,9 +35,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          pip install -r requirements.txt
-          pip install jupyter-server
-          pip install -e ".[dev]"
+          pip install -e ".[book,dev]"
 
       - name: Register Jupyter kernel for MyST execution
         run: |

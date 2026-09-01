@@ -49,8 +49,7 @@ eng-practice-book/
 ├── m2t/                                     # 教学辅助包（精简实现，对应演示项目核心能力）
 ├── deploy-demo/                             # 部署演示（Dockerfile.backend / docker-compose.yml）
 ├── myst.yml                                 # MyST 项目配置（toc 列前言 + part1..5 + 附录）
-├── requirements.txt                         # 构建执行依赖（nbclient/ipykernel/jupyter-server/fastapi）
-└── pyproject.toml                           # m2t 包元数据（requires-python >=3.12, [dev] 含 pytest/ruff/mypy）
+└── pyproject.toml                           # m2t 包元数据 + [book] 构建执行依赖 + [dev] 开发依赖
 ```
 
 > `myst.yml` 的 `project.toc` 即全书目录权威来源；`m2t/`、`labs/`、`deploy-demo/`、`book/samples/` 均为可复用资产，不参与正文编号。
@@ -69,8 +68,8 @@ uv venv --python 3.12 && source .venv/bin/activate
 # 或
 python3.12 -m venv .venv && source .venv/bin/activate
 
-# 3) 安装教学包与开发依赖
-pip install -e ".[dev]"
+# 3) 安装教学包、开发依赖与书籍构建依赖
+pip install -e ".[book,dev]"
 
 # 4) 验证
 python -c "import m2t; print(m2t.__version__)"
@@ -119,13 +118,13 @@ ls labs/lab01_project_init/starter/
 - `m2t/`：教学辅助包，精简实现音频处理、任务存储、导出等最小能力（`asr` / `store` / `export` / `llm` / `audio`），`pip install -e ".[dev]"` 后可 `import m2t`。
 - `deploy-demo/`：部署演示资产（`Dockerfile.backend`、`docker-compose.yml`、`ci.yml`），供第 11 章与实验 08 参考。
 - `book/samples/vue-min`：前端最小可运行样例。
-- `requirements.txt`：MyST 执行链依赖（`nbclient`/`ipykernel`/`jupyter-server`/`fastapi`）；`myst.yml` 的 `project.exclude` 已排除 `labs/**`、`m2t/**` 等非正文路径。
+- `pyproject.toml` 的 `[book]` extra：MyST 执行链依赖（`nbclient`/`ipykernel`/`jupyter-server`/`fastapi`/`sqlalchemy`）；`myst.yml` 的 `project.exclude` 已排除 `labs/**`、`m2t/**` 等非正文路径。
 
 ## 常见命令速查
 
 | 目的 | 命令 |
 |------|------|
-| 安装依赖 | `pip install -e ".[dev]"` |
+| 安装依赖 | `pip install -e ".[book,dev]"` |
 | 全量执行构建 | `myst clean --execute -y && myst build --html --execute --strict` |
 | 增量构建 | `myst build --html` |
 | 查看内核 | `jupyter kernelspec list` |
