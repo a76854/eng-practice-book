@@ -13,4 +13,8 @@
 - [第5章 数据持久化](chapter05_persistence_sql_orm/index.md)，从关系型数据库原理到 SQL 进阶，再到 Python 操作数据库的三种形态与 Alembic 迁移，讲透数据如何可靠落地与演进
 - [第6章 并发模型与性能工程](chapter06_concurrency_perf/index.md)，区分并发、并行与异步，剖析 Python GIL 与异步陷阱，给出 FastAPI 异步编程与性能剖析的可操作方法
 
+读完四章后，本篇末尾用一节综合实战收束：用一个真实的注册接口，把分层、HTTP 契约与持久化串成一条完整链路。
+
+- [综合实战](synthesis_user_register.md)，从 `POST /users/register` 出发，依次穿过路由层、服务层与存储层，落到 201、400、409 响应
+
 建议在阅读本篇时同步推进实验三至实验五，让路由、存储与异步能力在动手项目中串联起来。

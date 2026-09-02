@@ -29,20 +29,19 @@ jobs:
           npm i -g mystmd
           myst --version
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
       - name: Install Python dependencies
         run: |
-          pip install -e ".[book,dev]"
+          uv sync --extra book --extra dev
 
       - name: Register Jupyter kernel for MyST execution
         run: |
-          python -m ipykernel install --user --name python3 --display-name "Python 3 (book)"
-          python -m ipykernel install --user --name book-venv --display-name "book-venv"
-          jupyter kernelspec list
-          python -c "import fastapi; print('fastapi', fastapi.__version__)"
+          uv run python -m ipykernel install --user --name python3 --display-name "Python 3 (book)"
+          uv run python -m ipykernel install --user --name book-venv --display-name "book-venv"
+          uv run jupyter kernelspec list
+          uv run python -c "import fastapi; print('fastapi', fastapi.__version__)"
 
       - name: Build book (honest execution, log-gated)
         env:
