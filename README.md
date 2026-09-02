@@ -56,20 +56,18 @@ eng-practice-book/
 
 ## 环境准备
 
-要求：Python 3.12 + Node 24（`mystmd` 需 Node 18+，CI 固定 Node 24.3.0）。
+要求：Node 24（`mystmd` 需 Node 18+，CI 固定 Node 24.3.0）；Python 由 uv 按 `requires-python` 自动准备。
 
 ```bash
 # 1) 克隆
 git clone {仓库URL}
 cd eng-practice-book
 
-# 2) 创建虚拟环境
-uv venv --python 3.12 && source .venv/bin/activate
-# 或
-python3.12 -m venv .venv && source .venv/bin/activate
+# 2) 同步依赖（uv 自动创建 .venv、生成 uv.lock，装好教学包与 book/dev 依赖）
+uv sync --extra book --extra dev
 
-# 3) 安装教学包、开发依赖与书籍构建依赖
-pip install -e ".[book,dev]"
+# 3) 激活环境（后续命令直接使用 python/jupyter/pytest，也让 myst 能找到执行内核）
+source .venv/bin/activate
 
 # 4) 验证
 python -c "import m2t; print(m2t.__version__)"
@@ -85,9 +83,9 @@ pytest --version && ruff --version && mypy --version
 npm i -g mystmd
 myst --version  # 期望 v1.10.1
 
-# 2) 注册执行内核（让 myst 找到 .venv 中的 fastapi/m2t）
-.venv/bin/python -m ipykernel install --user --name python3 --display-name "Python 3 (book)"
-.venv/bin/python -m ipykernel install --user --name book-venv --display-name "book-venv"
+# 2) 注册执行内核（让 myst 找到已激活环境中的 fastapi/m2t）
+python -m ipykernel install --user --name python3 --display-name "Python 3 (book)"
+python -m ipykernel install --user --name book-venv --display-name "book-venv"
 jupyter kernelspec list
 
 # 3) 增量构建（日常写作，不重跑 code-cell）
@@ -115,7 +113,7 @@ ls labs/lab01_project_init/starter/
 
 ## 可复用资产
 
-- `m2t/`：教学辅助包，精简实现音频处理、任务存储、导出等最小能力（`asr` / `store` / `export` / `llm` / `audio`），`pip install -e ".[dev]"` 后可 `import m2t`。
+- `m2t/`：教学辅助包，精简实现音频处理、任务存储、导出等最小能力（`asr` / `store` / `export` / `llm` / `audio`），`uv sync --extra dev` 后可 `import m2t`。
 - `deploy-demo/`：部署演示资产（`Dockerfile.backend`、`docker-compose.yml`、`ci.yml`），供第 11 章与实验 08 参考。
 - `book/samples/vue-min`：前端最小可运行样例。
 - `pyproject.toml` 的 `[book]` extra：MyST 执行链依赖（`nbclient`/`ipykernel`/`jupyter-server`/`fastapi`/`sqlalchemy`）；`myst.yml` 的 `project.exclude` 已排除 `labs/**`、`m2t/**` 等非正文路径。
@@ -124,7 +122,7 @@ ls labs/lab01_project_init/starter/
 
 | 目的 | 命令 |
 |------|------|
-| 安装依赖 | `pip install -e ".[book,dev]"` |
+| 安装依赖 | `uv sync --extra book --extra dev` |
 | 全量执行构建 | `myst clean --execute -y && myst build --html --execute --strict` |
 | 增量构建 | `myst build --html` |
 | 查看内核 | `jupyter kernelspec list` |

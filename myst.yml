@@ -59,6 +59,7 @@ project:
             - file: book/part2_backend_development/chapter06_concurrency_perf/6.4_fastapi_async_pitfalls.md
             - file: book/part2_backend_development/chapter06_concurrency_perf/6.5_performance_profiling.md
             - file: book/part2_backend_development/chapter06_concurrency_perf/summary_and_questions.md
+        - file: book/part2_backend_development/synthesis_user_register.md
     - file: book/part3_frontend_collaboration/index.md
       children:
         - file: book/part3_frontend_collaboration/chapter07_frontend_overview/index.md
