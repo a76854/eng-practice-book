@@ -35,13 +35,14 @@ jobs:
       - name: Install Python dependencies
         run: |
           uv sync --extra book --extra dev
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Register Jupyter kernel for MyST execution
         run: |
-          uv run python -m ipykernel install --user --name python3 --display-name "Python 3 (book)"
-          uv run python -m ipykernel install --user --name book-venv --display-name "book-venv"
-          uv run jupyter kernelspec list
-          uv run python -c "import fastapi; print('fastapi', fastapi.__version__)"
+          python -m ipykernel install --user --name python3 --display-name "Python 3 (book)"
+          python -m ipykernel install --user --name book-venv --display-name "book-venv"
+          jupyter kernelspec list
+          python -c "import fastapi, jupyter_server; print('fastapi', fastapi.__version__, 'jupyter_server', jupyter_server.__version__)"
 
       - name: Build book (honest execution, log-gated)
         env:

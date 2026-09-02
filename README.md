@@ -66,9 +66,12 @@ cd eng-practice-book
 # 2) 同步依赖（uv 自动创建 .venv、生成 uv.lock，装好教学包与 book/dev 依赖）
 uv sync --extra book --extra dev
 
-# 3) 验证
-uv run python -c "import m2t; print(m2t.__version__)"
-uv run pytest --version && uv run ruff --version && uv run mypy --version
+# 3) 激活环境（后续命令直接使用 python/jupyter/pytest，也让 myst 能找到执行内核）
+source .venv/bin/activate
+
+# 4) 验证
+python -c "import m2t; print(m2t.__version__)"
+pytest --version && ruff --version && mypy --version
 ```
 
 ## 构建书籍
@@ -80,10 +83,10 @@ uv run pytest --version && uv run ruff --version && uv run mypy --version
 npm i -g mystmd
 myst --version  # 期望 v1.10.1
 
-# 2) 注册执行内核（让 myst 找到 .venv 中的 fastapi/m2t）
-uv run python -m ipykernel install --user --name python3 --display-name "Python 3 (book)"
-uv run python -m ipykernel install --user --name book-venv --display-name "book-venv"
-uv run jupyter kernelspec list
+# 2) 注册执行内核（让 myst 找到已激活环境中的 fastapi/m2t）
+python -m ipykernel install --user --name python3 --display-name "Python 3 (book)"
+python -m ipykernel install --user --name book-venv --display-name "book-venv"
+jupyter kernelspec list
 
 # 3) 增量构建（日常写作，不重跑 code-cell）
 myst build --html
