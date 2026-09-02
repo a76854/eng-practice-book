@@ -10,7 +10,7 @@
 
 - [第3章 后端开发到底是什么](chapter03_backend_essence/index.md)，厘清前端、后端与存储的职责边界，对比主流语言与框架生态，解释本书为何选择 FastAPI 加 Pydantic，并用分层架构落地最小可测试切片
 - [第4章 HTTP 与 RESTful 架构](chapter04_http_restful/index.md)，从方法语义与状态码到 Richardson 成熟度模型，用 FastAPI 路由、统一响应与 OpenAPI 契约把接口设计从约定变为可验证的协作闭环
-- [第5章 数据持久化，从 SQL 到 ORM](chapter05_persistence_sql_orm/index.md)，从关系型数据库原理到 SQL 进阶，再到 Python 操作数据库的三种形态与 Alembic 迁移，讲透数据如何可靠落地与演进
+- [第5章 数据持久化](chapter05_persistence_sql_orm/index.md)，从关系型数据库原理到 SQL 进阶，再到 Python 操作数据库的三种形态与 Alembic 迁移，讲透数据如何可靠落地与演进
 - [第6章 并发模型与性能工程](chapter06_concurrency_perf/index.md)，区分并发、并行与异步，剖析 Python GIL 与异步陷阱，给出 FastAPI 异步编程与性能剖析的可操作方法
 
 建议在阅读本篇时同步推进实验三至实验五，让路由、存储与异步能力在动手项目中串联起来。
