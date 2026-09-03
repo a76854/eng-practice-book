@@ -1,6 +1,6 @@
 # Lab03 starter 说明
 
-本目录是实验三的起点骨架，对应 `book/part5_lab_guide/experiment03_milestone_a_cli/index.md`。
+本目录是实验三的起点骨架，对应 `book/lab_guide/cli/index.md`。
 
 ## 包含内容
 

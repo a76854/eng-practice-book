@@ -1,6 +1,6 @@
 # Lab06 starter 说明
 
-本目录是实验六的起点骨架，对应 `book/part5_lab_guide/experiment06_frontend_routing_state/index.md`。
+本目录是实验六的起点骨架，对应 `book/lab_guide/frontend_routing_state/index.md`。
 
 ## 包含内容
 

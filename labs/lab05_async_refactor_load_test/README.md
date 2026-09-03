@@ -1,6 +1,6 @@
 # 实验五 异步改造与接口压力测试
 
-> 对应理论 [第6章 并发模型与性能工程](../../book/part2_backend_development/chapter06_concurrency_perf/index.md) · 4 学时 · 任务说明与验收标准同 `book/part5_lab_guide/experiment05_async_refactor_load_test/index.md`
+> 对应理论 [第6章 并发模型与性能工程](../../book/backend_development/concurrency_perf/index.md) · 4 学时 · 任务说明与验收标准同 `book/lab_guide/async_refactor_load_test/index.md`
 
 ## 实验目标
 

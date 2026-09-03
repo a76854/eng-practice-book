@@ -1,6 +1,6 @@
 # Lab07 starter 说明
 
-本目录是实验七的起点骨架，对应 `book/part5_lab_guide/experiment07_fullstack_streaming/index.md`，打通录音上传到实时转写到 AI 总结的链路，并用 EventSource 做流式渲染。
+本目录是实验七的起点骨架，对应 `book/lab_guide/fullstack_streaming/index.md`，打通录音上传到实时转写到 AI 总结的链路，并用 EventSource 做流式渲染。
 
 ## 包含内容
 
