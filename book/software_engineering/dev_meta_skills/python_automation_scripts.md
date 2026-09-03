@@ -23,7 +23,7 @@ Shell 脚本擅长调用命令、搬运文件、拼接文本流，它是系统�
 
 Shell 脚本适合短小的"胶水"任务——把几个命令串起来，用管道传递文本。但当任务变得复杂时，Shell 的局限就会暴露出来：
 
-![](./pics/1.5_1_Python-script.png)
+![](./figs/1.5_1_Python-script.png)
 
 **1. 可移植性：同一段脚本，三台机器三种结果**
 
@@ -85,7 +85,7 @@ Shell 脚本的测试方式通常是"跑一遍，看输出对不对"。要模拟
 
 但现实是混乱的：
 
-![](./pics/1.5_2_Excel-file-sync.png)
+![](./figs/1.5_2_Excel-file-sync.png)
 
 - 有些文件从别的部门拷贝过来，文件名包含乱码或日期后缀（`大修操作票_final.docx`、`大修操作票_备份.docx`），和 Excel 对不上
 - 有人直接把文件放到了错误的文件夹，但 Excel 里记录的是正确位置
@@ -170,7 +170,7 @@ graph LR
     B-->C
 ```
 
-![](./pics/1.5_3_Script-Architecture.png)
+![](./figs/1.5_3_Script-Architecture.png)
 
 每一层只做一件事，所以可以分别测试和替换。
 
@@ -275,7 +275,7 @@ result = subprocess.run(
 
 一个"能用"的脚本和"工程级"的脚本之间，差的是这五个设计：
 
-![](./pics/1.5_7_Script-Design-Pattern.png)
+![](./figs/1.5_7_Script-Design-Pattern.png)
 
 1.  `--dry-run` 模式：先预览，再执行
 

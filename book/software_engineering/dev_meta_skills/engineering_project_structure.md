@@ -31,11 +31,11 @@ audio_tool/
 └── config.py        # 配置常量
 ```
 
-![flat layout](./pics/flat-layout.png)
+![flat layout](./figs/flat-layout.png)
 
 一切看似正常。直到有一天，你想在另一个项目里复用 `processor.py` 中的音频处理功能。你写了 `from audio_tool.processor import AudioProcessor`，却报 `ModuleNotFoundError`。你把 `audio_tool` 文件夹复制到新项目的目录下，调整了导入路径，总算能跑了。但过了一个月，你在第三个项目中又要用到这个功能——同样的代码，同样的导入错误，你不得不第三次折腾路径。
 
-![](./pics/import-error.png)
+![](./figs/import-error.png)
 
 你花时间才发现：`from audio_tool.processor` 能工作，完全是因为运行目录恰好包含了 `audio_tool` 这个文件夹。一旦离开这个"恰好"，Python 根本找不到它。
 
@@ -92,7 +92,7 @@ sys.path.append("..")  # 或更复杂的相对路径 hack
 
 ## 两种布局：扁平 vs `src`
 
-![flat vs src](./pics/flat-vs-src.png)
+![flat vs src](./figs/flat-vs-src.png)
 
 ```
 # 扁平布局
@@ -202,7 +202,7 @@ myproject/
 
 有了目录结构，接下来要解决"项目是什么"——它的名字、版本、依赖谁、怎么安装。过去很长一段时间，Python 社区依靠一系列分散的文件来回答这些问题。
 
-![](./pics/requirements-vs-pyproject-toml.png)
+![](./figs/requirements-vs-pyproject-toml.png)
 
 ### `requirements.txt` 的局限
 
@@ -230,7 +230,7 @@ pytest>=7.0.0
 - **PEP 517 — 如何构建**：`build-backend` 指定后端（如 `hatchling.build`）负责打包成 wheel / sdist。
 - **PEP 621 — 项目是谁**：`[project]` 以声明式描述项目元数据，替代散落在各处的配置文件。
 
-![](./pics/pyproject-toml.png)
+![](./figs/pyproject-toml.png)
 
 `pyproject.toml` 的出现，意味着从"一堆文件凑在一起描述项目"进化到"一个文件定义一切"。开发者不再需要在 `setup.py`、`setup.cfg`、`requirements.txt`、`MANIFEST.in` 之间来回跳转。
 
@@ -273,7 +273,7 @@ dev-dependencies = [
 
 **一个文件即是项目的单一事实源**——不仅依赖与元数据在此声明，质量工具如 Ruff、Mypy、Black 的配置也可收敛于 `[tool.ruff]`、`[tool.mypy]` 等段，进一步减少配置文件散落。
 
-![](./pics/src-layout.png)
+![](./figs/src-layout.png)
 
 写好这份文件后，`pip install -e .` 就能把项目装成可 `import` 的包，并可定义命令入口。`-e` 表示可编辑安装，源码改动无需重装即可生效，配合 `src` 布局可立即暴露导入或打包配置错误。
 

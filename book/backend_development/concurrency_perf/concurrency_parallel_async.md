@@ -13,7 +13,7 @@ kernelspec:
 - Python 的 threading、multiprocessing、asyncio 三种方案分别解决什么问题？各自适用什么场景？
 - 面对一个具体任务，如何做出合理的并发方案选型？
 
-![同步和异步](./pics/Concurrency_and_parallelism.png)
+![同步和异步](./figs/Concurrency_and_parallelism.png)
 
 > 并发与并行的混淆，就像把“一个厨师在四个灶台间轮流翻炒”和“四个厨师一人守一个灶台”当成同一件事。前者解决的是“一个人怎么让四口锅都不糊”，后者解决的是“四个人怎么同时出一桌菜”。
 
@@ -23,7 +23,7 @@ kernelspec:
 
 在进入概念辨析之前，先看看我们的示例。下面的 Demo 让同一组 50 毫秒 I/O 任务分别走串行、线程和 asyncio 并发，耗时差异本身就是定义。
 
-![串行多线程异步](./pics/Serial_multithreading_asynchronous.png)
+![串行多线程异步](./figs/Serial_multithreading_asynchronous.png)
 
 ```{code-cell} python
 import time
@@ -110,7 +110,7 @@ t_async = await run_async()
 
 ## 四者的关系
 
-![阻塞非阻塞同步异步](./pics/Blocking_non-blocking_synchronous_asynchronous.png)
+![阻塞非阻塞同步异步](./figs/Blocking_non-blocking_synchronous_asynchronous.png)
 
 阻塞与非阻塞、同步与异步是两对正交的概念。它们从不同维度描述同一件事，不能混用。
 
