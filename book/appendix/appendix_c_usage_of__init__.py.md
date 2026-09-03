@@ -1,4 +1,5 @@
 ---
+numbering: false
 kernelspec:
   name: book-venv
   display_name: Python 3 (book)

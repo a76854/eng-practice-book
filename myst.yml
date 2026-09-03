@@ -14,101 +14,93 @@ project:
     - evidence/**
   toc:
     - file: book/preface.md
-    - file: book/part1_software_engineering/index.md
+    - file: book/software_engineering/dev_meta_skills/index.md
       children:
-        - file: book/part1_software_engineering/chapter01_dev_meta_skills/index.md
-          children:
-            - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.1_engineering_project_structure.md
-            - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.2_dependencies_virtualenv.md
-            - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.3_git_workflow.md
-            - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.4_shell.md
-            - file: book/part1_software_engineering/chapter01_dev_meta_skills/1.5_python_automation_scripts.md
-            - file: book/part1_software_engineering/chapter01_dev_meta_skills/summary_and_questions.md
-        - file: book/part1_software_engineering/chapter02_code_quality/index.md
-          children:
-            - file: book/part1_software_engineering/chapter02_code_quality/2.1_type_system.md
-            - file: book/part1_software_engineering/chapter02_code_quality/2.2_static_check_code_style.md
-            - file: book/part1_software_engineering/chapter02_code_quality/2.3_testing_coverage_and_ci.md
-            - file: book/part1_software_engineering/chapter02_code_quality/summary_and_questions.md
-    - file: book/part2_backend_development/index.md
+        - file: book/software_engineering/dev_meta_skills/engineering_project_structure.md
+        - file: book/software_engineering/dev_meta_skills/dependencies_virtualenv.md
+        - file: book/software_engineering/dev_meta_skills/git_workflow.md
+        - file: book/software_engineering/dev_meta_skills/shell.md
+        - file: book/software_engineering/dev_meta_skills/python_automation_scripts.md
+        - file: book/software_engineering/dev_meta_skills/summary_and_questions.md
+    - file: book/software_engineering/code_quality/index.md
       children:
-        - file: book/part2_backend_development/chapter03_backend_essence/index.md
-          children:
-            - file: book/part2_backend_development/chapter03_backend_essence/3.1_what_is_backend.md
-            - file: book/part2_backend_development/chapter03_backend_essence/3.2_language_and_framework.md
-            - file: book/part2_backend_development/chapter03_backend_essence/3.3_fastapi_and_layered_architecture.md
-            - file: book/part2_backend_development/chapter03_backend_essence/summary_and_questions.md
-        - file: book/part2_backend_development/chapter04_http_restful/index.md
-          children:
-            - file: book/part2_backend_development/chapter04_http_restful/4.1_http_and_restful.md
-            - file: book/part2_backend_development/chapter04_http_restful/4.2_fastapi_routing.md
-            - file: book/part2_backend_development/chapter04_http_restful/4.3_error_and_contract.md
-            - file: book/part2_backend_development/chapter04_http_restful/summary_and_questions.md
-        - file: book/part2_backend_development/chapter05_persistence_sql_orm/index.md
-          children:
-            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.1_database_modeling_er.md
-            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.2_building_database.md
-            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.3_accessing_database.md
-            - file: book/part2_backend_development/chapter05_persistence_sql_orm/5.4_orm.md
-            - file: book/part2_backend_development/chapter05_persistence_sql_orm/summary_and_questions.md
-        - file: book/part2_backend_development/chapter06_concurrency_perf/index.md
-          children:
-            - file: book/part2_backend_development/chapter06_concurrency_perf/6.1_concurrency_parallel_async.md
-            - file: book/part2_backend_development/chapter06_concurrency_perf/6.2_python_gil.md
-            - file: book/part2_backend_development/chapter06_concurrency_perf/6.3_async_programming_core.md
-            - file: book/part2_backend_development/chapter06_concurrency_perf/6.4_fastapi_async_pitfalls.md
-            - file: book/part2_backend_development/chapter06_concurrency_perf/6.5_performance_profiling.md
-            - file: book/part2_backend_development/chapter06_concurrency_perf/summary_and_questions.md
-        - file: book/part2_backend_development/synthesis_user_register.md
-    - file: book/part3_frontend_collaboration/index.md
+        - file: book/software_engineering/code_quality/type_system.md
+        - file: book/software_engineering/code_quality/static_check_code_style.md
+        - file: book/software_engineering/code_quality/testing_coverage_and_ci.md
+        - file: book/software_engineering/code_quality/summary_and_questions.md
+    - file: book/backend_development/backend_essence/index.md
       children:
-        - file: book/part3_frontend_collaboration/chapter07_frontend_overview/index.md
-          children:
-            - file: book/part3_frontend_collaboration/chapter07_frontend_overview/7.1_frontend_role_in_architecture.md
-            - file: book/part3_frontend_collaboration/chapter07_frontend_overview/7.2_framework_troika.md
-            - file: book/part3_frontend_collaboration/chapter07_frontend_overview/7.3_why_vue3_vite.md
-            - file: book/part3_frontend_collaboration/chapter07_frontend_overview/7.4_frontend_engineering_foundation.md
-            - file: book/part3_frontend_collaboration/chapter07_frontend_overview/summary_and_questions.md
-        - file: book/part3_frontend_collaboration/chapter08_vue3_core/index.md
-          children:
-            - file: book/part3_frontend_collaboration/chapter08_vue3_core/8.1_reactivity_principles.md
-            - file: book/part3_frontend_collaboration/chapter08_vue3_core/8.2_component_design.md
-            - file: book/part3_frontend_collaboration/chapter08_vue3_core/8.3_routing_management.md
-            - file: book/part3_frontend_collaboration/chapter08_vue3_core/8.4_cross_component_state_pinia.md
-            - file: book/part3_frontend_collaboration/chapter08_vue3_core/summary_and_questions.md
-    - file: book/part4_advanced_engineering/index.md
+        - file: book/backend_development/backend_essence/what_is_backend.md
+        - file: book/backend_development/backend_essence/language_and_framework.md
+        - file: book/backend_development/backend_essence/fastapi_and_layered_architecture.md
+        - file: book/backend_development/backend_essence/summary_and_questions.md
+    - file: book/backend_development/http_restful/index.md
       children:
-        - file: book/part4_advanced_engineering/chapter09_external_integration/index.md
-          children:
-            - file: book/part4_advanced_engineering/chapter09_external_integration/9.1_third_party_service_integration.md
-            - file: book/part4_advanced_engineering/chapter09_external_integration/9.2_asr_integration.md
-            - file: book/part4_advanced_engineering/chapter09_external_integration/9.3_llm_api_design.md
-            - file: book/part4_advanced_engineering/chapter09_external_integration/9.4_async_task_queue_celery.md
-            - file: book/part4_advanced_engineering/chapter09_external_integration/summary_and_questions.md
-        - file: book/part4_advanced_engineering/chapter10_robustness_security/index.md
-          children:
-            - file: book/part4_advanced_engineering/chapter10_robustness_security/10.1_auth_jwt.md
-            - file: book/part4_advanced_engineering/chapter10_robustness_security/10.2_data_validation_injection.md
-            - file: book/part4_advanced_engineering/chapter10_robustness_security/10.3_logging_design.md
-            - file: book/part4_advanced_engineering/chapter10_robustness_security/10.4_error_boundary_graceful_degradation.md
-            - file: book/part4_advanced_engineering/chapter10_robustness_security/summary_and_questions.md
-        - file: book/part4_advanced_engineering/chapter11_deploy_cicd/index.md
-          children:
-            - file: book/part4_advanced_engineering/chapter11_deploy_cicd/11.1_deployment_evolution.md
-            - file: book/part4_advanced_engineering/chapter11_deploy_cicd/11.2_dockerfile_best_practices.md
-            - file: book/part4_advanced_engineering/chapter11_deploy_cicd/11.3_docker_compose_orchestration.md
-            - file: book/part4_advanced_engineering/chapter11_deploy_cicd/11.4_cicd_pipeline.md
-            - file: book/part4_advanced_engineering/chapter11_deploy_cicd/summary_and_questions.md
-    - file: book/part5_lab_guide/index.md
+        - file: book/backend_development/http_restful/http_and_restful.md
+        - file: book/backend_development/http_restful/fastapi_routing.md
+        - file: book/backend_development/http_restful/error_and_contract.md
+        - file: book/backend_development/http_restful/summary_and_questions.md
+    - file: book/backend_development/persistence_sql_orm/index.md
       children:
-        - file: book/part5_lab_guide/experiment01_homework_organizer.md
-        - file: book/part5_lab_guide/experiment02_grade_analysis.md
-        - file: book/part5_lab_guide/experiment03_cli.md
-        - file: book/part5_lab_guide/experiment04_restful_api_db_migration.md
-        - file: book/part5_lab_guide/experiment05_async_refactor_load_test.md
-        - file: book/part5_lab_guide/experiment06_frontend_routing_state.md
-        - file: book/part5_lab_guide/experiment07_fullstack_streaming.md
-        - file: book/part5_lab_guide/experiment08_container.md
+        - file: book/backend_development/persistence_sql_orm/database_modeling_er.md
+        - file: book/backend_development/persistence_sql_orm/building_database.md
+        - file: book/backend_development/persistence_sql_orm/accessing_database.md
+        - file: book/backend_development/persistence_sql_orm/orm.md
+        - file: book/backend_development/persistence_sql_orm/summary_and_questions.md
+    - file: book/backend_development/concurrency_perf/index.md
+      children:
+        - file: book/backend_development/concurrency_perf/concurrency_parallel_async.md
+        - file: book/backend_development/concurrency_perf/python_gil.md
+        - file: book/backend_development/concurrency_perf/async_programming_core.md
+        - file: book/backend_development/concurrency_perf/fastapi_async_pitfalls.md
+        - file: book/backend_development/concurrency_perf/performance_profiling.md
+        - file: book/backend_development/concurrency_perf/summary_and_questions.md
+    - file: book/backend_development/backend_synthesis/index.md
+    - file: book/frontend_collaboration/frontend_overview/index.md
+      children:
+        - file: book/frontend_collaboration/frontend_overview/frontend_role_in_architecture.md
+        - file: book/frontend_collaboration/frontend_overview/framework_troika.md
+        - file: book/frontend_collaboration/frontend_overview/why_vue3_vite.md
+        - file: book/frontend_collaboration/frontend_overview/frontend_engineering_foundation.md
+        - file: book/frontend_collaboration/frontend_overview/summary_and_questions.md
+    - file: book/frontend_collaboration/vue3_core/index.md
+      children:
+        - file: book/frontend_collaboration/vue3_core/reactivity_principles.md
+        - file: book/frontend_collaboration/vue3_core/component_design.md
+        - file: book/frontend_collaboration/vue3_core/routing_management.md
+        - file: book/frontend_collaboration/vue3_core/cross_component_state_pinia.md
+        - file: book/frontend_collaboration/vue3_core/summary_and_questions.md
+    - file: book/advanced_engineering/external_integration/index.md
+      children:
+        - file: book/advanced_engineering/external_integration/third_party_service_integration.md
+        - file: book/advanced_engineering/external_integration/asr_integration.md
+        - file: book/advanced_engineering/external_integration/llm_api_design.md
+        - file: book/advanced_engineering/external_integration/async_task_queue_celery.md
+        - file: book/advanced_engineering/external_integration/summary_and_questions.md
+    - file: book/advanced_engineering/robustness_security/index.md
+      children:
+        - file: book/advanced_engineering/robustness_security/auth_jwt.md
+        - file: book/advanced_engineering/robustness_security/data_validation_injection.md
+        - file: book/advanced_engineering/robustness_security/logging_design.md
+        - file: book/advanced_engineering/robustness_security/error_boundary_graceful_degradation.md
+        - file: book/advanced_engineering/robustness_security/summary_and_questions.md
+    - file: book/advanced_engineering/deploy_cicd/index.md
+      children:
+        - file: book/advanced_engineering/deploy_cicd/deployment_evolution.md
+        - file: book/advanced_engineering/deploy_cicd/dockerfile_best_practices.md
+        - file: book/advanced_engineering/deploy_cicd/docker_compose_orchestration.md
+        - file: book/advanced_engineering/deploy_cicd/cicd_pipeline.md
+        - file: book/advanced_engineering/deploy_cicd/summary_and_questions.md
+    - file: book/lab_guide/index.md
+      children:
+        - file: book/lab_guide/homework_organizer.md
+        - file: book/lab_guide/grade_analysis.md
+        - file: book/lab_guide/cli.md
+        - file: book/lab_guide/restful_api_db_migration.md
+        - file: book/lab_guide/async_refactor_load_test.md
+        - file: book/lab_guide/frontend_routing_state.md
+        - file: book/lab_guide/fullstack_streaming.md
+        - file: book/lab_guide/container.md
     - file: book/appendix/index.md
       children:
         - file: book/appendix/appendix_a_course_design.md

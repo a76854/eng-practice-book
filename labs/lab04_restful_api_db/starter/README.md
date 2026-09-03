@@ -1,6 +1,6 @@
 # Lab04 starter 说明
 
-本目录是实验四的起点骨架，对应 `book/part5_lab_guide/experiment04_restful_api_db_migration/index.md`。
+本目录是实验四的起点骨架，对应 `book/lab_guide/restful_api_db_migration/index.md`。
 
 ## 包含内容
 

@@ -10,30 +10,30 @@ eng-practice-book/
 │   ├── preface.md                              # 前言
 │   ├── STYLE.md                             # 全书写作契约（章骨架、围栏规范、构建校验）
 │   ├── ai_policy.md                         # AI 工具使用政策
-│   ├── part1_software_engineering/                  # 第一篇：开发者元技能 + 代码质量护城河
-│   │   ├── chapter01_dev_meta_skills/
-│   │   └── chapter02_code_quality/
-│   ├── part2_backend_development/         # 第二篇：后端全景、HTTP/RESTful、持久化、并发
-│   │   ├── chapter03_backend_essence/
-│   │   ├── chapter04_http_restful/
-│   │   ├── chapter05_persistence_sql_orm/
-│   │   └── chapter06_concurrency_perf/
-│   ├── part3_frontend_collaboration/         # 第三篇：前端协作、Vue 3 核心
-│   │   ├── chapter07_frontend_overview/
-│   │   └── chapter08_vue3_core/
-│   ├── part4_advanced_engineering/             # 第四篇：外部集成、健壮性安全、部署CI/CD
-│   │   ├── chapter09_external_integration/
-│   │   ├── chapter10_robustness_security/
-│   │   └── chapter11_deploy_cicd/
-│   ├── part5_lab_guide/                    # 第五篇：8 个实验（理论配套动手）
-│   │   ├── experiment01_project_init_automation/
-│   │   ├── experiment02_unit_test_static_check/
-│   │   ├── experiment03_milestone_a_cli/
-│   │   ├── experiment04_restful_api_db_migration/
-│   │   ├── experiment05_async_refactor_load_test/
-│   │   ├── experiment06_frontend_routing_state/
-│   │   ├── experiment07_fullstack_streaming/
-│   │   └── experiment08_milestone_bc_container/
+│   ├── software_engineering/                  # 第一篇：开发者元技能 + 代码质量护城河
+│   │   ├── dev_meta_skills/
+│   │   └── code_quality/
+│   ├── backend_development/         # 第二篇：后端全景、HTTP/RESTful、持久化、并发
+│   │   ├── backend_essence/
+│   │   ├── http_restful/
+│   │   ├── persistence_sql_orm/
+│   │   └── concurrency_perf/
+│   ├── frontend_collaboration/         # 第三篇：前端协作、Vue 3 核心
+│   │   ├── frontend_overview/
+│   │   └── vue3_core/
+│   ├── advanced_engineering/             # 第四篇：外部集成、健壮性安全、部署CI/CD
+│   │   ├── external_integration/
+│   │   ├── robustness_security/
+│   │   └── deploy_cicd/
+│   ├── lab_guide/                    # 第五篇：8 个实验（理论配套动手）
+│   │   ├── homework_organizer/
+│   │   ├── grade_analysis/
+│   │   ├── cli/
+│   │   ├── restful_api_db_migration/
+│   │   ├── async_refactor_load_test/
+│   │   ├── frontend_routing_state/
+│   │   ├── fullstack_streaming/
+│   │   └── container/
 │   ├── appendix/                            # 附录
 │   │   └── appendix_a_course_design.md
 │   └── samples/                             # 最小可运行样例（如 vue-min）
@@ -100,11 +100,11 @@ myst clean --execute -y && myst build --html --execute --strict
 
 ## 实验
 
-第五篇为实验指导书（`book/part5_lab_guide/`），`labs/lab01..08` 为配套动手脚手架。每个实验仅含 `README.md`（任务说明）+ `starter/`（起始代码），不含参考解、测试或自动判分——以课堂讲解与动手完成度为准。
+第五篇为实验指导书（`book/lab_guide/`），`labs/lab01..08` 为配套动手脚手架。每个实验仅含 `README.md`（任务说明）+ `starter/`（起始代码），不含参考解、测试或自动判分——以课堂讲解与动手完成度为准。
 
 ```bash
 # 查看实验说明
-cat book/part5_lab_guide/experiment01_project_init_automation/index.md
+cat book/lab_guide/homework_organizer/index.md
 cat labs/lab01_project_init/README.md 2>/dev/null || echo "详见 book/part5"
 
 # starter 为空脚手架，按实验 README 自行实现
