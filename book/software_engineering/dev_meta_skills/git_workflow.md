@@ -47,6 +47,8 @@ graph LR
     style H fill:#ffd93d,stroke:#333,stroke-width:2px
 ```
 
+![](./pics/1.3_1_Version-management.png)
+
 这个场景背后有三个致命问题：
 
 - **回退靠猜**：出了 bug，不知道哪个目录是"最后一版能跑的"
@@ -62,6 +64,8 @@ graph LR
 ## Git 的三个状态
 
 理解 Git 的运作，先记住三个状态。这是 Pro Git[^gitpro] 开篇的核心概念：
+
+![](./pics/1.3_2_git-state.png)
 
 | 状态 | 含义 | 对应区域 |
 |------|------|----------|
@@ -137,6 +141,8 @@ git config --global user.email "你的邮箱"
 ## .gitignore：告诉 Git 忽略什么
 
 `git status` 总会列出未跟踪文件，但并非所有文件都该入库——编译产物、虚拟环境、操作系统垃圾文件、含隐私的数据都不该进仓库。`.gitignore` 就是给 Git 的“黑名单”：列在其中的路径会被 Git 视作不存在。
+
+![](./pics/1.3_3_gitignore.png)
 
 **规则**：
 
@@ -230,6 +236,8 @@ git log --oneline -5          # 看最近5条提交
 [optional footer]
 ```
 
+![](./pics/1.3_4_Submission-Info-Guidelines.png)
+
 常用 type 前缀：
 
 | 前缀 | 用途 |
@@ -277,6 +285,8 @@ git commit --amend -m "feat(audio): support 16k resample with fallback"
 
 Pro Git 的核心观点：*"Git 的分支实质上只是包含所指对象校验和（40 字节）的文件。分支的新建和合并都非常简单、快速，所以 Git 鼓励频繁创建和使用分支。"*
 
+![](./pics/1.3_5_Branch-and-Merge.png)
+
 ```bash
 # 分支基础命令
 git branch                    # 查看本地分支列表
@@ -314,6 +324,8 @@ git merge --abort
 ## 远端与 PR：协作的线上接口
 
 本地分支需要通过远端与他人协作。远端是 `origin` 指向的线上仓库（如 GitHub、GitLab），`push` 把本地提交推上去，`pull` 或 `fetch` + `merge` 把线上更新拿下来。
+
+![](./pics/1.3_6_PR-review.png)
 
 PR（Pull Request）是在线上发起的"请求合入"，提供讨论、Review 与 CI 校验的入口。它不只是代码合并的通道，更是**协作的契约**——代码合入主线前，必须经过 Peer Review 和自动化检查。
 

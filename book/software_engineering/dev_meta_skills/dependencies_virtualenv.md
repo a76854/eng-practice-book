@@ -29,17 +29,23 @@ kernelspec:
 
 ## 为什么需要隔离
 
+![](./pics/1.2_1_isolated-environment.png)
+
 Python 的导入机制本质是**在 `sys.path` 上按序搜索**。若所有项目共用同一个全局解释器：
 
 - A 项目需要 `numpy==1.26`，B 项目需要 `numpy==2.0`，全局只能装一个版本，必有一方失败
 - `pip install` 时可能因权限或系统包冲突把系统 Python 弄脏，回退困难
 - "在我机器上能跑"往往是因为全局环境恰好有某依赖，而同事机器没有
 
+![](./pics/1.2_2_Virtual-environment.png)
+
 虚拟环境要解决的正是**依赖的确定性与隔离性**：每个项目拥有独立的解释器、独立的 `site-packages`、独立的 `PATH`。
 
 ## 虚拟环境工具 vs 项目管理工具
 
 在开始之前，先分清两个容易混淆的概念：
+
+![](./pics/1.2_3_Management-tools.png)
 
 | 类型 | 工具 | 职责 |
 |------|------|------|
@@ -106,6 +112,8 @@ uv run python main.py
 ---
 
 ## 核心工作流：从 `pyproject.toml` 到可运行环境
+
+![](./pics/1.2_4_Operating-Environment.png)
 
 无论选择哪种方案，核心步骤一致：
 
@@ -194,6 +202,8 @@ python -c "import mypackage; print(mypackage.__version__)"
 1. **复制或链接解释器**：在 `.venv/bin/python` 放置一个指向原解释器的副本或符号链接。
 2. **独立的 `site-packages`**：`.venv/lib/python3.12/site-packages` 成为该环境独有的第三方包目录。
 3. **改写 `sys.prefix` 与 `PATH`**：激活后 `sys.prefix` 指向虚拟环境根，`PATH` 首位加入 `.venv/bin`，使得 `python` 与 `pip` 优先解析到环境内。
+
+![](./pics/1.2_5_sys.prefix-and-sys.base_prefix.png)
 
 未激活时，`sys.prefix` 与 `sys.base_prefix` 相等；激活后二者分离——这正是判断"是否在虚拟环境中"的可靠信号：
 
