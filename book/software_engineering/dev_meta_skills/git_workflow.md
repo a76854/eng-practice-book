@@ -40,7 +40,7 @@ graph LR
     I --> K[目录越来越多<br>my_project_20260115/<br>my_project_bak_old/<br>my_project_v2.0/<br>my_project_v2.0_new/]
     J --> K
 
-    K --> L[💥 崩溃<br>哪个才是对的？]
+    K --> L[💥 崩溃]
 
     style L fill:#ff6b6b,stroke:#333,stroke-width:2px
     style K fill:#ffd93d,stroke:#333,stroke-width:2px
@@ -84,13 +84,18 @@ git add main.py
 git commit -m "fix: handle empty input"
 ```
 
-## Git 初始化与项目绑定
+## Git 初始化
 
 在[依赖与虚拟环境](dependencies_virtualenv.md)中，我们用 `uv init` 创建了项目并生成了 `pyproject.toml`。
 
 ```bash
 $ uv init myproject
 Initialized project `myproject` at `~/myproject`
+```
+
+使用`uv init`同步会创建git仓库，使用tree命令，你会可以看到`uv init`不只是创建了文件夹`myproject`，还同步创建了项目需要的其他文件或者目录。
+
+```bash
 $ cd myproject/
 $ tree .
 .
@@ -101,6 +106,26 @@ $ tree .
         └── __init__.py
 
 3 directories, 3 files
+```
+
+当然，此处所说的其他文件还包括git仓库`.git`
+
+```bash
+$ ls -la
+total 28
+drwxr-xr-x 4 huiguo huiguo 4096 Sep  4 16:39 .
+drwxr-xr-x 7 huiguo huiguo 4096 Sep  4 16:39 ..
+drwxr-xr-x 7 huiguo huiguo 4096 Sep  4 16:39 .git
+-rw-r--r-- 1 huiguo huiguo  109 Sep  4 16:39 .gitignore
+-rw-r--r-- 1 huiguo huiguo    5 Sep  4 16:39 .python-version
+-rw-r--r-- 1 huiguo huiguo    0 Sep  4 16:39 README.md
+-rw-r--r-- 1 huiguo huiguo  354 Sep  4 16:39 pyproject.toml
+drwxr-xr-x 3 huiguo huiguo 4096 Sep  4 16:39 src
+```
+
+进一步的，我们使用`git status`就能查看当前仓库的状态，可以发现很多未提交文件。
+
+```bash
 $ git status
 On branch master
 
@@ -117,28 +142,28 @@ Untracked files:
 nothing added to commit but untracked files present (use "git add" to track)
 ```
 
-但项目目录本身还不是一个 Git 仓库——Git 和 Python 项目管理是两套系统，需要分别初始化。
+如果你需要在其他项目中使用git，使用下面的命令初始化。
 
 ```bash
-# 创建项目（已有则跳过）
-uv init myproject
+# 创建项目
+mkdir myproject
 cd myproject
 # 初始化 Git 仓库
 git init
-# 检查状态（应看到一堆未跟踪的文件）
+# 检查状态，应当为空
 git status
 ```
 
 `git init` 会在当前目录创建 `.git` 子目录，这是 Git 存储所有版本信息的"数据库"。`.git` 目录就是仓库本身——删除它，所有历史记录随之消失。
 
-**第一次配置（每个机器只需一次）**：
+**第一次配置**：
 
 ```bash
 git config --global user.name "你的名字"
 git config --global user.email "你的邮箱"
 ```
 
-## .gitignore：告诉 Git 忽略什么
+## .gitignore
 
 `git status` 总会列出未跟踪文件，但并非所有文件都该入库——编译产物、虚拟环境、操作系统垃圾文件、含隐私的数据都不该进仓库。`.gitignore` 就是给 Git 的“黑名单”：列在其中的路径会被 Git 视作不存在。
 
@@ -152,7 +177,7 @@ git config --global user.email "你的邮箱"
 
 该文件本身**应该提交**，且越早提交越好——否则已提交的垃圾文件需用 `git rm --cached` 才能移出跟踪。
 
-直接可用的示例（覆盖 Python + 本课程实验一的数据与环境）：
+直接可用的示例：
 
 ```gitignore
 # Python 产物与缓存
@@ -199,7 +224,7 @@ data/
 !.env.example
 ```
 
-按需裁剪：纯课程项目保留 `__pycache__/.venv/data/*.xlsx/*.pdf` 即可；含密钥的项目务必忽略 `.env`。
+如果你恰巧使用了`uv init`命令，会生成一份`.gitignore`，里面通常包括了python项目常见的需要忽略的项目。
 
 已误提交的文件：
 
@@ -210,7 +235,7 @@ git rm --cached .env
 git commit -m "chore: stop tracking ignored files"
 ```
 
-## 最小循环：改、存、记、看
+## 日常检查
 
 日常开发中，你最常用的是这条循环——改文件、看状态、进暂存、写提交、看历史。先把这条循环跑顺，再学分支也不迟。
 
@@ -224,7 +249,7 @@ git log --oneline -5          # 看最近5条提交
 
 要点：提交前先 `git status` 确认改了什么，比直接 `git add .` 更可控。
 
-## 提交信息规范：让历史可读
+## 提交信息规范
 
 提交是给人看的。好的提交只做一件事，信息包含"改了什么、为什么改"。太大的提交让 Review 难读，回退也难挑。
 
@@ -279,7 +304,7 @@ git commit --amend -m "feat(audio): support 16k resample with fallback"
 
 小技巧：写提交前用 `git diff --staged` 再看一遍将要提交的内容，等于给自己做一次轻量 Review。
 
-## 分支与合并：并行不踩脚
+## 分支与合并
 
 分支让"正在做的事"与"稳定的主线"分开。常见做法是在 `main` 上保持可运行状态，新功能或修复都从 `main` 开分支，完成后合回。
 
@@ -316,12 +341,14 @@ git commit
 git merge --abort
 ```
 
+更可行的建议是，使用IDE处理冲突。
+
 记住两个习惯：
 
 - 分支名用 `feat/`、`fix/`、`docs/` 前缀让人一眼看懂意图
 - 合并前先 `git fetch` 再 `git log --oneline main..feat/xxx` 预览要合入的提交，比直接合更安心
 
-## 远端与 PR：协作的线上接口
+## 远端与 PR
 
 本地分支需要通过远端与他人协作。远端是 `origin` 指向的线上仓库（如 GitHub、GitLab），`push` 把本地提交推上去，`pull` 或 `fetch` + `merge` 把线上更新拿下来。
 
@@ -342,6 +369,83 @@ git branch -d feat/transcribe-cli
 git push origin --delete feat/transcribe-cli
 ```
 
+假设你们有一个五人团队，开发一个线上商城，如果你们的写作合适的话，很容易“绘制”出下面的gitGraph。“话说天下大势，分久必合，合久必分”，从main分支开始，什么都没有，然后你的五个同事，按照他们的职能开发代码，虽然中间经历了一些波折`hotfix/bug-001`，最终成功合并发版。
+
+```mermaid
+
+gitGraph
+    commit id: "项目初始化"
+    commit id: "基础框架搭建"
+
+    branch alice/auth
+    checkout alice/auth
+    commit id: "用户注册"
+    commit id: "登录验证"
+
+    branch bob/db
+    checkout bob/db
+    commit id: "数据库Schema"
+    commit id: "ORM映射"
+
+    checkout alice/auth
+    commit id: "JWT令牌"
+
+    branch charlie/api
+    checkout charlie/api
+    commit id: "RESTful设计"
+    commit id: "中间件"
+
+    checkout bob/db
+    commit id: "数据迁移脚本"
+    merge alice/auth
+
+    branch dave/frontend
+    checkout dave/frontend
+    commit id: "页面框架"
+    commit id: "组件开发"
+
+    checkout charlie/api
+    commit id: "接口鉴权"
+    commit id: "速率限制"
+
+    branch hotfix/bug-001
+    checkout hotfix/bug-001
+    commit id: "紧急热修复"
+    checkout main
+    merge hotfix/bug-001
+
+    checkout alice/auth
+    commit id: "SSO单点登录"
+    commit id: "RBAC权限模型"
+
+    checkout dave/frontend
+    commit id: "状态管理"
+    merge charlie/api
+
+    checkout bob/db
+    commit id: "读写分离"
+    commit id: "Redis缓存层"
+
+    branch eve/test
+    checkout eve/test
+    commit id: "E2E测试框架"
+    commit id: "CI流水线"
+
+    checkout main
+    merge bob/db
+    merge alice/auth
+
+    checkout eve/test
+    commit id: "覆盖率报告"
+    checkout main
+    merge dave/frontend
+    merge eve/test
+
+    commit id: "全链路压测"
+    commit id: "v1.0正式发布"
+```
+
+
 ## 多人协作原则
 
 团队协作不是"谁能把代码合进去"的比赛，而是**如何让每一行合入的代码都经得起审视**。以下五条原则是协作的底线：
@@ -352,7 +456,7 @@ git push origin --delete feat/transcribe-cli
 4. **CI**：CI（持续集成）在每次 push 后自动运行测试、检查格式。PR 合入前必须全部绿色。这条原则把"本地能跑"升级为"所有人都能跑"。
 5. **提交信息要有意义**：回看历史时，提交信息是唯一的线索。`fix bug` 和 `fix: handle empty audio input gracefully` 的区别，三个月后你再看就明白了。
 
-## 日常 checklist：提交前五分钟
+## 日常 checklist
 
 把下面这份清单贴在手边，提交与推远端前逐项过一遍，能避免大多数"后悔提交"。
 
