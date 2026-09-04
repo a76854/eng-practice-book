@@ -12,6 +12,7 @@ project:
     - _build/**
     - node_modules/**
     - evidence/**
+    - book/**/samples/**
   toc:
     - file: book/preface.md
     - file: book/software_engineering/dev_meta_skills/index.md
@@ -58,6 +59,7 @@ project:
     - file: book/backend_development/backend_synthesis/index.md
     - file: book/frontend_collaboration/frontend_overview/index.md
       children:
+        - file: book/frontend_collaboration/frontend_overview/frontend_origin.md
         - file: book/frontend_collaboration/frontend_overview/frontend_role_in_architecture.md
         - file: book/frontend_collaboration/frontend_overview/framework_troika.md
         - file: book/frontend_collaboration/frontend_overview/why_vue3_vite.md

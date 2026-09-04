@@ -6,232 +6,95 @@ kernelspec:
 
 # 前端工程化基石
 
-> 学完本节，你能回答：Node.js 在前端工程中承担什么角色？npm / pnpm 如何解决“依赖地狱”与可复现性？ES Module 的静态结构为何让 tree-shaking 与按需加载成为可能？三者如何共同构成前端的“运行时 + 包管理 + 模块系统”？
+学完本节，你能回答：
 
-## 前端的“水电煤”：运行时、包管理、模块系统
+- Node.js 在前端工程里承担什么角色？为什么它能被理解成前端的 Python 解释器？
+- npm 与 pnpm 如何解决依赖地狱与可复现？pnpm 的严格依赖又是怎么一回事？
+- ES Module 的静态结构，为什么让 tree-shaking 与按需加载成为可能？
+- 三者如何共同撑起前端运行时 + 包管理 + 模块系统三件套？一个真实的前端工程长什么样？
 
-后端有 Python 解释器 + `pip`/`pyproject.toml` + `import` 三件套，前端亦有对应的工程基石：
+上一节里 Vite 承担了构建这件事，但构建工具本身跑在哪里、依赖怎么装、源码怎么变成浏览器能跑的页面，还没有回答。这一节补上前端工程化的三件地基。
 
-- **Node.js — 前端的运行时与工具宿主**：让 JavaScript 脱离浏览器，在服务端与命令行中运行。前端的 dev server（Vite）、类型检查（`vue-tsc`）、打包（Rollup）与脚本（`node scripts/...`）都跑在 Node 上。类比后端的“Python 解释器”。
-- **npm / pnpm — 包管理与可复现**：从 registry 拉取、解析 semver、落盘到本地，并通过 lockfile 保证“同一份 `package.json` + lockfile 在任何机器得到同一棵依赖树”。类比后端的 `pip` + `requirements.txt` / `pyproject.toml` + lock。
-- **ES Module（ESM）— 浏览器与工具的共同模块标准**：用静态的 `import`/`export` 声明依赖，让工具可在不执行代码的情况下做依赖图分析、tree-shaking 与按需加载。类比后端的 `import` 系统，但更强调“静态可分析”。
+> 后端的三件套是 Python、pip、import：Python 是解释器，pip 装依赖，import 组织模块。前端有一套镜像版的三件套：Node 是前端的解释器，npm/pnpm 是前端的 pip，ES Module 是前端的 import。把这三件看清，前端工程就从黑箱变回了你熟悉的样子。
 
-三者缺一不可：没有 Node，前端工具无处运行；没有包管理，依赖无法复现；没有 ESM，工具无法可靠地做“未使用代码剔除”与“按需分包”。
+这一节把前端工程化落成三件可对照后端理解的事，最后用一个真实前端的目录骨架收口，兑现以后端视角读懂前端工程这个学习目标。
 
-## Node.js：前端工具的“操作系统”
+## 前端的运行时与工具宿主
 
-Node 基于 V8 引擎，让 JS 拥有文件、网络与进程能力。前端工程中，Node 的角色不是“替代浏览器”，而是“承载构建与开发工具”：
-
-```bash
-# Node 版本与包管理器
-node -v          # → v22.x 或 v24.x（myst 要求 Node 18+，本仓 CI 固定 24.3.0）
-npm -v
-pnpm -v          # 若未安装 pnpm，见下文
-
-# 前端工具均跑在 Node 上（示意）
-npm run dev      # vite dev server（Node 启动）
-npm run build    # vue-tsc --noEmit && vite build（Node 执行类型检查与打包）
-node --version   # 与 python --version 对照理解：都是“运行时版本”
-```
-
-对后端开发者的直觉：把 Node 理解为“前端的 Python 解释器”——`node app.js` 之于前端，如同 `python -m m2t` 之于后端；`package.json` 之于前端，如同 `pyproject.toml` 之于后端。
-
-## npm / pnpm：从“能装上”到“可复现、省空间、快”
-
-### npm 的演进
-
-- **npm 早期（嵌套）**：每个包各自嵌套 `node_modules`，同一依赖的多版本重复落盘，路径深、安装慢。
-- **npm 3+（扁平）**：尽量把依赖提升到顶层 `node_modules`，减少重复；但仍可能因版本冲突产生“幽灵依赖”（未声明却能 `import` 到）。
-- **lockfile**：`package-lock.json` 记录精确版本与完整性哈希，保证可复现；CI 中用 `npm ci` 严格按 lockfile 安装，而非重新解析 semver。
-
-### pnpm 的解法（本课程推荐理解）
-
-pnpm 用**内容寻址存储（content-addressable store）+ 符号链接**解决 npm 的两大痛点：
-
-- **省空间**：同一版本的包在全局 store 只存一份，项目中的 `node_modules` 仅为符号链接指向 store，10 个项目共用一份 `vue@3.5.13`。
-- **严依赖**：项目的 `node_modules` 仅暴露 `package.json` 声明的依赖，幽灵依赖在 pnpm 下会直接 `MODULE_NOT_FOUND`，迫使依赖声明更诚实。
-
-```
-npm 扁平：node_modules/
-  vue@3.5.13/          # 项目 A 一份
-  lodash@4.17.21/      # 项目 A 一份，项目 B 又一份（重复落盘）
-
-pnpm store：~/.pnpm-store/v3/files/  # 全局内容寻址
-  vue@3.5.13  → 一份
-  lodash@4.17.21 → 一份
-项目 A/node_modules/vue →  symlink → store/vue@3.5.13
-项目 B/node_modules/vue →  symlink → store/vue@3.5.13（复用）
-```
+Node 基于 V8 引擎，让 JavaScript 离开浏览器，在命令行和服务端运行。在前端工程里，Node 的角色不是替代浏览器，而是承载构建与开发工具：Vite 开发服务器、`vue-tsc` 类型检查、Rollup 打包以及各种脚本，全都跑在 Node 上。
 
 ```bash
-# npm 与 pnpm 的等价命令
-npm install          # 或 npm ci（严格按 lockfile）
-pnpm install         # pnpm 按 pnpm-lock.yaml 安装，复用全局 store
-
-npm run dev          # 均可；scripts 由 package.json 定义，与包管理器无关
-pnpm dev             # pnpm 支持 pnpm dev 简写，等价 pnpm run dev
-
-# 查看依赖树
-npm ls --depth=0
-pnpm ls --depth=0
+node -v        # 运行时版本，对应 python -V
+npm -v         # 包管理器版本
+node app.js    # 运行 JS，对应 python app.py
 ```
 
-> **可复现性**：无论 npm 还是 pnpm，都应提交 lockfile（`package-lock.json` 或 `pnpm-lock.yaml`）。如同后端应提交 `requirements.txt` 或 `poetry.lock`，前端的 lockfile 是“依赖可复现”的唯一事实源，缺了它，`install` 的结果就是“在我机器上能跑”。
+对后端开发者最省力的直觉，是把 Node 理解成前端的 Python 解释器，把 `package.json` 理解成前端的 pyproject.toml。这一层对应关系，是入门最快的路标。
 
-内联 `package.json` 示例即遵循该契约（见 [index 的 Python 解析](index.md)）：`dependencies` 声明运行时依赖（`vue`），`devDependencies` 声明构建时依赖（`vite`、`vue-tsc`），`scripts` 定义可复现的命令。
+## npm / pnpm
 
-## ES Module：静态结构带来的工程红利
+### npm 的演进与痛点
 
-CommonJS（`require`/`module.exports`）是运行时的动态加载，工具难以在不执行代码的情况下判断“哪些导出被使用了”。ES Module（`import`/`export`）是**静态声明**——`import` 必须在顶层，路径为字符串字面量，工具可在构建时静态分析依赖图：
+- 早期 npm 用嵌套结构：每个包各自嵌套 `node_modules`，同一依赖的多版本重复落盘，路径深、装得慢。
+- npm 3 起改扁平：尽量把依赖提升到顶层、减少重复，但也可能产生幽灵依赖：某个包并未声明，却因为被提升到顶层而能被 `import` 到。
+- lockfile 出现后，`package-lock.json` 记录精确版本与完整性哈希，保证可复现；CI 里用 `npm ci` 严格按 lockfile 安装，而不是重新解析语义化版本。
+
+### pnpm 的两点解法
+
+pnpm 用内容寻址存储 + 符号链接同时解决省空间与严格依赖两个痛点：
+
+- 省空间：同一版本在全局 store 只存一份，各项目的 `node_modules` 只是指向 store 的符号链接，十个项目共用一份 `vue@3.5.13`。
+- 严依赖：项目的 `node_modules` 只暴露自己声明的依赖，幽灵依赖在 pnpm 下会直接报 `MODULE_NOT_FOUND`，逼着依赖声明更诚实。
+
+```bash
+npm install      # 按 package.json 解析安装（或 npm ci 严格按 lockfile）
+pnpm install     # 按 pnpm-lock.yaml 安装，复用全局 store
+```
+
+不管是 npm 还是 pnpm，都应提交 lockfile。它如同后端提交的依赖锁文件，是依赖可复现的唯一事实源，缺了它，安装结果就成了在我机器上能跑。
+
+## ES Module
+
+CommonJS 用 `require` 在运行时动态加载，工具很难在不执行代码时判断哪些导出真正被用了。ES Module 用静态的 `import` / `export` 声明依赖：`import` 必须在顶层、路径是字符串字面量，工具因此在构建期就能静态分析出依赖图。
 
 ```javascript
-// ESM：静态，可被 tree-shaking（未使用的导出可被剔除）
+// ESM：静态、可被 tree-shaking（未使用的导出可被剔除）
 // 文件 utils/format.js
 export function formatDuration(sec) { return `${sec}s` }
 export function formatDate(d) { return d.toISOString() }
 
-// 文件 app.js — 只用 formatDuration，formatDate 可被摇掉
+// 文件 app.js 只用了 formatDuration，formatDate 可被摇掉
 import { formatDuration } from './utils/format.js'
 console.log(formatDuration(42))
-
-// CommonJS：动态，难以静态剔除
-// const { formatDuration } = require('./utils/format') // 路径可为变量，工具难分析
 ```
 
-Vite 与 Rollup 正是利用 ESM 的静态性做两件事：开发期按需服务（浏览器原生支持 `import`），生产期做 tree-shaking（未引用的 `formatDate` 不会进入 `dist/`）。内联 `package.json` 示例设 `"type": "module"` 即声明“本包按 ESM 解析”，让 Node 与 Vite 统一按 ESM 处理。
+Vite 与 Rollup 正靠这个静态性做两件事：开发期按需服务（浏览器原生支持 `import`），生产期 tree-shaking（未被引用的 `formatDate` 不会进入 `dist/`）。`package.json` 里的 `"type": "module"`，就是声明本包按 ESM 解析。
 
-```bash
-# ESM 产物是浏览器可直接加载的静态资源（示意）
-pnpm build
-ls frontend/dist/ 2>/dev/null || echo "dist/ 由 vite build 生成，含 index.html + assets/*.js（ESM）"
+## 工程化文件夹样例
+
+三件套落地后，一个前端工程的后端视角地图大致是这样：
+
+```text
+frontend/
+├── package.json           # 依赖与脚本
+├── pnpm-lock.yaml         # 依赖锁
+├── node_modules/          # 安装的依赖
+├── src/
+│   ├── main.ts            # 入口，装配应用
+│   ├── App.vue            # 根组件
+│   ├── components/        # 可复用组件
+│   └── router/            # 前端路由
+├── index.html             # 唯一真正的 HTML 入口
+└── dist/                  # vite build 产物
 ```
 
-## 可运行示例：用 Python 解析前端工程的“运行时 + 包管理 + 模块”契约
+和 [工程化项目结构](../../software_engineering/dev_meta_skills/engineering_project_structure.md) 里的 `pyproject.toml` + `src` 布局对照，你会看到同一套运行时 + 包管理 + 模块的影子：前端的 `package.json` + lockfile + `type: module`，正是后端的 `pyproject.toml` + lockfile + `import`。读懂这张地图，后端开发者就能参与前端的依赖评审与构建产物审计，这正是后续部署一章里 `dist/` 静态托管的起点。
 
-示例（用 Python 标准库解析 `package.json`、模拟 pnpm store 的内容寻址与 ESM 静态分析，本地可复现，无网络）：
+## 本节小结
 
-```{code-cell} ipython3
-import json, pathlib, hashlib, re
+- Node.js 是前端的Python 解释器与工具宿主，Vite、`vue-tsc`、Rollup 都跑在它上面。
+- npm/pnpm 解决依赖地狱与可复现：pnpm 用内容寻址 store 省空间、用严格依赖逼诚实，lockfile 是可复现的唯一事实源。
+- ES Module 的静态 `import` / `export` 让工具不执行代码即可分析依赖图，是 tree-shaking 与按需加载的前提。
+- 三者共同构成前端的运行时 + 包管理 + 模块系统，与后端的 Python + pip + import 形成镜像。
 
-# ---- 1) 解析 package.json：依赖与脚本即“前端的 pyproject.toml” ----
-# 内联 package.json 示例（与 7.3 节一致，无需依赖仓库中的真实文件）
-PKG = {
-    "name": "frontend-min",
-    "type": "module",
-    "dependencies": {"vue": "^3.5.13"},
-    "devDependencies": {"vite": "^6.0.0", "vue-tsc": "^2.0.0"},
-    "scripts": {"dev": "vite", "build": "vue-tsc --noEmit && vite build", "preview": "vite preview"},
-}
-data = PKG
-
-print("=== package.json 契约 ===")
-print("name:", data["name"])
-print("type:", data.get("type"))  # module → ESM
-print("deps:", list(data.get("dependencies", {}).keys()))
-print("devDeps:", list(data.get("devDependencies", {}).keys()))
-print("scripts:", data.get("scripts", {}))
-assert data["type"] == "module"
-assert "vue" in data["dependencies"]
-assert "vite" in data["devDependencies"]
-assert "dev" in data["scripts"] and "build" in data["scripts"]
-print("package.json 校验通过：type=module 且 dev/build 脚本存在")
-print()
-
-# ---- 2) pnpm 内容寻址：同一版本的包全局只存一份（用哈希模拟） ----
-print("=== pnpm store 内容寻址 ===")
-
-def hash_value(name: str, version: str) -> str:
-    """模拟 pnpm 的内容寻址：name@version → sha256 前 8 位（示意）"""
-    return hashlib.sha256(f"{name}@{version}".encode()).hexdigest()[:8]
-
-packages = [("vue", "3.5.13"), ("vite", "6.0.1"), ("vue", "3.5.13"), ("typescript", "5.7.0")]
-store: dict[str, str] = {}
-links: list[tuple[str, str]] = []
-
-for name, ver in packages:
-    key = f"{name}@{ver}"
-    h = hash_value(name, ver)
-    if h not in store:
-        store[h] = key
-        print(f"  store 写入: {key} → {h}")
-    else:
-        print(f"  store 复用: {key} → {h}（已存在，不重复落盘）")
-    links.append((key, h))
-
-print(f"store 去重后条目数: {len(store)}（4 次请求 → {len(store)} 份实体，vue@3.5.13 复用）")
-assert len(store) == 3  # vue 去重
-# 模拟 pnpm 的严格性：未声明的依赖不可见
-declared = set(data.get("dependencies", {})) | set(data.get("devDependencies", {}))
-ghost = "lodash"
-print(f"幽灵依赖检查: '{ghost}' 在 declared 中? {ghost in declared} → {'可见(宽松)' if ghost in declared else '不可见(严格，pnpm 正确)'}")
-assert ghost not in declared
-print()
-
-# ---- 3) ESM 静态分析：仅从 import 字面量即可构建依赖图，无需执行 ----
-print("=== ESM 静态依赖图 ===")
-esm_sources = {
-    "App.vue": "import { ref } from 'vue'\nimport { formatDuration } from './utils/format.js'\n",
-    "utils/format.js": "export function formatDuration(sec) { return sec }\nexport function formatDate(d) { return d }\n",
-    "main.ts": "import App from './App.vue'\n",
-}
-
-import_pattern = re.compile(r"^\s*import\s+.*?from\s+['\"]([^'\"]+)['\"]", re.MULTILINE)
-export_pattern = re.compile(r"^\s*export\s+(?:function|const|class)\s+(\w+)")
-
-graph: dict[str, list[str]] = {}
-exports: dict[str, list[str]] = {}
-for fname, src in esm_sources.items():
-    imps = import_pattern.findall(src)
-    exps = export_pattern.findall(src)
-    graph[fname] = imps
-    exports[fname] = exps
-    print(f"  {fname}: imports {imps or '[]'} ; exports {exps or '[]'}")
-
-# 静态可判定：若 App.vue 只用 formatDuration，则 formatDate 可被 tree-shaking
-app_imports_format = "formatDuration" in esm_sources["App.vue"]
-unused = "formatDate" not in esm_sources["App.vue"]
-print(f"App.vue 使用 formatDuration? {app_imports_format} ; 未使用 formatDate? {unused} → formatDate 可被摇掉: {unused}")
-assert unused
-print()
-
-# ---- 4) 环境路径：pathlib 自动处理分隔符 ----
-dist = pathlib.Path("frontend/dist/index.html")
-print("=== 环境路径 ===")
-print("POSIX 形式:", dist.as_posix())
-print("当前平台形式:", str(dist))
-print("环境校验通过：pathlib 统一处理 / 与 \\ 差异")
-print()
-print("工程基石小结：Node 提供运行时，pnpm/store 保证可复现与省空间，ESM 的静态性让按需与摇树成为可能")
-# 预期输出:
-# === package.json 契约 ===
-# name: frontend-min
-# type: module
-# deps: ['vue']
-# devDeps: [...]
-# scripts: {'dev': 'vite', ...}
-# package.json 校验通过：type=module 且 dev/build 脚本存在
-# === pnpm store 内容寻址 ===
-#   store 写入: vue@3.5.13 → ...
-#   store 复用: vue@3.5.13 → ...（已存在，不重复落盘）
-#   store 去重后条目数: 3
-#   幽灵依赖检查: 'lodash' 在 declared 中? False → 不可见(严格，pnpm 正确)
-# === ESM 静态依赖图 ===
-#   App.vue: imports ['vue', './utils/format.js'] ; exports []
-#   ...
-#   App.vue 使用 formatDuration? True ; 未使用 formatDate? True → formatDate 可被摇掉: True
-# === 环境路径 ===
-#   POSIX 形式: frontend/dist/index.html
-#   当前平台形式: frontend/dist/index.html
-#   环境校验通过：...
-#   工程基石小结：...
-```
-
-> **与全书的衔接**：本节的“运行时 + 包管理 + 模块”与 [第1章 工程化项目结构](../../software_engineering/dev_meta_skills/engineering_project_structure.md) 的 `pyproject.toml` + `src` 布局形成镜像；前端的 `package.json` + `pnpm-lock.yaml` + `type: module` 正是后端的 `pyproject.toml` + lockfile + `import` 的前端映射。读懂这一映射，你就能以后端视角参与前端的依赖评审与构建产物审计（见 [第11章 部署](../../advanced_engineering/deploy_cicd/index.md) 的 `dist/` 静态托管）。
-
-```bash
-# 本地验证 package.json 与 ESM 类型（Linux；以内联文本为例）
-.venv/bin/python -c "import json; pkg={'type': 'module', 'scripts': {'dev': 'vite'}}; print(pkg['type'], pkg['scripts']['dev'])"
-node -e "import('vue')" 2>&1 | head -5 || echo "ESM 需在 type:module 包或 .mjs 中验证"
-# 路径验证（任一平台均可用 Python）
-.venv/bin/python -c "import pathlib; print(pathlib.Path('frontend/dist').as_posix())"
-```
+读不懂工程的代码库，工程对你就是一堆文件；看懂运行时、依赖、模块三件事，那些文件就自动排成了你知道的样子。

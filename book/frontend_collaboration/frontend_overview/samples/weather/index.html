@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>天气查询</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: #eef2f6; color: #1f2328; padding: 48px 24px; }
+    .app { max-width: 420px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); overflow: hidden; }
+    .header { padding: 20px 24px; border-bottom: 1px solid #eef0f3; }
+    .header h1 { font-size: 18px; font-weight: 600; }
+    .header p { font-size: 13px; color: #7a828c; margin-top: 4px; }
+    .header code { background: #f2f4f7; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+    .card { padding: 28px 24px; text-align: center; }
+    .city { font-size: 16px; font-weight: 600; }
+    .date { font-size: 13px; color: #9aa3ae; margin-top: 4px; }
+    .temp { font-size: 60px; font-weight: 600; margin: 14px 0 6px; color: #1a56db; line-height: 1; }
+    .condition { display: inline-block; font-size: 14px; padding: 4px 16px; border-radius: 999px; background: #e6f0ff; color: #1a56db; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <h1>天气查询</h1>
+      <p>来自 <code>GET /api/weather/{date}</code> 的天气数据</p>
+    </div>
+    <div class="card" id="weather-card">
+      <div class="city" id="city">北京</div>
+      <div class="date" id="date">2024-01-15</div>
+      <div class="temp" id="temp">12°C</div>
+      <div class="condition" id="condition">晴</div>
+    </div>
+  </div>
+
+  <script>
+    // 模拟后端 GET /api/weather/2024-01-15 返回的 JSON（前后端分离下，前端拿到的就是这份数据）
+    const mockWeather = { date: "2024-01-15", city: "北京", temperature: 12, condition: "晴" };
+
+    // 前端把 JSON 渲染成天气卡片
+    document.getElementById("city").textContent = mockWeather.city;
+    document.getElementById("date").textContent = mockWeather.date;
+    document.getElementById("temp").textContent = `${mockWeather.temperature}°C`;
+    document.getElementById("condition").textContent = mockWeather.condition;
+  </script>
+</body>
+</html>
