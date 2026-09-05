@@ -4,7 +4,7 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-# Vue3 核心机制与状态设计
+# Vue3 机制与状态
 
 > **本章学习目标**
 > - 能够用 `ref`、`computed`、`watch` 说清“数据变了，视图为什么自动变”，并在三者之间选对用法
