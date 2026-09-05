@@ -4,267 +4,110 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-# 组件化设计
+# 把界面拆成组件
 
-> 学完本节，你能回答：组件的输入输出契约是什么？Props / Emits / Slots 三条链路各解决什么通信方向？何时用组件复用、何时抽为组合函数？后端如何以后端视角读懂前端组件树？
+学完本节，你能回答：
 
-## 为何要组件化：从“一整页”到“可复用零件”
+- 一个“搜索框 + 列表”的页面，为什么要拆成多个组件，而不是写成一整页？
+- Props 和 Emits 分别解决哪个方向的通信？谁往下传、谁往上通知？
+- 前端在什么时候向后端发请求拉数据？这个时机由哪个钩子控制？
+- 什么时候该抽一个组件，什么时候该抽一个组合函数？
 
-MeetingToText 的任务列表页若写成单文件，会把“搜索框 + 列表 + 空状态 + 加载态”全挤在一起——改一处搜索逻辑要在一整页代码中定位，复用“任务卡片”到详情页只能复制粘贴。
+上一节讲清了响应式：数据一变，视图跟着变。但真实的页面不可能是一段脚本从头写到尾，界面要拆成一块块可复用的部件，每块有清晰的输入与输出。这一节讲怎么拆、拆开的部件之间怎么说话。
 
-组件化的本质是“按职责划边界，按契约做通信”——每个组件像一个带明确输入输出的函数，输入是 Props，输出是 Emits，内容分发是 Slots。类比后端：组件之于前端，如同微服务之于后端——边界清晰、契约明确、可独立演进。
+> 组件像流水线上的标准零件：每个零件只认一种输入，做好了从固定口子把结果交出去，外壳不变、里面装的东西可以换。后端最熟的类比是：组件之于前端，如同函数之于后端，定义好参数和返回值，谁都能调、互不干扰。
 
-## 三条通信链路：Props 向下、Emits 向上、Slots 向内
+这一节回答“界面怎么拆、拆开的零件怎么通信”，并在末尾补上“数据什么时候拉”这个联调真正的落点。一共四件事：为什么拆、往下传、往上通知、何时拉数据。
 
-### Props：父 → 子（只读输入）
+## 为什么要把页面拆成组件
 
-父组件通过 Props 向子组件传数据，子组件不得直接修改 Props（单向数据流），需通过 Emits 通知父组件修改。
+把“搜索框 + 列表 + 空状态 + 加载态”全写在一个文件里，改一处搜索逻辑要在整页代码里定位，想把“任务卡片”复用到详情页只能复制粘贴。组件的价值就在于此：把职责切成小块，每块自带输入输出，能独立看、独立改、独立复用。
 
-```javascript
-// 父组件
+## Props：父传子
+
+父组件通过 Props 把数据传给子组件，子组件拿到的是只读副本，自己不能改。这对应后端的“函数参数”：调用方传入，接收方只读。
+
+```vue
+<!-- 父组件：把 tasks 和 keyword 传给子组件 -->
 <TaskList :tasks="tasks" :keyword="keyword" />
 
-// 子组件 TaskList.vue
+<!-- 子组件 TaskList.vue -->
 <script setup>
 defineProps({ tasks: Array, keyword: String })
 </script>
+
 <template>
-  <li v-for="t in tasks" :key="t.id">{{ t.filename }} — {{ t.status }}</li>
+  <li v-for="t in tasks" :key="t.id">{{ t.name }}</li>
 </template>
 ```
 
-类比后端的“函数参数”——调用方传入，接收方只读。
+数据只能从父往子流动，这就是单向数据流。子组件若想改数据，不能直接改 Props，得走下面的 Emits。
 
-### Emits：子 → 父（事件通知）
+## Emits：子传父
 
-子组件通过 Emits 向父组件发事件，父组件监听并决定如何改状态。
+子组件不该直接改父组件的状态，而是发一个事件“通知”父组件，由父组件决定怎么改。这对应后端的“回调”：子组件只上报，不越权。
 
-```javascript
-// 子组件 SearchInput.vue
+```vue
+<!-- 子组件 SearchInput.vue：发出 update 事件 -->
 <script setup>
-const emit = defineEmits(['update:keyword', 'search'])
+const emit = defineEmits(['update:keyword'])
 function onInput(e) { emit('update:keyword', e.target.value) }
 </script>
-<template><input :value="keyword" @input="onInput" /></template>
 
-// 父组件监听
-<SearchInput :keyword="keyword" @update:keyword="keyword = $event" />
-// 简写：<SearchInput v-model:keyword="keyword" />
-```
-
-类比后端的“回调/事件”——子组件不直接改父状态，而是“通知”父组件。
-
-### Slots：父 → 子的内容分发（结构复用）
-
-Slots 让父组件决定子组件内部的部分结构，实现“框架固定、内容可变”。
-
-```javascript
-// 子组件 TaskCard.vue（提供插槽）
 <template>
-  <div class="card">
-    <slot name="header">默认标题</slot>
-    <slot>默认内容</slot>
-    <slot name="footer" :status="task.status">{{ task.status }}</slot>
-  </div>
+  <input :value="keyword" @input="onInput" />
 </template>
 
-// 父组件使用
-<TaskCard :task="task">
-  <template #header><h3>{{ task.filename }}</h3></template>
-  <template #footer="{ status }"><span :class="status">{{ status }}</span></template>
-</TaskCard>
+<!-- 父组件：监听事件，自己改状态 -->
+<SearchInput :keyword="keyword" @update:keyword="keyword = $event" />
 ```
 
-类比后端的“模板方法模式”——骨架在子组件，具体内容由父组件注入；作用域插槽（`#footer="{ status }"`）则像“父组件向子组件索要上下文再决定渲染”。
+`v-model` 就是上面这套“传值 + 监听 update”的语法糖：`<SearchInput v-model:keyword=“keyword” />` 一行顶两行。
 
-### 何时抽组件 vs 何时抽组合函数
+## 插槽：留一个内容位
+
+父组件想往子组件里塞一段自定义内容时，子组件留一个 `<slot>` 占位。默认插槽已经覆盖绝大多数场景，命名插槽和作用域插槽等用到时再查文档即可，这里不展开。
+
+## 生命周期：数据什么时候拉
+
+这是后端联调最该记住的一点。组件从“被创建”到“从页面消失”会经过几个阶段，最常用的两个钩子是：
+
+```vue
+<script setup>
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+
+const tasks = ref([])
+
+onMounted(async () => {
+  // 组件挂载到页面后执行一次，通常在这里拉后端数据
+  tasks.value = await fetch('/api/tasks').then(r => r.json())
+})
+
+onBeforeUnmount(() => {
+  // 组件从页面移除前执行，用来清理定时器、取消请求
+})
+</script>
+```
+
+记住 `onMounted` 就够了：**前端就是在组件挂载之后，通过 `onMounted` 里的 `fetch` 去调你的接口。** 这也是联调时判断“这行请求是页面一进来就发，还是点了按钮才发”的根据。
+
+## 抽组件还是抽组合函数
+
+一块逻辑该放哪，看它有没有界面：
 
 | 场景 | 抽什么 | 例子 |
-|------|--------|------|
-| 有 UI 结构需复用 | 组件 | `TaskCard`、`EmptyState` |
-| 无 UI、纯逻辑复用 | 组合函数 | `useTasks()`、`usePolling()` |
-| 既有 UI 又有逻辑 | 组件 + 组合函数 | `TaskList` 内聚 `useFilteredTasks` |
+| --- | --- | --- |
+| 有界面结构要复用 | 组件 | `TaskCard`、`EmptyState` |
+| 无界面、纯逻辑要复用 | 组合函数 | `useTasks`、`usePolling` |
+| 两者都有 | 组件包裹组合函数 | `TaskList` 里用 `useFilteredTasks` |
 
-原则：UI 复用 → 组件；逻辑复用 → 组合函数；两者兼有 → 组件包裹组合函数。
+原则一句话：界面复用抽组件，逻辑复用抽组合函数，两者都要就把逻辑装进组件里的组合函数。
 
-## 可运行示例：Python 对象模型演示组件输入输出契约
+## 本节小结
 
-示例（用 Python 类模拟 Props/Emits/Slots 三条链路，本地可复现，无网络）：
+- 组件是“带契约的部件”：按职责划边界，靠输入输出通信，能独立复用与演进。
+- Props 向下只读传数据，Emits 向上发事件通知，一套单向数据流覆盖父子通信。
+- `onMounted` 是前端向后端拉数据的标准时机，`onBeforeUnmount` 用来清理。
+- 界面复用抽组件，逻辑复用抽组合函数，两者结合即“组件包裹组合函数”。
 
-```{code-cell} ipython3
-from typing import Any, Callable
-
-# ---- 1) 组件基类：Props 只读、Emits 事件、Slots 内容分发 ----
-class Component:
-    def __init__(self, props: dict | None = None):
-        self._props = dict(props or {})
-        self._emits: dict[str, list[Callable]] = {}
-        self._slots: dict[str, Callable] = {}
-
-    def prop(self, key: str):
-        return self._props.get(key)
-
-    def on(self, event: str, handler: Callable):
-        self._emits.setdefault(event, []).append(handler)
-
-    def emit(self, event: str, *args):
-        for h in self._emits.get(event, []):
-            h(*args)
-
-    def slot(self, name: str, fn: Callable):
-        self._slots[name] = fn
-
-    def render_slot(self, name: str, fallback: str = "", **ctx):
-        fn = self._slots.get(name)
-        if fn:
-            return fn(**ctx)
-        return fallback
-
-# ---- 2) Props 向下：父传子，子只读 ----
-print("=== Props 向下（父→子，只读） ===")
-
-class TaskList(Component):
-    def render(self) -> str:
-        tasks = self.prop("tasks") or []
-        keyword = (self.prop("keyword") or "").lower()
-        filtered = [t for t in tasks if keyword in t["filename"].lower()]
-        if not filtered:
-            return self.render_slot("empty", fallback="(空列表)")
-        lines = []
-        for t in filtered:
-            # 作用域插槽：把 task 传给父，让父决定每行渲染
-            row = self.render_slot("row", fallback=f"{t['filename']} — {t['status']}", task=t)
-            lines.append(row)
-        return "\n".join(lines)
-
-tasks = [
-    {"id": "1", "filename": "meeting.wav", "status": "done"},
-    {"id": "2", "filename": "interview.mp3", "status": "processing"},
-    {"id": "3", "filename": "demo.wav", "status": "pending"},
-]
-
-child = TaskList({"tasks": tasks, "keyword": "meeting"})
-print(child.render())
-assert "meeting.wav" in child.render()
-assert "interview.mp3" not in child.render()
-
-child2 = TaskList({"tasks": tasks, "keyword": ""})
-print("keyword 为空 → 全部:", child2.render().count("—"))
-assert child2.render().count("—") == 3
-print("Props 校验通过：父改 keyword，子自动按新 Props 渲染")
-print()
-
-# ---- 3) Emits 向上：子通知父，父改状态 ----
-print("=== Emits 向上（子→父，事件通知） ===")
-
-class SearchInput(Component):
-    def input(self, value: str):
-        # 子不直接改父的 keyword，而是 emit 事件
-        self.emit("update:keyword", value)
-    def search(self):
-        self.emit("search", self.prop("keyword"))
-
-parent_keyword = ""
-search_input = SearchInput({"keyword": ""})
-search_input.on("update:keyword", lambda v: globals().update(parent_keyword=v))
-# 模拟用户输入
-search_input.input("interview")
-# 校验：事件已触发，父状态已更新（通过闭包模拟）
-emitted_values: list[str] = []
-si2 = SearchInput({"keyword": ""})
-si2.on("update:keyword", lambda v: emitted_values.append(v))
-si2.input("demo")
-assert emitted_values == ["demo"]
-print("Emits 校验通过：子 input → emit update:keyword → 父收到", emitted_values)
-
-# v-model 双向绑定的本质： :keyword + @update:keyword
-keyword_state = {"value": ""}
-si3 = SearchInput({"keyword": keyword_state["value"]})
-def sync_keyword(v): keyword_state["value"] = v
-si3.on("update:keyword", sync_keyword)
-si3.input("meeting")
-print("v-model 模拟：keyword 同步为", keyword_state["value"])
-assert keyword_state["value"] == "meeting"
-print()
-
-# ---- 4) Slots 内容分发：父决定子内部的部分结构 ----
-print("=== Slots 内容分发（父决定子内部结构） ===")
-
-card = TaskList({"tasks": tasks, "keyword": ""})
-# 父通过 slot 决定每行如何渲染（类比 Vue 的 #row="{ task }"）
-card.slot("row", lambda task: f"[{task['status'].upper()}] {task['filename']}")
-out = card.render()
-print(out)
-assert "[DONE] meeting.wav" in out
-
-# 空状态插槽
-empty_card = TaskList({"tasks": [], "keyword": ""})
-empty_card.slot("empty", lambda: "暂无任务，去上传一个吧")
-print("空状态插槽:", empty_card.render())
-assert "暂无任务" in empty_card.render()
-
-# 作用域插槽：子把上下文传给父，父据此渲染
-scoped = TaskList({"tasks": tasks, "keyword": ""})
-scoped.slot("row", lambda task: f"{task['filename']} ({'可播放' if task['status']=='done' else '处理中'})")
-print("作用域插槽:", scoped.render().splitlines()[0])
-assert "可播放" in scoped.render()
-print("Slots 校验通过：父决定结构，子提供数据上下文")
-print()
-
-# ---- 5) 组合函数：无 UI 的逻辑复用（类比 useTasks） ----
-print("=== 组合函数（逻辑复用，无 UI） ===")
-
-def use_keyword_filter(initial: list[dict]):
-    state = {"keyword": "", "tasks": list(initial)}
-    def filtered():
-        kw = state["keyword"].lower()
-        return [t for t in state["tasks"] if kw in t["filename"].lower()]
-    def set_keyword(v: str): state["keyword"] = v
-    return state, filtered, set_keyword
-
-s1, f1, set1 = use_keyword_filter(tasks)
-s2, f2, set2 = use_keyword_filter(tasks)
-set1("meeting")
-set2("demo")
-print("实例1:", [t["filename"] for t in f1()])
-print("实例2:", [t["filename"] for t in f2()])
-assert [t["filename"] for t in f1()] == ["meeting.wav"]
-assert [t["filename"] for t in f2()] == ["demo.wav"]
-print("组合函数通过：同一逻辑在两个组件实例中独立复用，无命名冲突")
-print()
-print("小结：Props 是输入、Emits 是输出、Slots 是内容分发；UI 复用用组件，逻辑复用用组合函数")
-# 预期输出:
-# === Props 向下 ===
-# meeting.wav — done
-# keyword 为空 → 全部: 3
-# Props 校验通过
-# === Emits 向上 ===
-# Emits 校验通过：子 input → emit update:keyword → 父收到 ['demo']
-# v-model 模拟：keyword 同步为 meeting
-# === Slots 内容分发 ===
-# [DONE] meeting.wav
-# ...
-# 作用域插槽: meeting.wav (可播放)
-# Slots 校验通过
-# === 组合函数 ===
-# 实例1: ['meeting.wav']
-# 实例2: ['demo.wav']
-# 组合函数通过
-```
-
-```javascript
-// 示意：TaskList.vue（与 Python 模型对应）
-// Props 向下
-defineProps({ tasks: Array, keyword: String })
-// Emits 向上
-const emit = defineEmits(['update:keyword'])
-// Slots 内容分发
-// <slot name="row" :task="t">{{ t.filename }} — {{ t.status }}</slot>
-```
-
-```bash
-# 本地验证组件契约
-.venv/bin/python -c "import pathlib; print(pathlib.Path('src/components').exists())"
-```
-
-> **与全书的衔接**：本节的组件边界划分是 [8.3 路由](routing_management.md) 中“路由级组件 vs 子组件”的前提，也是 [8.4 Pinia](cross_component_state_pinia.md) 中“何时用 Props 逐层传、何时提升到 Store”的判断依据；组件的 `onMounted` 数据拉取将在路由守卫中被更精细地控制。
+金句：组件把一页大代码拆成一盒零件，每个零件签好输入输出的契约，拼装和改动才不用再为一整页提心吊胆。

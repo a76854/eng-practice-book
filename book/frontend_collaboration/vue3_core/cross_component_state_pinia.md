@@ -4,354 +4,82 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-# 跨组件状态管理Pinia
+# 跨组件共享的状态
 
-> 学完本节，你能回答：何时用 Props 逐层传、何时提升到 Pinia？Pinia 的 State / Getter / Action 各自承担什么职责？前端状态与后端 `TaskStore` 如何划边界、如何避免“前端缓存与后端真相不一致”？
+学完本节，你能回答：
 
-## 从“Props 钻孔”到“全局状态”
+- 两个组件要共享同一份状态时，用 Props 逐层透传有什么问题？什么时候该提升到 Pinia？
+- Pinia 的 State、Getter、Action 三层各自承担什么职责？
+- 前端状态和后端状态是什么关系？为什么说“以后端为真相、前端为缓存”？
 
-MeetingToText 有一个典型痛点：任务列表在 `TaskList.vue`，任务详情在 `TaskDetail.vue`，两者都需要“当前任务列表”与“当前选中任务”。若用 Props 逐层传，需要从根组件一层层钻孔（prop drilling）——每加一层中间组件都要透传，改一个字段要改 5 个文件。
+路由解决了页面之间的切换，但还剩一块拼图：有些状态要跨组件、跨页面共享。这一节讲共享状态归谁管、怎么变。
 
-状态管理解决的是“跨组件共享的可变状态归谁管、如何变、如何派生”。Pinia 是 Vue 3 官方推荐的状态库，其心智可类比后端的“单例服务 + 显式方法变更 + 派生查询”。
+> Props 逐层透传像一层层递话，十个人传一份菜单，传到第十个人早走了样。Pinia 像挂在大厅的一块公告板：谁要看就抬头看一眼，谁要改就上板改，用不着经过中间任何一个人。
 
-## Pinia 的三层模型：State / Getter / Action
+这一节讲三件事：什么时候该用全局状态、它内部的三层模型长什么样、它和后端状态是什么边界。只讲够用的部分，不往深处钻。
+
+## 什么时候该用全局状态
+
+两个页面都要同一份“任务列表”：列表页要渲染它，一个统计组件要读它算“已完成了几条”。若靠 Props 把这份数据从根组件一层层往下传，每加一层中间组件都要透传一遍，改一个字段要动一串文件。这种“跨组件、跨页面共享的可变状态”，就该提升到全局状态库里，谁用谁直接取。
+
+## State、Getter、Action 三层
+
+Pinia 是 Vue 3 官方推荐的状态库，一个小 store 就三层：
 
 | 层 | 职责 | 后端类比 |
-|----|------|---------|
-| State | 原始可变状态（响应式） | 数据库表 / 内存中的真实数据 |
-| Getter | 基于 State 的派生只读（带缓存） | 视图 / 计算字段 / 查询方法 |
-| Action | 变更 State 的唯一入口（可异步） | Service 方法 / 用例 |
+| --- | --- | --- |
+| State | 原始可变状态 | 数据库里的数据 |
+| Getter | 由 State 派生的只读值，带缓存 | 计算字段、查询方法 |
+| Action | 变更 State 的唯一入口，可异步 | Service 方法 |
 
 ```javascript
-// 文件 src/stores/task.ts（Pinia 典型结构）
+// src/stores/tasks.ts
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-export const useTaskStore = defineStore('task', () => {
+export const useTasks = defineStore('tasks', () => {
   // State：原始状态
   const tasks = ref([])
   const keyword = ref('')
   const loading = ref(false)
 
-  // Getter：派生（带缓存，类比 computed）
-  const filtered = computed(() => tasks.value.filter(t => (t.name || t.filename).includes(keyword.value)))
+  // Getter：派生值，带缓存
+  const filtered = computed(() => tasks.value.filter(t => t.name.includes(keyword.value)))
   const doneCount = computed(() => tasks.value.filter(t => t.status === 'done').length)
 
-  // Action：变更（可异步，唯一写入口）
+  // Action：唯一的写入口
   async function load() {
     loading.value = true
-    try { tasks.value = (await fetch('/mock.json').then(r => r.json())).tasks }
-    finally { loading.value = false }
+    try {
+      tasks.value = await fetch('/api/tasks').then(r => r.json())
+    } finally {
+      loading.value = false
+    }
   }
   function setKeyword(v) { keyword.value = v }
-  function addTask(t) { tasks.value.push(t) }
 
-  return { tasks, keyword, loading, filtered, doneCount, load, setKeyword, addTask }
+  return { tasks, keyword, loading, filtered, doneCount, load, setKeyword }
 })
 ```
 
-使用时，任何组件都可 `const store = useTaskStore()` 拿到同一单例——如同后端任何 handler 都可 `store = get_task_store()` 拿到同一服务实例。
+用法上，任何组件 `const store = useTasks()` 拿到的都是同一个单例，谁改、谁读，看到的都是一份。这对应后端“任何 handler 都能拿到同一个服务实例”。
 
-```javascript
-// 组件 A：任务列表
-<script setup>
-import { useTaskStore } from '@/stores/task'
-const store = useTaskStore()
-store.load()
-</script>
-<template>
-  <input :value="store.keyword" @input="store.setKeyword($event.target.value)" />
-  <li v-for="t in store.filtered" :key="t.id">{{ t.filename }}</li>
-</template>
+## 前端状态与后端状态的边界
 
-// 组件 B：任务统计（复用同一 store，无需 Props 透传）
-<script setup>
-import { useTaskStore } from '@/stores/task'
-const store = useTaskStore()
-</script>
-<template><span>已完成 {{ store.doneCount }} / {{ store.tasks.length }}</span></template>
-```
+这里有一条必须分清的边界：
 
-### 模块化：按领域拆 store
+| 维度 | 前端状态（Pinia） | 后端状态（数据库） |
+| --- | --- | --- |
+| 真相地位 | 缓存，刷新即失 | 持久真相 |
+| 职责 | 交互态、过滤、分页 | 权威数据、一致性 |
 
-与后端的分层一致，Pinia 亦按领域拆模块：`useTaskStore` 管任务，`useUserStore` 管用户，`useUploadStore` 管上传队列。每个 store 独立、可组合——`useUploadStore` 的 `onUploaded` 可调用 `useTaskStore().load()` 刷新列表。
+原则一句话：**以后端为真相，前端为缓存。** 前端不管你缓存了啥，刷新页面、重新进入后，都以 `load()` 重新拉取后端为准。联调时“刷新后状态丢了”往往是正常的，除非这段状态本就应该持久化到后端。
 
-## 前端状态 vs 后端状态：边界与一致性
+## 本节小结
 
-| 维度 | 前端 Pinia | 后端 TaskStore |
-|------|-----------|---------------|
-| 真相来源 | 缓存/视图状态 | 持久化真相（DB） |
-| 生命周期 | 内存，刷新即失 | 持久，重启仍在 |
-| 职责 | 交互状态、过滤、分页、乐观更新 | 权威数据、一致性、权限 |
+- 跨组件、跨页面共享的可变状态，别用 Props 一路透传，提升到 Pinia 全局状态。
+- Store 分三层：State 存原始状态、Getter 存派生只读、Action 是唯一写入口，对应后端的数据、查询、Service。
+- Pinia 是单例，任何组件拿到的都是同一份状态。
+- 前端状态是缓存、后端状态是真相，刷新即以 `load()` 重拉为准。
 
-原则：以后端为真相，前端为缓存。刷新后以前端 `load()` 重新拉取为准；乐观更新（如“标记完成”）可先改前端、再调接口，失败则回滚——如同后端的“先写缓存、再写库、失败补偿”。
-
-## 可运行示例：Python 演示 Store 模式（单例 + Action + Getter）
-
-示例（用 Python 模拟 Pinia 的三层模型与前后端状态边界，本地可复现，无网络）：
-
-```{code-cell} ipython3
-from typing import Callable
-
-# ---- 1) 响应式基建（复用 8.1 的极简实现，服务于 Store 的响应式） ----
-class Dep:
-    def __init__(self): self.subs: list[Callable] = []
-    def depend(self, fn):
-        if fn not in self.subs: self.subs.append(fn)
-    def notify(self):
-        for fn in list(self.subs): fn()
-
-_active: list[Callable] = []
-
-def watchEffect(fn: Callable):
-    def wrapped():
-        _active.append(wrapped)
-        try: fn()
-        finally: _active.pop()
-    wrapped()
-    return wrapped
-
-class Ref:
-    def __init__(self, v): self._v, self._dep = v, Dep()
-    @property
-    def value(self):
-        if _active: self._dep.depend(_active[-1])
-        return self._v
-    @value.setter
-    def value(self, nv):
-        if nv != self._v:
-            self._v = nv
-            self._dep.notify()
-
-# ---- 2) Pinia Store：State + Getter(computed) + Action ----
-class TaskStore:
-    """单例 Store（类比 Pinia defineStore + 后端 TaskStore）"""
-    _instance = None
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._init = False
-        return cls._instance
-
-    def __init__(self):
-        if self._init: return
-        self._init = True
-        # State
-        self.tasks: Ref = Ref([])
-        self.keyword: Ref = Ref("")
-        self.loading: Ref = Ref(False)
-        # Getter 缓存
-        self._filtered_cache = None
-        self._dirty = True
-        self._getter_dep = Dep()
-        def mark_dirty():
-            self._dirty = True
-            self._getter_dep.notify()
-        # 订阅 State 变化 → Getter 变脏
-        def track_state():
-            # 访问 tasks 与 keyword 以建立依赖
-            _ = self.tasks.value
-            _ = self.keyword.value
-        # 用 watchEffect 建立 tasks/keyword → mark_dirty 的链路
-        def effect():
-            _active.append(mark_dirty)
-            try:
-                _ = self.tasks.value
-                _ = self.keyword.value
-            finally:
-                _active.pop()
-        watchEffect(effect)
-
-    # Getter：派生，只读，带缓存
-    @property
-    def filtered(self):
-        if _active:
-            self._getter_dep.depend(_active[-1])
-        if self._dirty:
-            kw = self.keyword.value.lower()
-            tasks = self.tasks.value
-            self._filtered_cache = [
-                t for t in tasks
-                if kw in t.get("filename", "").lower() or kw in (t.get("name") or "").lower()
-            ]
-            self._dirty = False
-        return self._filtered_cache
-
-    @property
-    def done_count(self) -> int:
-        return sum(1 for t in self.tasks.value if t.get("status") == "done")
-
-    @property
-    def total(self) -> int:
-        return len(self.tasks.value)
-
-    # Action：变更 State 的唯一入口（可异步）
-    def load(self, data: list[dict]):
-        """模拟异步 load（真实为 fetch）"""
-        self.loading.value = True
-        try:
-            self.tasks.value = list(data)
-        finally:
-            self.loading.value = False
-
-    def set_keyword(self, v: str):
-        self.keyword.value = v
-
-    def add_task(self, t: dict):
-        # 触发响应式：重赋新列表（类比 Vue 中对数组的响应式变更）
-        self.tasks.value = self.tasks.value + [t]
-
-    def mark_done(self, task_id: str):
-        updated = []
-        for t in self.tasks.value:
-            if t["id"] == task_id:
-                updated.append({**t, "status": "done"})
-            else:
-                updated.append(t)
-        self.tasks.value = updated
-
-    def reset(self):
-        self.tasks.value = []
-        self.keyword.value = ""
-        self.loading.value = False
-
-# 单例校验：任意处获取的是同一实例（类比 Pinia 的全局单例）
-s1 = TaskStore()
-s2 = TaskStore()
-assert s1 is s2
-print("单例校验通过：s1 is s2 ==", s1 is s2)
-
-# ---- 3) Action 变更 + Getter 派生 ----
-print("\n=== Store：Action 变更 + Getter 派生 ===")
-store = TaskStore()
-store.reset()
-
-mock_tasks = [
-    {"id": "1", "filename": "meeting.wav", "name": "周会", "status": "done"},
-    {"id": "2", "filename": "interview.mp3", "status": "processing"},
-    {"id": "3", "filename": "demo.wav", "name": "Demo 评审", "status": "pending"},
-]
-
-store.load(mock_tasks)
-print(f"load 后 total={store.total} done={store.done_count}")
-assert store.total == 3
-assert store.done_count == 1
-
-# Getter 自动派生
-store.set_keyword("meeting")
-print(f"keyword=meeting → filtered={[t['filename'] for t in store.filtered]}")
-assert [t["filename"] for t in store.filtered] == ["meeting.wav"]
-
-store.set_keyword("")
-print(f"keyword 清空 → filtered {len(store.filtered)} 条")
-assert len(store.filtered) == 3
-
-# 监听派生：filtered 变化自动通知（类比组件自动重渲染）
-renders: list[str] = []
-watchEffect(lambda: renders.append(f"filtered:{len(store.filtered)}"))
-store.set_keyword("demo")
-print("监听派生:", renders[-1])
-assert renders[-1] == "filtered:1"
-
-store.set_keyword("")
-print("清空后:", renders[-1])
-assert renders[-1] == "filtered:3"
-print("Action+Getter 校验通过：改 State 即派生 Getter，监听自动触发")
-print()
-
-# ---- 4) 模块化：按领域拆 store，跨 store 协作 ----
-print("=== 模块化：多 Store 协作 ===")
-
-class UploadStore:
-    def __init__(self, task_store: TaskStore):
-        self.task_store = task_store
-        self.queue: list[str] = []
-    def enqueue(self, filename: str):
-        self.queue.append(filename)
-        print(f"  入队 {filename}，队列 {self.queue}")
-    def on_uploaded(self, task: dict):
-        """上传完成 → 刷新任务列表（跨 store 调用）"""
-        self.task_store.add_task(task)
-        print(f"  上传完成 {task['filename']} → 任务列表已更新 total={self.task_store.total}")
-
-upload = UploadStore(store)
-upload.enqueue("new_meeting.wav")
-upload.on_uploaded({"id": "4", "filename": "new_meeting.wav", "status": "done"})
-assert store.total == 4
-print(f"跨 Store 协作通过：上传后 total={store.total}")
-print()
-
-# ---- 5) 前后端状态边界：以后端为真相，前端为缓存 ----
-print("=== 前后端状态边界 ===")
-# 后端真相（模拟 DB）
-backend_db = [{"id": "1", "filename": "a.wav", "status": "done"}]
-# 前端缓存（Pinia）
-store.reset()
-store.load(backend_db)
-print(f"初始：后端 {len(backend_db)} 条，前端 total={store.total}")
-
-# 前端乐观更新：先改前端，再调后端（失败回滚）
-store.add_task({"id": "2", "filename": "b.wav", "status": "processing"})
-print(f"乐观更新后前端 total={store.total}（未调后端）")
-# 模拟后端写入成功
-backend_db.append({"id": "2", "filename": "b.wav", "status": "processing"})
-print(f"后端写入后后端 {len(backend_db)} 条")
-assert store.total == len(backend_db)
-
-# 刷新：以前端 load 重新拉取后端真相为准
-store.reset()
-store.load(backend_db)
-print(f"刷新后前端 total={store.total}（以后端为真相）")
-assert store.total == 2
-print("边界校验通过：以后端为真相，前端刷新即一致")
-print()
-
-# 乐观失败回滚
-store.add_task({"id": "99", "filename": "fail.wav", "status": "done"})
-print(f"乐观写入 fail.wav 后 total={store.total}")
-# 模拟后端失败 → 回滚前端
-store.tasks.value = [t for t in store.tasks.value if t["id"] != "99"]
-print(f"回滚后 total={store.total}（模拟后端失败补偿）")
-assert store.total == 2
-print()
-
-print("小结：State 是真相缓存，Getter 是派生只读，Action 是唯一写入口；模块化按领域拆，前后端以拉取保持一致")
-# 预期输出:
-# 单例校验通过：s1 is s2 == True
-# === Store：Action 变更 + Getter 派生 ===
-# load 后 total=3 done=1
-# keyword=meeting → filtered=['meeting.wav']
-# ...
-# 监听派生: filtered:1
-# Action+Getter 校验通过
-# === 模块化：多 Store 协作 ===
-#   入队 new_meeting.wav ...
-# 跨 Store 协作通过
-# === 前后端状态边界 ===
-# 初始：后端 1 条，前端 total=1
-# 乐观更新后前端 total=2
-# 刷新后前端 total=2（以后端为真相）
-# 边界校验通过
-# 回滚后 total=2
-```
-
-```javascript
-// 文件 src/stores/task.ts（真实 Pinia，对应 Python 模型的三层结构）
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-export const useTaskStore = defineStore('task', () => {
-  const tasks = ref([])                          // State
-  const filtered = computed(() => tasks.value)   // Getter
-  async function load() { tasks.value = await fetch('/mock.json').then(r => r.json()) } // Action
-  return { tasks, filtered, load }
-})
-```
-
-```bash
-# 本地验证 Store 契约
-.venv/bin/python -c "import pathlib; print(pathlib.Path('src/stores').exists() if pathlib.Path('src/stores').exists() else 'stores 目录由 Vite 项目承载')"
-# 路径
-.venv/bin/python -c "import pathlib; print(pathlib.Path('src/App.vue').exists())"
-```
-
-> **与全书的衔接**：本节的 Pinia 单例与 [第5章 数据持久化](../../backend_development/persistence_sql_orm/index.md) 的后端 `TaskStore` 形成镜像——前端管“交互缓存”，后端管“持久真相”；两者的同步点正是 [第4章的 HTTP 契约](../../backend_development/http_restful/index.md)（`GET /api/tasks`）与 [实验 06 的前后端联调](../../lab_guide/frontend_routing_state/index.md)。
+金句：状态件归谁管是第一等要紧事，管错了地方，联调时“数据动了视图不动”“刷新了状态还在”这些怪相就会找上门。
