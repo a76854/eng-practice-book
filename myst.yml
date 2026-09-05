@@ -62,11 +62,11 @@ project:
         - file: book/frontend_collaboration/frontend_overview/frontend_origin.md
         - file: book/frontend_collaboration/frontend_overview/frontend_role_in_architecture.md
         - file: book/frontend_collaboration/frontend_overview/framework_troika.md
-        - file: book/frontend_collaboration/frontend_overview/why_vue3_vite.md
         - file: book/frontend_collaboration/frontend_overview/frontend_engineering_foundation.md
         - file: book/frontend_collaboration/frontend_overview/summary_and_questions.md
     - file: book/frontend_collaboration/vue3_core/index.md
       children:
+        - file: book/frontend_collaboration/vue3_core/why_vue3_vite.md
         - file: book/frontend_collaboration/vue3_core/reactivity_principles.md
         - file: book/frontend_collaboration/vue3_core/component_design.md
         - file: book/frontend_collaboration/vue3_core/routing_management.md

@@ -10,7 +10,6 @@ kernelspec:
 > - 能够用职责与产物说清前端在浏览器—接口—存储链路中的位置，并对比后端模板渲染与前后端分离两种形态的边界与代价
 > - 能够沿着前端的演进脉络，说清为什么会有独立的前端这个角色，以及每一步演进解决了什么、留下了什么
 > - 能够客观对比 React / Vue / Angular 三者的设计哲学、数据流与适用场景，并在给定约束下给出不偏袒的选型判断
-> - 能够解释 Vue 3 组合式 API 与 Proxy 响应式的基本原理，并说明 Vite 为何在开发期比传统打包器更快
 > - 能够说清 Node.js、npm/pnpm、ES Module 三件套在前端工程化中的各自角色，并用 `package.json` 的依赖与脚本字段描述一个可复现的前端工程
 
 > **为什么需要掌握本章**
@@ -23,7 +22,6 @@ kernelspec:
 - [前端从哪来](frontend_origin.md) —— 为什么会有独立的前端：从静态页面到 SPA 的演进如何把前端从一个附属角色推成独立工种
 - [前端在架构中的角色](frontend_role_in_architecture.md) —— 后端模板渲染 vs 前后端分离：职责如何切、URL 与数据如何分工、接口契约如何落成三态渲染
 - [框架三驾马车](framework_troika.md) —— React / Vue / Angular 设计哲学对比：声明式、响应式与企业级约束的 trade-off
-- [Vue 3 与 Vite](why_vue3_vite.md) —— 单文件组件、响应式、组合式 API 与 Vite 的开发/生产分工：以一个具体框架讲清前端开发
 - [前端工程化基石](frontend_engineering_foundation.md) —— Node.js、npm/pnpm、ES Module：前端如何拥有自己的运行时 + 包管理 + 模块系统
 
 

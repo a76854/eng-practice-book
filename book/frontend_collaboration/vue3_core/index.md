@@ -7,6 +7,7 @@ kernelspec:
 # Vue3 机制与状态
 
 > **本章学习目标**
+> - 能够说清 Vue 3 的核心特性（单文件组件、声明式渲染、响应式、组件化）与组合式 API 的组织方式，以及为什么需要 Vite 构建
 > - 能够用 `ref`、`computed`、`watch` 说清“数据变了，视图为什么自动变”，并在三者之间选对用法
 > - 能够用 Props 向下、Emits 向上刻画组件间通信，并在组件挂载时（`onMounted`）拉取后端数据
 > - 能够用路由表、登录守卫与懒加载三件事，理解前端多页面应用的页面切换与鉴权
@@ -20,6 +21,7 @@ kernelspec:
 
 本章讲 Vue 的语法与机制，不依赖可运行环境：代码一律以围栏展示，动手练习交给实验指导书。章内结构如下：
 
+- [Vue 3 与 Vite](why_vue3_vite.md) —— 认识 Vue 3 的核心特性与组合式 API，以及为什么需要 Vite
 - [数据如何驱动视图](reactivity_principles.md) —— `ref`、`computed`、`watch` 如何让数据变化自动反映到界面
 - [把界面拆成组件](component_design.md) —— Props 向下、Emits 向上，以及挂载时拉取数据
 - [多页面与登录守卫](routing_management.md) —— 路由表、登录守卫与懒加载三件事

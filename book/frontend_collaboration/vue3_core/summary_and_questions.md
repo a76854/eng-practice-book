@@ -6,6 +6,7 @@ kernelspec:
 
 ## 本章小结
 
+- **Vue 3 是本章的框架载体**：单文件组件聚拢模板、逻辑与样式，组合式 API 按关注点组织代码，Proxy 把响应式补得更圆，Vite 拆分开开发期按需与生产期打包（见 [Vue 3 与 Vite](why_vue3_vite.md)）。
 - **响应式让“改数据”与“改视图”焊在一起**：`ref` 装单值、`reactive` 装对象，都是可观测容器；`computed` 管派生值（带缓存），`watch` 管副作用（源变即执行）。本质是“记录依赖 + 变化通知”，你只改数据，视图照着数据的形状自己变（见 [数据如何驱动视图](reactivity_principles.md)）。
 - **组件是带契约的部件**：Props 向下只读传数据、Emits 向上发事件通知、插槽留内容位，一套单向数据流覆盖父子通信；`onMounted` 是前端向后端拉数据的标准时机，`onBeforeUnmount` 用来清理（见 [把界面拆成组件](component_design.md)）。
 - **路由是“URL 到组件”的映射加一道门**：路由表把页面挂到路径上，`:id` 是动态参数；全局守卫 `beforeEach` 做鉴权、`beforeEnter` 做参数校验；懒加载用动态 `import()` 按路由拆包，首屏只加载当前页（见 [多页面与登录守卫](routing_management.md)）。
