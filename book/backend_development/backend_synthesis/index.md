@@ -8,222 +8,259 @@ kernelspec:
 
 学完本节，你能回答：
 
-- 一个注册请求从进入到返回，依次穿过哪几层，每一层各自做什么？
-- Service 层除了查重，为什么密码不能明文落库，密码哈希怎么做才安全？
+- 一个搜索请求从进入到返回，依次穿过哪几层，每一层各自做什么？
+- 搜索走外部 API、收藏走本地数据库，这两种数据来源为什么要分别抽象？
 - 分层之后，Controller 如何把业务错误映射成正确的 HTTP 状态码？
-- 为什么数据访问要放进 Repository，而不是让 Controller 直接写 SQL？
+- 为什么收藏要落库持久化，而不是只活在进程内存里？
 
-> 一个注册请求像一张快递单：从前台签收，交业务室核验、登记，再送库房归档，最后把回执寄回。每一站只干本分的事，单子才能在站点之间顺畅流转，出了错也能一眼看出卡在哪一站。
+> 一个搜索请求像一张快递单：从前台签收，交业务室核验，再分头去"外部搜索"与"本地仓库"两个地方取货，最后把回执寄回。每一站只干本分的活，单子才能在站点间顺畅流转，出了错也能一眼看出卡在哪一站。
 
-前四章各自交付了一件工具：第 3 章给了FastAPI框架以及分层组织方式，第 4 章给了 HTTP 的契约与状态码，第 5 章给了持久化与 SQL，第 6 章给了性能优化视角。为了增强几个章节的连贯性，让读者体会到本章的用意。本节用一个用户注册接口，把"后端框架、HTTP、持久化"串成一条完整链路，看 `POST /users/register` 请求如何穿过框架，最后带着 201 或错误码返回。
+前几章各自交付了一件工具：第 3 章给了分层组织与可替换依赖，第 4 章给了 HTTP 的契约与状态码，第 5 章给了持久化与参数化 SQL，第 6 章给了性能优化视角。本节用一个文档查询应用，把"外部搜索、HTTP、持久化"串成一条完整链路：看一个 `GET /api/search` 如何穿过框架调用搜索服务，一条数据如何存入数据库。
 
 ```{mermaid}
 flowchart LR
     A["HTTP 请求<br/>POST /users/register"] --> C["路由层 Controller<br/>解析参数、映射状态码"]
     C --> S["服务层 Service<br/>校验、查重、密码哈希"]
     S --> R["存储层 Repository<br/>参数化写库"]
-    R --> E["HTTP 响应<br/>201 / 400 / 409"]
+    R --> E["HTTP 响应<br/>201+搜索结果"]
 ```
 
 ## 定义数据模型与接口
 
-分层的第一步是把边界画清楚。数据在程序里的形态是一个 `User`，存储层对外只承诺三个方法：写入一个用户、按用户名查询、判断用户名是否已存在。至于背后是内存字典还是数据库，调用方不关心。
+分层的第一步是把边界画清楚。搜索返回的是 `Document`；外部搜索与本地收藏是两种不同的数据来源，各自抽象成接口：`DocumentRepository` 负责"搜索结果从哪来"，`FavoriteRepository` 负责"收藏存到哪里"。
 
 ```{code-cell} ipython3
 from dataclasses import dataclass
-from typing import Optional, Protocol
+from typing import Protocol
+from urllib.parse import urlparse
 
 @dataclass
-class User:
+class Document:
     id: str
-    username: str
-    password_hash: str
+    title: str
+    source: str
+    url: str
+    content: str
 
-class UserRepository(Protocol):
-    def create(self, user: User) -> None: ...
-    def get_by_username(self, username: str) -> Optional[User]: ...
-    def username_exists(self, username: str) -> bool: ...
+class DocumentRepository(Protocol):
+    def search(self, query: str) -> list[Document]: ...
 
-print("model ready:", User.__name__)
+class FavoriteRepository(Protocol):
+    def add(self, doc_id: str) -> None: ...
+    def remove(self, doc_id: str) -> None: ...
+    def list_all(self) -> list[str]: ...
+    def exists(self, doc_id: str) -> bool: ...
+
+print("models ready:", Document.__name__)
 ```
 
-模型与接口就位。注意 `User` 里存的是 `password_hash`，不是明文密码，这个字段名本身就是一层约束，提醒每一层都不该碰明文。
+模型与接口就位。两种数据来源各自一个抽象，这是本节的骨架：搜索与收藏可以独立替换、独立测试。
 
-## Repository 层：把数据写进真实数据库
+## Repository 层：数据源的抽象
 
-这一层是持久化的落地点，用标准库 `sqlite3` 实现。与第 5 章一致，写库用参数化占位符而不是字符串拼接，用户名上挂 `UNIQUE` 约束，把"不重复"从业务规则变成数据库层面的门卫。连接上加了 `check_same_thread=False`：同步路由会被 FastAPI 丢进线程池执行，而连接对象默认绑定创建它的线程，放开这个限制才能跨线程使用，这正是第 6 章会面对的线程细节。
+这一层把"搜索"抽象成一次调用。基于 WebSearch 的 HTTP API 检索，把网页结果整理成 `Document`；未配置 key 时返回空。
+
+```{code-cell} ipython3
+import os
+from tavily import TavilyClient
+
+class WebSearchRepository:
+    def __init__(self, api_key: str) -> None:
+        self._client = TavilyClient(api_key=api_key) if api_key else None
+
+    def search(self, query: str) -> list[Document]:
+        if self._client is None:
+            return []
+        response = self._client.search(query, max_results=5)
+        docs = []
+        for r in response.get("results", []):
+            docs.append(Document(
+                id=r["url"], title=r["title"], source=urlparse(r["url"]).netloc,
+                url=r["url"], content=r["content"],
+            ))
+        return docs
+
+repo = WebSearchRepository(os.environ.get("WEBSEARCH_API_KEY", ""))
+print("repository ready:", type(repo).__name__)
+```
+
+## FavoriteRepository 层：把收藏写进 SQLite
+
+收藏不能只活在内存里，进程一退出就没了。这一层用标准库 `sqlite3` 实现持久化，沿用第 5 章的参数化占位符，`doc_id` 上挂 `PRIMARY KEY`，把"不重复收藏"从业务规则变成数据库门卫。
 
 ```{code-cell} ipython3
 import sqlite3
+import datetime
 
-class SqliteUserRepository:
+class SqliteFavoriteRepository:
     def __init__(self, path: str = ":memory:") -> None:
         self._conn = sqlite3.connect(path, check_same_thread=False)
-        self._conn.row_factory = sqlite3.Row
         self._conn.execute(
-            "CREATE TABLE IF NOT EXISTS users ("
-            " id TEXT PRIMARY KEY,"
-            " username TEXT NOT NULL UNIQUE,"
-            " password_hash TEXT NOT NULL"
+            "CREATE TABLE IF NOT EXISTS favorites ("
+            " doc_id TEXT PRIMARY KEY,"
+            " created_at TEXT NOT NULL"
             ")"
         )
         self._conn.commit()
 
-    def create(self, user: User) -> None:
+    def add(self, doc_id: str) -> None:
         self._conn.execute(
-            "INSERT INTO users (id, username, password_hash) VALUES (?, ?, ?)",
-            (user.id, user.username, user.password_hash),
+            "INSERT INTO favorites (doc_id, created_at) VALUES (?, ?)",
+            (doc_id, datetime.datetime.now().isoformat()),
         )
         self._conn.commit()
 
-    def get_by_username(self, username: str) -> Optional[User]:
-        row = self._conn.execute(
-            "SELECT id, username, password_hash FROM users WHERE username = ?", (username,)
-        ).fetchone()
-        if row is None:
-            return None
-        return User(id=row["id"], username=row["username"], password_hash=row["password_hash"])
+    def remove(self, doc_id: str) -> None:
+        self._conn.execute("DELETE FROM favorites WHERE doc_id = ?", (doc_id,))
+        self._conn.commit()
 
-    def username_exists(self, username: str) -> bool:
-        row = self._conn.execute("SELECT 1 FROM users WHERE username = ?", (username,)).fetchone()
-        return row is not None
+    def list_all(self) -> list[str]:
+        rows = self._conn.execute("SELECT doc_id FROM favorites ORDER BY created_at").fetchall()
+        return [r[0] for r in rows]
 
-repo = SqliteUserRepository()
-print("repository ready:", type(repo).__name__)
-assert repo.username_exists("alice") is False
+    def exists(self, doc_id: str) -> bool:
+        return self._conn.execute("SELECT 1 FROM favorites WHERE doc_id = ?", (doc_id,)).fetchone() is not None
+
+favorite_repo = SqliteFavoriteRepository()
+print("favorite repo ready, empty:", favorite_repo.list_all())
+assert favorite_repo.list_all() == []
 ```
 
-存储层就绪，初始为空。值得留意的是 `UNIQUE` 约束：即使上层的 Service 查过重，两个并发请求仍可能同时通过查重，这时数据库的 `UNIQUE` 是最后一道防线，撞上时 `INSERT` 抛出 `IntegrityError`。这正是第 6 章讲的竞态，靠底层约束兜底，而非只靠应用层判断。
+收藏存储就绪，初始为空。`PRIMARY KEY` 保证同一文档不会收藏两次，这与第 5 章"约束是数据库门卫"一脉相承。
 
-## Service 层：校验、查重与密码哈希
+## Service 层：编排两种数据来源
 
-这一层承载业务规则，不感知 HTTP，通过抛 `ValueError` 表达"哪里不合法"。密码不能明文落库，对它的处理是加盐哈希：每个密码一个随机盐，用 `pbkdf2_hmac` 做单向密钥派生，库里的字段是"盐加哈希"，反向推不出原文。
+这一层承载业务规则，不感知 HTTP。搜索时校验关键词、按 URL 去重；收藏时查重。它持有两个依赖——DocumentRepository 与 FavoriteRepository。
 
 ```{code-cell} ipython3
-import hashlib
-import secrets
-
-def hash_password(password: str) -> str:
-    salt = secrets.token_hex(16)
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), bytes.fromhex(salt), 100_000)
-    return f"{salt}${digest.hex()}"
-
-class UserService:
-    def __init__(self, repo: UserRepository) -> None:
+class SearchService:
+    def __init__(self, repo: DocumentRepository, favorites: FavoriteRepository) -> None:
         self.repo = repo
+        self.favorites = favorites
 
-    def register(self, username: str, password: str) -> User:
-        if not username.strip():
-            raise ValueError("用户名不能为空")
-        if len(password) < 8:
-            raise ValueError("密码长度至少 8 位")
-        if self.repo.username_exists(username):
-            raise ValueError("用户名已注册")
-        user = User(
-            id=secrets.token_hex(8),
-            username=username,
-            password_hash=hash_password(password),
-        )
-        self.repo.create(user)
-        return user
+    def search(self, query: str) -> list[Document]:
+        q = query.strip()
+        if not q:
+            return []
+        docs = self.repo.search(q)
+        seen: set[str] = set()
+        unique: list[Document] = []
+        for d in docs:
+            if d.url not in seen:
+                seen.add(d.url)
+                unique.append(d)
+        return unique
 
-service = UserService(repo)
+    def add_favorite(self, doc_id: str) -> None:
+        if self.favorites.exists(doc_id):
+            raise ValueError("已收藏")
+        self.favorites.add(doc_id)
 
-u = service.register("alice", "correct-horse-1")
-print("注册成功:", u.username, "id", u.id[:8])
-print("存储的密码字段:", u.password_hash[:24], "...")
-assert "correct-horse-1" not in u.password_hash
-assert u.password_hash.count("$") == 1
+    def list_favorites(self) -> list[str]:
+        return self.favorites.list_all()
 
-try:
-    service.register("alice", "another-pass-1")
-except ValueError as e:
-    print("重复用户名:", e)
+service = SearchService(repo, favorite_repo)
 
-try:
-    service.register("", "whatever-1")
-except ValueError as e:
-    print("空用户名:", e)
+assert service.search("  ") == []   # 空关键词拦截
+
+service.add_favorite("https://docs.pydantic.dev/latest/concepts/models/")
+print("favorites after add:", service.list_favorites())
+assert len(service.list_favorites()) == 1
 
 try:
-    service.register("bob", "short")
+    service.add_favorite("https://docs.pydantic.dev/latest/concepts/models/")
 except ValueError as e:
-    print("密码过短:", e)
+    print("重复收藏被拦截:", e)
+
+print("service ready")
 ```
 
-Service 层不 import 任何 HTTP 或数据库模块，只面对 `UserRepository` 接口。规校验、查重、哈希三件事都落在这里，Controller 与 Repository 各司其职。
+Service 不 import HTTP 模块，只面对两个接口。搜索与收藏的业务规则都落在这里，Controller 与两个数据源各司其职。
 
 ## Controller 层：路由与状态码
 
-最上面的这一层只做 HTTP 翻译：接收 Pydantic 校验过的输入，调用 Service，把业务错误映射成状态码。这里有一条边界分工值得看清楚：Pydantic 管的是形状，参数有没有、什么类型、超不超长度，越界直接回 422；Service 管的是业务规则，密码够不够强、用户名重不重复，违规回 400 或 409。创建成功回 201，正是第 4 章"状态码表达责任归属"的那句话。
+最上面一层只做 HTTP 翻译。搜索成功回 200；收藏成功回 201、重复回 409。
 
 ```{code-cell} ipython3
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-class RegisterIn(BaseModel):
-    username: str = Field(min_length=1, max_length=64, description="用户名")
-    password: str = Field(min_length=1, max_length=128, description="密码")
+class FavoriteIn(BaseModel):
+    doc_id: str
 
-class UserOut(BaseModel):
+class DocOut(BaseModel):
     id: str
-    username: str
+    title: str
+    source: str
+    url: str
+    content: str
 
-repo2 = SqliteUserRepository()
-service2 = UserService(repo2)
+app = FastAPI(title="Doc Search API")
 
-app = FastAPI(title="Users API")
+@app.get("/api/search", response_model=list[DocOut])
+def search(q: str = ""):
+    docs = service.search(q)
+    return [DocOut(id=d.id, title=d.title, source=d.source, url=d.url, content=d.content) for d in docs]
 
-@app.post("/users/register", response_model=UserOut, status_code=201)
-def register(payload: RegisterIn):
+@app.post("/api/favorites", status_code=201)
+def add_favorite(payload: FavoriteIn):
     try:
-        user = service2.register(payload.username, payload.password)
+        service.add_favorite(payload.doc_id)
     except ValueError as e:
-        detail = str(e)
-        if "已注册" in detail:
-            raise HTTPException(status_code=409, detail=detail)
-        raise HTTPException(status_code=400, detail=detail)
-    return UserOut(id=user.id, username=user.username)
+        raise HTTPException(status_code=409, detail=str(e))
+    return {"doc_id": payload.doc_id, "favorited": True}
 
-print("routes:", [r.path for r in app.routes if getattr(r, "path", "").startswith("/users")])
+@app.get("/api/favorites")
+def list_favorites():
+    return service.list_favorites()
+
+print("routes:", [r.path for r in app.routes if getattr(r, "path", "").startswith("/api")])
 ```
 
-路由函数只有一句 try/except 和一次 Service 调用，又薄又清晰。它不碰数据库、不写业务规则，只负责把 HTTP 的进出翻译好。
+路由函数又薄又清晰：不碰数据库、不发外部请求，只负责把 HTTP 的进出翻译好。业务错误 `ValueError("已收藏")` 在这里被映射成 409。
 
 ## 一个请求的完整往返
 
-最后用 TestClient 走一遍完整链路，再从数据库里确认落库的是哈希而非明文。
+最后用 TestClient 走一遍：搜索走 WebSearch（未配置 key 时返回空），收藏落进 SQLite。
 
 ```{code-cell} ipython3
 client = TestClient(app)
 
-r1 = client.post("/users/register", json={"username": "alice", "password": "correct-horse-1"})
-print("注册成功:", r1.status_code, r1.json())
-assert r1.status_code == 201
+r1 = client.get("/api/search", params={"q": "python pydantic"})
+print("搜索:", r1.status_code, "返回", len(r1.json()), "条")
+assert r1.status_code == 200
 
-r2 = client.post("/users/register", json={"username": "alice", "password": "another-pass-1"})
-print("重复用户名:", r2.status_code, r2.json()["detail"])
-assert r2.status_code == 409
+r2 = client.get("/api/search", params={"q": "  "})
+print("空关键词:", r2.status_code, len(r2.json()))
+assert r2.status_code == 200
+assert r2.json() == []
 
-r3 = client.post("/users/register", json={"username": "bob", "password": "short"})
-print("密码过短:", r3.status_code)
-assert r3.status_code == 400
+r3 = client.post("/api/favorites", json={"doc_id": "https://docs.pydantic.dev/"})
+print("收藏:", r3.status_code)
+assert r3.status_code == 201
 
-stored = repo2.get_by_username("alice")
-assert stored is not None
-print("库中密码字段:", stored.password_hash[:24], "...")
-assert "correct-horse-1" not in stored.password_hash
-assert stored.password_hash.count("$") == 1
+r4 = client.post("/api/favorites", json={"doc_id": "https://docs.pydantic.dev/"})
+print("重复收藏:", r4.status_code, r4.json()["detail"])
+assert r4.status_code == 409
+
+r5 = client.get("/api/favorites")
+print("收藏列表:", r5.json())
+assert "https://docs.pydantic.dev/" in r5.json()
+
+# 收藏确实写进了数据库，而不只是返回里出现
+assert favorite_repo.exists("https://docs.pydantic.dev/")
+print("收藏已持久化到 SQLite")
 ```
 
-一个 `POST /users/register` 从 TestClient 发出，经路由层翻译、服务层核验、存储层写库，最终带着状态码回到调用方；而数据库里留下的，只有加盐后的哈希。
+一个 `GET /api/search` 从 TestClient 发出，经路由层翻译、服务层编排、搜索返回结果；一条 `POST /api/favorites` 落进 SQLite，从数据库层也能查回。
 
 ## 朝花夕拾
 
 | 章节 | 这一节用到了什么 |
 |---|---|
-| 第3章 分层 | Controller 薄、Service 厚、Repository 藏，单向依赖，替换与测试沿边界进行 |
-| 第4章 HTTP | POST 表达创建，状态码表达责任（201 成功、400 校验失败、409 冲突） |
-| 第5章 持久化 | 参数化 SQL 防注入，`UNIQUE` 约束在库层兜底，密码哈希与盐 |
-| 第6章 并发 | 同步路由交给 FastAPI 走线程池，避免阻塞事件循环；并发查重靠库约束兜底 |
+| 第3章 分层 | Controller 薄、Service 厚、依赖抽象沿边界替换（DocumentRepository 与 FavoriteRepository）|
+| 第4章 HTTP | GET 查询、POST 创建，状态码表达责任（200 / 201 / 409）|
+| 第5章 持久化 | 参数化 SQL 防注入，`PRIMARY KEY` 约束在库层兜底收藏不重复 |
+
+> 分层定寿命，契约定协作，持久化定记忆，三者合起来才是一条能交付的完整链路。

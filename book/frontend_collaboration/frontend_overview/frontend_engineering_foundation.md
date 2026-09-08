@@ -134,21 +134,21 @@ frontend/
 │   ├── main.ts                 # 应用入口：创建 Vue 实例、挂载到 #app
 │   ├── App.vue                 # 根组件：布局、路由出口、全局样式
 │   ├── components/             # 可复用组件
-│   │   ├── WeatherCard.vue     # 天气展示卡片
-│   │   └── ErrorToast.vue      # 错误提示组件
+│   │   ├── SearchBar.vue       # 搜索框组件
+│   │   └── ResultCard.vue      # 搜索结果卡片
 │   ├── views/                  # 页面级组件
-│   │   ├── WeatherView.vue     # /weather 页面
+│   │   ├── SearchView.vue      # /search 搜索页
 │   │   └── AboutView.vue       # /about 页面
 │   ├── router/
 │   │   └── index.ts            # 前端路由配置：路径 → 组件映射
 │   ├── stores/                 # Pinia 状态管理
-│   │   └── weather.ts          # 天气数据的 store
+│   │   └── search.ts           # 搜索状态与收藏的 store
 │   ├── api/                    # 接口调用层（封装后端 API）
-│   │   └── weather.ts          # fetch('/api/weather/...') 封装
+│   │   └── search.ts           # fetch('/api/search?q=...') 封装
 │   ├── utils/                  # 工具函数
 │   │   └── format.ts           # 格式化函数
 │   └── types/                  # TypeScript 类型定义
-│       └── weather.ts          # 后端接口响应的类型定义
+│       └── search.ts           # 后端接口响应的类型定义
 ├── index.html                  # 唯一真正的 HTML 入口
 ├── vite.config.ts              # Vite 构建配置
 ├── tsconfig.json               # TypeScript 编译配置

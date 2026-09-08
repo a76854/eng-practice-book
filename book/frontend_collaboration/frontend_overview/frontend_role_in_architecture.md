@@ -8,7 +8,7 @@ kernelspec:
 
 学完本节，你能回答：
 
-- 谁来渲染 HTML这个看似细枝末节的问题，如何决定整条链路的职责与协作方式？
+- 谁来渲染 HTML 这个看似细枝末节的问题，如何决定整条链路的职责与协作方式？
 - 后端模板渲染与前后端分离，在职责、URL 与产物上的本质差异是什么？
 - 接口契约是什么？它如何让前后端在没有对方在场的情况下并行开发？
 - 面对一个具体的页面，你根据什么判断它该走模板直出还是前后端分离？
@@ -31,10 +31,10 @@ kernelspec:
 sequenceDiagram
     participant B as 浏览器
     participant S as 后端服务器
-    participant D as 数据库
-    B->>S: GET /weather
-    S->>D: 查询天气数据
-    D-->>S: 天气数据
+    participant D as 数据/索引
+    B->>S: GET /search
+    S->>D: 查询匹配的文档
+    D-->>S: 文档列表
     S->>S: 模板填数据，拼成 HTML
     S-->>B: 完整 HTML 页面
 ```
@@ -49,12 +49,12 @@ sequenceDiagram
 sequenceDiagram
     participant B as 浏览器
     participant S as 后端服务器
-    participant D as 数据库
+    participant D as 数据/索引
     B->>S: 加载 index.html 与 app.js（静态资源）
-    B->>S: GET /api/weather/{date}
-    S->>D: 查询天气数据
-    D-->>S: 天气数据
-    S-->>B: JSON
+    B->>S: GET /api/search?q=pydantic
+    S->>D: 搜索匹配的文档
+    D-->>S: 文档列表
+    S-->>B: JSON 列表
     B->>B: JS 把 JSON 渲染成 DOM
 ```
 
@@ -72,22 +72,22 @@ sequenceDiagram
 | 部署 | 前后端耦合，一起发布 | 可独立部署演进 |
 | 多端复用 | 接口被页面绑定 | 接口服务 Web / App 等多端 |
 
-两种形态都能交付同一个页面，但“谁对页面负责”不同。选型跟着需求走：内容型、SEO 强依赖的官网适合模板直出；交互密集、需多端复用的应用更适合前后端分离。
+两种形态都能交付同一个页面，但"谁对页面负责"不同。选型跟着需求走：内容型、SEO 强依赖的官网适合模板直出；交互密集、需多端复用的应用更适合前后端分离。
 
 ## 页面路由与接口路由
 
-谁来渲染 HTML 的答案，直接决定了 URL 的归属。以查询某一天的天气为例，看两类 URL 各归哪一方。
+谁来渲染 HTML 的答案，直接决定了 URL 的归属。以文档搜索为例，看两类 URL 各归哪一方。
 
-后端模板渲染下，URL 既是页面地址又是数据查询：`GET /weather` 直接返回一个填好天气数据的 HTML 页面，接口与页面混在同一张路由表里。
+后端模板渲染下，URL 既是页面地址又是数据查询：`GET /search` 直接返回一个填好搜索结果的 HTML 页面，接口与页面混在同一张路由表里。
 
 前后端分离下，URL 分成两类，各归一方。前端代码负责把页面路由与接口路由配合起来：
 
 ```javascript
-// 前端：页面路由 /weather 归前端控制，数据来自接口路由 /api/weather/{date}
-async function load(date) {
-  const res = await fetch(`/api/weather/${date}`)   // 接口路由，归后端
+// 前端：页面路由 /search 归前端控制，数据来自接口路由 /api/search?q=...
+async function search(keyword) {
+  const res = await fetch(`/api/search?q=${keyword}`)   // 接口路由，归后端
   const data = await res.json()
-  render(data)                                      // 前端把 JSON 渲染成页面
+  render(data)                                           // 前端把 JSON 渲染成页面
 }
 ```
 
@@ -99,17 +99,18 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
-@app.get("/api/weather/{date}")
-def get_weather(date: str):
-    return {"date": date, "city": "北京", "temperature": 12, "condition": "晴"}
+@app.get("/api/search")
+def search(q: str):
+    # 这里调用搜索服务（第 10 章外部集成会展开），此处只返回形状
+    return [{"title": "Models - Pydantic", "url": "https://docs.pydantic.dev/", "source": "docs.pydantic.dev"}]
 ```
 
 两种路由的分工总结如下：
 
 | 路由类型 | 归属 | 例子 | 返回 |
 | --- | --- | --- | --- |
-| 页面路由 | 前端 | `/weather` | 由前端路由决定渲染哪个页面 |
-| 接口路由 | 后端 | `/api/weather/{date}` | JSON 数据 |
+| 页面路由 | 前端 | `/search` | 由前端路由决定渲染哪个页面 |
+| 接口路由 | 后端 | `/api/search?q=...` | JSON 数据 |
 
 两者用统一前缀（如 `/api`）区分，避免歧义。这种划分让协作更清晰：后端在 OpenAPI 里定义输入、输出形状与状态码，前端据此渲染；任何一方改动，都先回到契约，再改实现。
 
@@ -118,20 +119,22 @@ def get_weather(date: str):
 契约是前后端之间那份共同文件，双方不知道对方怎么实现，也能并行推进。上一节说过，它最少锁定三样东西：路径、请求与响应形状、状态码。下面是一份最小契约的示意：
 
 ```json
-// GET /api/weather/2024-01-15 的响应形状（示意）
-{
-  "date": "2024-01-15",
-  "city": "北京",
-  "temperature": 12,
-  "condition": "晴"
-}
+// GET /api/search?q=pydantic 的响应形状（示意）
+[
+  {
+    "title": "Models - Pydantic",
+    "url": "https://docs.pydantic.dev/latest/concepts/models/",
+    "source": "docs.pydantic.dev",
+    "content": "模型是继承 BaseModel 的类……"
+  }
+]
 ```
 
 契约一旦确定，前端就能拿着这份形状做开发：数据没来之前渲染加载中，数据到了渲染结果，数据为空渲染空态，请求失败渲染错误与重试。这几种状态统称三态渲染，它是前端对接任何接口时的标准姿态。
 
-![天气查询页的渲染结果](./figs/frontend_overview_weather.png)
+![文档搜索页的渲染结果](./figs/frontend_overview_search.png)
 
-上图是一个天气查询页在前端渲染出的样子：后端只返回了上一段那样的 JSON，是前端把它变成了一个能看的页面。这正是前后端分离分工的结果。
+上图是一个文档搜索页在前端渲染出的样子：后端只返回了上一段那样的 JSON，是前端把它变成了一个能看的页面。这正是前后端分离分工的结果。
 
 ## 选型判断
 

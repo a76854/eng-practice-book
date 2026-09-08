@@ -58,41 +58,39 @@ button { padding: 8px 16px; }
 
 Vue 3 提供两种组织组件逻辑的方式：选项式 API 与组合式 API。
 
-选项式 API 按选项切分：数据、方法、计算属性分别散落在 `data`、`methods`、`computed` 三块里。单个功能好读，但一个组件同时管日期选择、天气请求、加载状态时，同一个关注点的逻辑就被选项割裂到文件各处。
+选项式 API 按选项切分：数据、方法、计算属性分别散落在 `data`、`methods`、`computed` 三块里。单个功能好读，但一个组件同时管输入搜索、请求结果、加载状态时，同一个关注点的逻辑就被选项割裂到文件各处。
 
 组合式 API 反过来按关注点收拢：把同一件事的状态与逻辑放进一个组合函数，复用靠普通函数而非混入。对照如下：
 
 ```javascript
-// 选项式（Vue 2 风格）：同一关注点「天气查询」被选项割裂到各处
+// 选项式（Vue 2 风格）：同一关注点「文档搜索」被选项割裂到各处
 export default {
-  data() { return { date: '2024-01-15', weather: null, loading: false } },
-  methods: { async fetchWeather() { /* 拉取逻辑 */ } },
-  watch: { date() { this.fetchWeather() } }
+  data() { return { query: '', results: [], loading: false } },
+  methods: { async search() { /* 拉取逻辑 */ } },
 }
 ```
 
 ```javascript
-// 组合式（Vue 3 风格）：按关注点收拢，可抽成 useWeather()
-import { ref, watch } from 'vue'
+// 组合式（Vue 3 风格）：按关注点收拢，可抽成 useSearch()
+import { ref } from 'vue'
 
-function useWeather() {
-  const date = ref('2024-01-15')
-  const weather = ref(null)
+function useSearch() {
+  const query = ref('')
+  const results = ref([])
   const loading = ref(false)
 
-  async function fetchWeather() {
+  async function search() {
     loading.value = true
-    weather.value = await fetch(`/api/weather/${date.value}`).then(r => r.json())
+    results.value = await fetch(`/api/search?q=${query.value}`).then(r => r.json())
     loading.value = false
   }
-  watch(date, fetchWeather, { immediate: true })
 
-  return { date, weather, loading, fetchWeather }
+  return { query, results, loading, search }
 }
-// 组件里一行引入：const { date, weather, loading } = useWeather()
+// 组件里一行引入：const { query, results, loading, search } = useSearch()
 ```
 
-同一套天气查询逻辑，组合式把它收进了一个可复制、可测试的 `useWeather()`。当它要跨组件复用时，前者要复制一堆散落的字段，后者只需调用同一个函数。`ref` 包装出一个响应式数据，`watch` 在值变化时挂上一个反应，这两者是组合式函数里最常见的两个原语。
+同一套文档搜索逻辑，组合式把它收进了一个可复制、可测试的 `useSearch()`。当它要跨组件复用时，前者要复制一堆散落的字段，后者只需调用同一个函数。`ref` 包装出一个响应式数据，普通函数收拢同一关注点的逻辑，一行引入就能复用整套搜索能力。
 
 ## Proxy 响应式：把改数据即改视图补圆
 
@@ -100,11 +98,11 @@ function useWeather() {
 
 ```javascript
 // Vue 2 的盲区需要补丁
-// this.cities[0] = '上海'                 // 视图不更新
-// this.$set(this.cities, 0, '上海')       // 必须显式补丁
+// this.results[0] = newResult           // 视图不更新
+// this.$set(this.results, 0, newResult) // 必须显式补丁
 
 // Vue 3 的 Proxy 代理整个对象
-// state.cities[0] = '上海'                // 视图自动更新，无需补丁
+// state.results[0] = newResult          // 视图自动更新，无需补丁
 ```
 
 响应式背后的完整实现，放到后续的响应式原理一节展开。这里只需记住一句结论：代理整个对象，比逐个属性打补丁更不易漏。

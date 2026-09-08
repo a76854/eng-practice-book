@@ -13,9 +13,9 @@ kernelspec:
 - `v-if`、`v-show`、`v-for` 在条件渲染和列表渲染上各自怎么用？`:key` 为什么不能省？
 - `v-model` 为什么叫"双向绑定"？它和 `:value` 加 `@input` 是什么关系？
 
-第 8 章的天气样例里，把数据塞进页面的代码长这样：`document.getElementById("city").textContent = mockWeather.city`。要显示四个字段，就得写四行牵线，字段再多一点，一页的 DOM 操作就能铺满半屏。这一节要解决的，就是怎么把这些"手动牵线"的活，换成一句声明。
+第 8 章的文档搜索样例里，把搜索结果塞进页面的代码长这样：`document.createElement("li")`、`li.appendChild(a)`，一条结果要写好几行牵线，五条结果就是一大堆。这一节要解决的，就是怎么把这些"手动牵线"的活，换成一句声明。
 
-> 手工把数据填进页面，像照着清单逐个给货架补货，哪一格放什么都要亲自动手。模板语法像给货架贴上一张取值规则表：这一格取 `weather.city`、那一格取 `weather.temperature`，数据一到，货架自己就摆齐了，你要做的只是维护那一张规则表。
+> 手工把数据填进页面，像照着清单逐个给货架补货，哪一格放什么都要亲自动手。模板语法像给货架贴上一张取值规则表：这一格取 `result.title`、那一格取 `result.source`，数据一到，货架自己就摆齐了，你要做的只是维护那一张规则表。
 
 上一节认识了 Vue 3 的轮廓，知道它是声明式的：我们负责描述数据长什么样，把"数据怎么变成界面"交给框架。这一节把"声明式"三个字落到最实在的地方，也就是模板。它一共六样东西：插值、属性绑定、事件绑定、条件渲染、列表渲染、双向绑定。顺序也不是随便排的：先有"值放到哪"（插值、绑定），再有"放不放、放几个"（条件、循环），最后是"用户能不能改"（`v-model`）。
 
@@ -25,13 +25,13 @@ kernelspec:
 
 ```vue
 <template>
-  <h1>{{ weather.city }}</h1>
-  <p>{{ weather.condition }}</p>
-  <img :src="iconUrl" />
+  <h1>{{ result.title }}</h1>
+  <span>{{ result.source }}</span>
+  <a :href="result.url">查看原文</a>
 </template>
 ```
 
-`{{ }}` 里放的是 JavaScript 表达式，`weather.city` 一变化，这一处文字自动跟着换。属性里则不能写 `src="iconUrl"`，那样只会得到字面字符串 `"iconUrl"`；要取变量的值，得用 `v-bind:src="iconUrl"`，简写成 `:src="iconUrl"`。这个 `:` 是 `v-bind` 的简写，用得最勤。读前端代码时看到 `:xxx="..."`，就知道是在"把变量的值绑到这个属性上"。
+`{{ }}` 里放的是 JavaScript 表达式，`result.title` 一变化，这一处文字自动跟着换。属性里则不能写 `href="result.url"`，那样只会得到字面字符串 `"result.url"`；要取变量的值，得用 `v-bind:href="result.url"`，简写成 `:href="result.url"`。这个 `:` 是 `v-bind` 的简写，用得最勤。读前端代码时看到 `:xxx="..."`，就知道是在"把变量的值绑到这个属性上"。
 
 ## 事件绑定：让页面有反应
 
@@ -39,25 +39,24 @@ kernelspec:
 
 ```vue
 <template>
-  <button @click="clear">清空</button>
-  <input @input="onDateInput" />
+  <button @click="search">搜索</button>
+  <input @input="onQueryInput" />
 </template>
 ```
 
-`@click="clear"` 是 `v-on:click="clear"` 的简写。读前端代码时，`@` 开头的属性都是"这个元素发生了什么事件、去调哪个方法"。属性和事件是成对出现的：`:` 管数据怎么进标签，`@` 管用户的动作怎么回给逻辑。
+`@click="search"` 是 `v-on:click="search"` 的简写。读前端代码时，`@` 开头的属性都是"这个元素发生了什么事件、去调哪个方法"。属性和事件是成对出现的：`:` 管数据怎么进标签，`@` 管用户的动作怎么回给逻辑。
 
 ## 条件渲染：放，还是不放
 
-天气页有三种状态：加载中、出错、查出了结果。同一块区域，不同状态该显示不同的内容。`v-if` 按条件决定"要不要渲染这个元素"：
+搜索页有三种状态：加载中、出错、搜出了结果。同一块区域，不同状态该显示不同的内容。`v-if` 按条件决定"要不要渲染这个元素"：
 
 ```vue
 <template>
   <p v-if="loading">加载中...</p>
-  <p v-else-if="error">加载失败：{{ error }}</p>
-  <div v-else>
-    <p>城市：{{ weather.city }}</p>
-    <p>温度：{{ weather.temperature }}°C</p>
-  </div>
+  <p v-else-if="error">搜索失败：{{ error }}</p>
+  <ul v-else>
+    <li v-for="r in results" :key="r.url">{{ r.title }}</li>
+  </ul>
 </template>
 ```
 
@@ -65,25 +64,28 @@ kernelspec:
 
 ## 列表渲染：一个变出一组
 
-一份天气数据可以是一个城市，也可以是一串城市：要同时查多个城市的天气，就得把一个模板套到数组的每一项上。`v-for` 就是"照着模板，把数组的每一项各渲染成一份"：
+一份搜索结果是一个列表：一次搜索返回多条文档，就要把一个模板套到数组的每一项上。`v-for` 就是"照着模板，把数组的每一项各渲染成一份"：
 
 ```vue
 <template>
-  <li v-for="city in cities" :key="city">{{ city }}</li>
+  <li v-for="r in results" :key="r.url">
+    <a :href="r.url">{{ r.title }}</a>
+    <span>{{ r.source }}</span>
+  </li>
 </template>
 ```
 
-`v-for="city in cities"` 读作"把 `cities` 数组中的每一项依次命名为 `city`，并为每项渲染一个 `<li>`"。后面那个 `:key` 不能省：Vue 靠它区分"哪个 `<li>` 对应数组的哪一项"，列表增删时才知道该刷新谁、该复用谁。省掉或写个恒定的值，列表一打乱顺序，页面上往往会出现内容张冠李戴的怪相。这是读列表渲染代码时最该多看一眼的地方。
+`v-for="r in results"` 读作"把 `results` 数组中的每一项依次命名为 `r`，并为每项渲染一个 `<li>`"。后面那个 `:key` 不能省：Vue 靠它区分"哪个 `<li>` 对应数组的哪一项"，列表增删时才知道该刷新谁、该复用谁。省掉或写个恒定的值，列表一打乱顺序，页面上往往会出现内容张冠李戴的怪相。这是读列表渲染代码时最该多看一眼的地方。
 
 ## 双向绑定：让表单能改数据
 
-前面说的都是"数据往页面流"，可日期输入框是"用户也能改数据"。想想看，一个日期框要做的其实是两件事：把 `date` 的当前值显示进输入框，再在用户改动时把新值写回 `date`。这两件事分别对应 `:value` 和 `@input`，Vue 用 `v-model` 把它们合并成一行：
+前面说的都是"数据往页面流"，可搜索框是"用户也能改数据"。想想看，一个搜索框要做的其实是两件事：把 `query` 的当前值显示进输入框，再在用户改动时把新值写回 `query`。这两件事分别对应 `:value` 和 `@input`，Vue 用 `v-model` 把它们合并成一行：
 
 ```vue
 <template>
   <!-- v-model 一行，等价于下面注释掉的两行 -->
-  <input type="date" v-model="date" />
-  <!-- <input type="date" :value="date" @input="date = $event.target.value" /> -->
+  <input v-model="query" />
+  <!-- <input :value="query" @input="query = $event.target.value" /> -->
 </template>
 ```
 

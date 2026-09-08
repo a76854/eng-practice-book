@@ -20,7 +20,7 @@ kernelspec:
 
 ## 什么时候该用全局状态
 
-天气应用里有两份天然要跨页面共享的状态：一份是"温度单位"，用户在查询页切成华氏，收藏页、详情页的显示都得跟着用华氏；另一份是"收藏城市列表"，在列表页添进去，收藏页要能立刻看到。若靠 Props 把这两份数据从根组件一层层往下传，每加一层中间组件都要透传一遍，改一个字段要动一串文件。这种"跨组件、跨页面共享的可变状态"，就该提升到全局状态库里，谁用谁直接取。
+文档搜索应用里有两份天然要跨页面共享的状态：一份是"当前关键词与结果"，用户在搜索页搜出结果，切到收藏页再回来，关键词和结果应该还在；另一份是"收藏列表"，在列表页点了收藏，收藏页要能立刻看到。若靠 Props 把这两份数据从根组件一层层往下传，每加一层中间组件都要透传一遍，改一个字段要动一串文件。这种"跨组件、跨页面共享的可变状态"，就该提升到全局状态库里，谁用谁直接取。
 
 ## State、Getter、Action 三层
 
@@ -33,34 +33,42 @@ Pinia 是 Vue 3 官方推荐的状态库，一个小 store 就三层：
 | Action | 变更 State 的唯一入口，可异步 | Service 方法 |
 
 ```javascript
-// src/stores/weather.ts
+// src/stores/search.ts
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-export const useWeather = defineStore('weather', () => {
+export const useSearch = defineStore('search', () => {
   // State：原始状态
-  const unit = ref('C')              // 'C' 摄氏 / 'F' 华氏
-  const favorites = ref([])          // 收藏的城市
-  const weather = ref(null)          // 当前查询结果（缓存）
+  const query = ref('')
+  const results = ref([])
+  const favorites = ref([])
   const loading = ref(false)
 
   // Getter：派生值，带缓存
+  const resultCount = computed(() => results.value.length)
   const favoriteCount = computed(() => favorites.value.length)
 
   // Action：唯一的写入口
-  async function loadWeather(city) {
+  async function search(keyword) {
     loading.value = true
-    weather.value = await fetch(`/api/weather/${city}`).then(r => r.json())
-    loading.value = false
+    try {
+      query.value = keyword
+      results.value = await fetch(`/api/search?q=${keyword}`).then(r => r.json())
+    } finally {
+      loading.value = false
+    }
   }
-  function toggleUnit() { unit.value = unit.value === 'C' ? 'F' : 'C' }
-  function addFavorite(city) { if (!favorites.value.includes(city)) favorites.value.push(city) }
+  function toggleFavorite(doc) {
+    const i = favorites.value.findIndex(f => f.url === doc.url)
+    if (i >= 0) favorites.value.splice(i, 1)
+    else favorites.value.push(doc)
+  }
 
-  return { unit, favorites, weather, loading, favoriteCount, loadWeather, toggleUnit, addFavorite }
+  return { query, results, favorites, loading, resultCount, favoriteCount, search, toggleFavorite }
 })
 ```
 
-用法上，任何组件 `const store = useWeather()` 拿到的都是同一个单例，谁改、谁读，看到的都是一份。这对应后端"任何 handler 都能拿到同一个服务实例"。
+用法上，任何组件 `const store = useSearch()` 拿到的都是同一个单例，谁改、谁读，看到的都是一份。这对应后端"任何 handler 都能拿到同一个服务实例"。
 
 ## 前端状态与后端状态的边界
 
@@ -69,15 +77,15 @@ export const useWeather = defineStore('weather', () => {
 | 维度 | 前端状态（Pinia） | 后端状态（数据库） |
 | --- | --- | --- |
 | 真相地位 | 缓存，刷新即失 | 持久真相 |
-| 职责 | 交互态、单位选择、过滤 | 权威数据、一致性 |
+| 职责 | 交互态、关键词、过滤 | 权威数据、一致性 |
 
-原则一句话：**以后端为真相，前端为缓存。** 前端不管你缓存了啥，刷新页面、重新进入后，都以 `loadWeather()` 重新拉取后端为准。联调时"刷新后收藏没了"往往是正常的，除非这段状态本就应该持久化到后端账户里。
+原则一句话：**以后端为真相，前端为缓存。** 前端不管你缓存了啥，刷新页面、重新进入后，都以重新拉取后端为准。联调时"刷新后收藏没了"往往是正常的，除非这段收藏本就应该持久化到后端账户里。
 
 ## 本节小结
 
 - 跨组件、跨页面共享的可变状态，别用 Props 一路透传，提升到 Pinia 全局状态。
 - Store 分三层：State 存原始状态、Getter 存派生只读、Action 是唯一写入口，对应后端的数据、查询、Service。
 - Pinia 是单例，任何组件拿到的都是同一份状态。
-- 前端状态是缓存、后端状态是真相，刷新即以 `loadWeather()` 重拉为准。
+- 前端状态是缓存、后端状态是真相，刷新即以重拉为准。
 
 金句：状态归谁管是第一等要紧事，管错了地方，联调时"数据动了视图不动""刷新了状态还在"这些怪相就会找上门。

@@ -13,7 +13,7 @@ kernelspec:
 - `@vue/test-utils` 的 `mount` 如何测"组件渲染出了什么"、"交互发出了什么"？
 - 组件测试、组合函数测试、端到端测试分别落在什么位置？
 
-前面几节把 Vue 的模板、响应式、组件、路由、状态逐个讲完，天气应用也从一个 `WeatherCard` 长到了带路由和状态库的完整页面。但代码越堆越高，一个问题浮了上来：改一处组件，凭什么相信没把别处改坏？这一节给前端补上最后一块拼图，测试。
+前面几节把 Vue 的模板、响应式、组件、路由、状态逐个讲完，文档搜索应用也从一个 `ResultCard` 长到了带路由和状态库的完整页面。但代码越堆越高，一个问题浮了上来：改一处组件，凭什么相信没把别处改坏？这一节给前端补上最后一块拼图，测试。
 
 > 前端的手动验证像试衣服，每改一版都要重新往身上套一遍，穿好了还得对着镜子转一圈。组件测试像裁缝的样板纸：尺寸对不对、领口歪不歪，往样板上一对就知道，不用每次都找真人试。
 
@@ -25,24 +25,29 @@ kernelspec:
 
 ## Vitest 起步：先测一个纯函数
 
-翻回"数据如何驱动视图"那一节，`computed` 把摄氏温度换成华氏。这种纯函数是测试最好的起点，先摸清 Vitest 的骨架：
+“数据如何驱动视图”那一节里，`computed` 把结果条数数出来。这种纯函数是测试最好的起点，先摸清 Vitest 的骨架：
 
 ```javascript
-// src/utils/temperature.js
-export function toFahrenheit(celsius) {
-  return Math.round(celsius * 9 / 5 + 32)
+// src/utils/highlight.js
+export function countBySource(results, source) {
+  return results.filter(r => r.source === source).length
 }
 ```
 
 ```javascript
-// src/utils/temperature.test.js
+// src/utils/highlight.test.js
 import { describe, it, expect } from 'vitest'
-import { toFahrenheit } from './temperature.js'
+import { countBySource } from './highlight.js'
 
-describe('toFahrenheit', () => {
-  it('摄氏转华氏', () => {
-    expect(toFahrenheit(0)).toBe(32)
-    expect(toFahrenheit(12)).toBe(54)
+describe('countBySource', () => {
+  it('按来源计数', () => {
+    const results = [
+      { title: 'A', source: 'docs.pydantic.dev' },
+      { title: 'B', source: 'docs.python.org' },
+      { title: 'C', source: 'docs.pydantic.dev' },
+    ]
+    expect(countBySource(results, 'docs.pydantic.dev')).toBe(2)
+    expect(countBySource(results, 'docs.python.org')).toBe(1)
   })
 })
 ```
@@ -51,49 +56,48 @@ describe('toFahrenheit', () => {
 
 ## 组件测试：渲染与交互
 
-纯函数好测，但前端真正要守住的是组件。`@vue/test-utils` 提供 `mount`，把一个组件"挂"到隔离的测试环境里，不碰真实浏览器。天气卡片 `WeatherCard` 只认一个 `weather` 属性往下渲染，测它渲染出了什么：
+纯函数好测，但前端真正要守住的是组件。`@vue/test-utils` 提供 `mount`，把一个组件"挂"到隔离的测试环境里，不碰真实浏览器。结果卡片 `ResultCard` 只认一个 `result` 属性往下渲染，测它渲染出了什么：
 
 ```javascript
-// src/components/WeatherCard.test.js
+// src/components/ResultCard.test.js
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import WeatherCard from './WeatherCard.vue'
+import ResultCard from './ResultCard.vue'
 
-describe('WeatherCard', () => {
-  it('把 weather 字段渲染进页面', () => {
-    const wrapper = mount(WeatherCard, {
-      props: { weather: { city: '北京', temperature: 12, condition: '晴' } }
+describe('ResultCard', () => {
+  it('把 result 字段渲染进页面', () => {
+    const wrapper = mount(ResultCard, {
+      props: { result: { title: 'Models - Pydantic', source: 'docs.pydantic.dev', url: 'https://docs.pydantic.dev/' } }
     })
     const text = wrapper.text()
-    expect(text).toContain('城市：北京')
-    expect(text).toContain('温度：12°C')
-    expect(text).toContain('天气：晴')
+    expect(text).toContain('Models - Pydantic')
+    expect(text).toContain('docs.pydantic.dev')
   })
 })
 ```
 
 `mount` 返回一个 `wrapper`，`wrapper.text()` 拿到渲染后的全部文本，`toContain` 断言它包含了该有的字段。这测的是"渲染"这一侧。
 
-另一端是"交互"。`WeatherDatePicker` 不自己改状态，而是发 `update:date` 事件通知父组件。测它交互后发出了什么：
+另一端是"交互"。`SearchBar` 不自己改状态，而是发 `update:query` 事件通知父组件。测它交互后发出了什么：
 
 ```javascript
-// src/components/WeatherDatePicker.test.js
+// src/components/SearchBar.test.js
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import WeatherDatePicker from './WeatherDatePicker.vue'
+import SearchBar from './SearchBar.vue'
 
-describe('WeatherDatePicker', () => {
-  it('改动日期时发出 update:date 事件', async () => {
-    const wrapper = mount(WeatherDatePicker, { props: { date: '2024-01-15' } })
+describe('SearchBar', () => {
+  it('输入关键词时发出 update:query 事件', async () => {
+    const wrapper = mount(SearchBar, { props: { query: '' } })
     const input = wrapper.find('input')
-    await input.setValue('2024-01-16')
-    expect(wrapper.emitted('update:date')).toBeTruthy()
-    expect(wrapper.emitted('update:date')[0]).toEqual(['2024-01-16'])
+    await input.setValue('pydantic')
+    expect(wrapper.emitted('update:query')).toBeTruthy()
+    expect(wrapper.emitted('update:query')[0]).toEqual(['pydantic'])
   })
 })
 ```
 
-`find('input')` 定位到日期框，`setValue` 模拟用户输入，`emitted('update:date')` 取出这个组件发出去的事件。渲染测"长什么样"，交互测"做了会怎样"，两条合起来就是组件测试的主干。
+`find('input')` 定位到搜索框，`setValue` 模拟用户输入，`emitted('update:query')` 取出这个组件发出去的事件。渲染测"长什么样"，交互测"做了会怎样"，两条合起来就是组件测试的主干。
 
 ```bash
 # 安装测试工具，再跑一遍整条测试
@@ -103,9 +107,9 @@ npx vitest run
 
 ## 再往上一级：组合函数与端到端
 
-组合函数是纯逻辑，比组件还好测。跨组件状态那一节的 store 里，`loadWeather` 会真的发 `fetch` 请求，测试时不能让测试去连真接口，就用 Vitest 的 mock 把全局 `fetch` 换成假实现，断言它"换了日期会重新请求、请求成功会写入 weather"。套路不变：替换依赖、断言行为，和第 4 章接口测试的 `dependency_overrides` 异曲同工。
+组合函数是纯逻辑，比组件还好测。跨组件状态那一节的 store 里，`search` 会真的发 `fetch` 请求，测试时不能让测试去连真接口，就用 Vitest 的 mock 把全局 `fetch` 换成假实现，断言它"换了关键词会重新请求、请求成功会写入 `results`" 。套路不变：替换依赖、断言行为，和第 4 章接口测试的 `dependency_overrides` 异曲同工。
 
-组件测试之外还有端到端测试，用 Playwright 在真实浏览器里把整条链路点一遍，第 8 章的天气样例里就带了一个 `screenshot.mjs` 做原型。它最慢、最接近真实用户，但跨前端的整链验证属于联调环节，这里点到为止。
+组件测试之外还有端到端测试，用 Playwright 在真实浏览器里把整条链路点一遍，第 8 章的文档搜索样例里就带了一个 `screenshot.mjs` 做原型。它最慢、最接近真实用户，但跨前端的整链验证属于联调环节，这里点到为止。
 
 ## 本节小结
 

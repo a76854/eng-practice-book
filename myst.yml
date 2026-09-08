@@ -75,6 +75,15 @@ project:
         - file: book/frontend_collaboration/vue3_core/cross_component_state_pinia.md
         - file: book/frontend_collaboration/vue3_core/component_testing.md
         - file: book/frontend_collaboration/vue3_core/summary_and_questions.md
+    - file: book/frontend_collaboration/communication_debugging/index.md
+      children:
+        - file: book/frontend_collaboration/communication_debugging/communication_overview.md
+        - file: book/frontend_collaboration/communication_debugging/fetch_axios.md
+        - file: book/frontend_collaboration/communication_debugging/async_state.md
+        - file: book/frontend_collaboration/communication_debugging/contract_alignment.md
+        - file: book/frontend_collaboration/communication_debugging/cors_proxy.md
+        - file: book/frontend_collaboration/communication_debugging/error_debugging.md
+        - file: book/frontend_collaboration/communication_debugging/summary_and_questions.md
     - file: book/advanced_engineering/external_integration/index.md
       children:
         - file: book/advanced_engineering/external_integration/third_party_service_integration.md

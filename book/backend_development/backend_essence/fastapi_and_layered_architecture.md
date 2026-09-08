@@ -125,192 +125,146 @@ Python 生态里框架不少，上一节已经摆过 Django、Flask、FastAPI �
 |---|---|---|---|
 | Controller | 表现层，HTTP 翻译官 | 路由、参数解析、状态码与错误体，不含业务规则 | 用 TestClient 测路由与校验，可注入替身 Service |
 | Service | 业务层，领域编排者 | 业务规则与事务边界，通过 Repository 接口操作数据 | 可注入替身 Repository 聚焦业务分支 |
-| Repository | 数据层，存储抽象 | 封装持久化细节，提供领域友好的方法 | 用临时存储验证，替换存储只需实现同一接口 |
+| Repository | 数据层，数据源抽象 | 封装数据从哪来，提供领域友好的方法 | 用替身验证，替换数据源只需实现同一接口 |
 
 三层协作让变更沿边界收敛：改校验不碰存储，换数据库不改路由，增规则只在 Service 内调整。下面用三段代码在同一内核中顺序执行，逐层看清这条链路。
 
-## Repository 层：存储的抽象
+## Repository 层：数据源的抽象
 
-本段定义 Repository 层，用内存字典与标准库实现存储抽象，不依赖任何第三方包。
+本段定义 Repository 层：数据源的抽象。本例的数据来自外部搜索服务，抽象只承诺一个 `search` 方法，调用 WebSearch 的 HTTP API，把网页结果整理成首尾一致的 `Document`。
 
 ```{code-cell} ipython3
-from __future__ import annotations
-
-from dataclasses import dataclass, asdict
-from typing import Protocol, Optional
+from dataclasses import dataclass
+from typing import Protocol
+from urllib.parse import urlparse
+from tavily import TavilyClient
 
 @dataclass
-class Task:
+class Document:
     id: str
-    filename: str
-    status: str = "pending"
+    title: str
+    source: str
+    url: str
+    content: str
+class DocumentRepository(Protocol):
+    def search(self, query: str) -> list[Document]: ...
 
-class TaskRepository(Protocol):
-    def create(self, task: Task) -> None: ...
-    def get(self, task_id: str) -> Optional[Task]: ...
-    def list_all(self) -> list[Task]: ...
-    def exists(self, task_id: str) -> bool: ...
+class WebSearchRepository:
+    """把关键词搜索转成对 WebSearch 的外部 HTTP 调用。"""
+    def __init__(self, api_key: str) -> None:
+        self._client = TavilyClient(api_key=api_key) if api_key else None
 
-class InMemoryTaskRepository:
-    def __init__(self) -> None:
-        self._store: dict[str, Task] = {}
+    def search(self, query: str) -> list[Document]:
+        if self._client is None:
+            return []
+        response = self._client.search(query, max_results=5)
+        docs: list[Document] = []
+        for r in response.get("results", []):
+            docs.append(Document(
+                id=r["url"],
+                title=r["title"],
+                source=urlparse(r["url"]).netloc,
+                url=r["url"],
+                content=r["content"],
+            ))
+        return docs
 
-    def create(self, task: Task) -> None:
-        self._store[task.id] = task
-
-    def get(self, task_id: str) -> Optional[Task]:
-        return self._store.get(task_id)
-
-    def list_all(self) -> list[Task]:
-        return list(self._store.values())
-
-    def exists(self, task_id: str) -> bool:
-        return task_id in self._store
-
-repo = InMemoryTaskRepository()
-print("repository ready:", type(repo).__name__)
-print("empty count:", len(repo.list_all()))
-assert len(repo.list_all()) == 0
+print("DocumentRepository 抽象与 WebSearchRepository 已定义")
 ```
 
 Repository 的存储抽象已就绪，初始为空，可被 Service 依赖注入。
 
 ## Service 层：业务规则与依赖注入
 
-本段定义 Service 层，承载非空校验与去重规则，依赖注入 Repository，通过抛 ValueError 表达业务错误，不感知 HTTP。
+本段定义 Service 层，承载搜索的业务规则（空关键词拦截、按 URL 去重），依赖注入 DocumentRepository，不感知 HTTP。
 
 ```{code-cell} ipython3
-class TaskService:
-    def __init__(self, repo: TaskRepository) -> None:
+import os
+
+class SearchService:
+    def __init__(self, repo: DocumentRepository) -> None:
         self.repo = repo
 
-    def create_task(self, task_id: str, filename: str) -> Task:
-        if not task_id.strip() or not filename.strip():
-            raise ValueError("task_id and filename must be non-empty")
-        if self.repo.exists(task_id):
-            raise ValueError(f"task {task_id} already exists")
-        task = Task(id=task_id, filename=filename, status="pending")
-        self.repo.create(task)
-        result = self.repo.get(task_id)
-        assert result is not None
-        return result
+    def search(self, query: str) -> list[Document]:
+        q = query.strip()
+        if not q:
+            return []
+        docs = self.repo.search(q)
+        # 业务规则：同一 URL 只留一条
+        seen: set[str] = set()
+        unique: list[Document] = []
+        for d in docs:
+            if d.url not in seen:
+                seen.add(d.url)
+                unique.append(d)
+        return unique
 
-    def get_task(self, task_id: str) -> Task:
-        task = self.repo.get(task_id)
-        if task is None:
-            raise KeyError(f"task {task_id} not found")
-        return task
+api_key = os.environ.get("WEBSEARCH_API_KEY", "")
+service = SearchService(WebSearchRepository(api_key=api_key))
 
-    def list_tasks(self) -> list[Task]:
-        return self.repo.list_all()
+if not api_key:
+    print("提示：未配置 WEBSEARCH_API_KEY")
+else:
+    results = service.search("python pydantic")
+    for d in results[:4]:
+        print(" -", d.title[:44], "|", d.source)
+    print("搜索返回", len(results), "条结果")
 
-service = TaskService(repo)
-t = service.create_task("t1", "demo.wav")
-print("created:", asdict(t))
-assert t.id == "t1"
+empty = service.search("  ")
+print("empty keyword:", len(empty))
+assert len(empty) == 0
 
-try:
-    service.create_task("t1", "dup.wav")
-except ValueError as e:
-    print("duplicate rejected:", e)
-
-try:
-    service.create_task(" ", "x.wav")
-except ValueError as e:
-    print("empty rejected:", e)
-
-print("service ready: validation and dedup work as expected")
+print("service ready: search works as expected")
 ```
 
-Service 的业务规则生效，空输入与重复输入被拦截，正常创建可落地到 Repository。
+Service 的业务规则生效，空关键词被拦截、同一 URL 去重，搜索结果沿 DocumentRepository 落地。
 
 ## Controller 层：HTTP 翻译与本地验证
 
-本段定义 Controller 层，用 FastAPI 路由与 Pydantic 模型暴露接口，并用 TestClient 走通创建、冲突、空输入与查询的完整链路。
+本段定义 Controller 层，用 FastAPI 路由与 Pydantic 模型暴露搜索接口，并用 TestClient 走通搜索与空关键词的链路。
 
 ```{code-cell} ipython3
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-class TaskCreateIn(BaseModel):
-    task_id: str = Field(min_length=1, description="任务标识")
-    filename: str = Field(min_length=1, description="文件名")
-
-class TaskOut(BaseModel):
+class DocOut(BaseModel):
     id: str
-    filename: str
-    status: str
+    title: str
+    source: str
+    url: str
+    content: str
 
-repo2 = InMemoryTaskRepository()
-service2 = TaskService(repo2)
+app = FastAPI(title="Doc Search API")
 
-app = FastAPI(title="Task API")
-
-@app.post("/api/tasks", response_model=TaskOut, status_code=201)
-def create_task(payload: TaskCreateIn):
-    try:
-        task = service2.create_task(payload.task_id, payload.filename)
-    except ValueError as e:
-        msg = str(e)
-        if "already exists" in msg:
-            raise HTTPException(status_code=409, detail=msg)
-        raise HTTPException(status_code=422, detail=msg)
-    return TaskOut(id=task.id, filename=task.filename, status=task.status)
-
-@app.get("/api/tasks/{task_id}", response_model=TaskOut)
-def get_task(task_id: str):
-    try:
-        task = service2.get_task(task_id)
-    except KeyError:
-        raise HTTPException(status_code=404, detail="task not found")
-    return TaskOut(id=task.id, filename=task.filename, status=task.status)
-
-@app.get("/api/tasks", response_model=list[TaskOut])
-def list_tasks():
-    tasks = service2.list_tasks()
-    return [TaskOut(id=t.id, filename=t.filename, status=t.status) for t in tasks]
+@app.get("/api/search", response_model=list[DocOut])
+def search(q: str = ""):
+    docs = service.search(q)
+    return [DocOut(id=d.id, title=d.title, source=d.source, url=d.url, content=d.content) for d in docs]
 
 client = TestClient(app)
 
-r1 = client.post("/api/tasks", json={"task_id": "a1", "filename": "demo.wav"})
-print("create a1:", r1.status_code, r1.json())
-assert r1.status_code == 201
+r1 = client.get("/api/search", params={"q": "  "})
+print("search empty:", r1.status_code, len(r1.json()))
+assert r1.status_code == 200
+assert r1.json() == []
 
-r2 = client.post("/api/tasks", json={"task_id": "a1", "filename": "demo.wav"})
-print("conflict a1:", r2.status_code, r2.json()["detail"])
-assert r2.status_code == 409
+if api_key:
+    r2 = client.get("/api/search", params={"q": "python pydantic"})
+    print("search:", r2.status_code, "返回", len(r2.json()), "条")
+    assert r2.status_code == 200
+    assert len(r2.json()) >= 1
 
-r3 = client.post("/api/tasks", json={"task_id": "", "filename": "x.wav"})
-print("empty input:", r3.status_code)
-assert r3.status_code == 422
-
-r4 = client.post("/api/tasks", json={"task_id": "a2", "filename": "report.pdf"})
-print("create a2:", r4.status_code, r4.json())
-assert r4.status_code == 201
-
-r5 = client.get("/api/tasks/a2")
-print("get a2:", r5.json())
-assert r5.json()["filename"] == "report.pdf"
-
-r6 = client.get("/api/tasks")
-print("list count:", len(r6.json()))
-assert len(r6.json()) == 2
-
-r7 = client.get("/api/tasks/missing")
-print("missing:", r7.status_code)
-assert r7.status_code == 404
-
-print("layered validation passed: controller thin, service thick, repository hidden")
+print("layered validation passed")
 ```
 
-分层链路贯通：Controller 仅做 HTTP 翻译，业务冲突与校验分别映射为 409 与 422，查询与列表沿 Repository 返回一致结果。
+分层链路贯通：Controller 仅做 HTTP 翻译，搜索请求沿 Service 与 DocumentRepository 返回结果。
 
 ## 本节小结
 
 - 语言是第一步，AI 时代的智能与数据层由 Python 主导，靠生态、快速验证、胶水能力与可读性叠加出的优势站住脚跟。
 - 框架是第二步，FastAPI 的异步原生、自动文档与类型安全三条能力，分别对上了 I/O 密集、契约先行与类型安全的约束。
 - 组织是第三步，分层用单向依赖解决测试贵、替换难、定位慢三个痛点。
-- Controller 薄而专注 HTTP，Service 厚而承载业务，Repository 封装存储，替换或测试都沿边界进行。
+- Controller 薄而专注 HTTP，Service 厚而承载业务，Repository 封装数据源，替换或测试都沿边界进行。
 
 > 语言定生态，框架定手感，分层定寿命，三者环环相扣，缺一不可。

@@ -65,9 +65,9 @@ XMLHttpRequest 的诞生是一个转折点：浏览器不必刷新整个页面�
 
 ```javascript
 // 阶段三：Ajax 局部刷新，改列表不重载整页（示意）
-$.get('/api/tasks', function (tasks) {
-  const html = tasks.map(t => `<li>${t.title}</li>`).join('')
-  $('#task-list').html(html)   // 只更新列表这一块
+$.get('/api/search?q=pydantic', function (results) {
+  const html = results.map(r => `<li>${r.title}</li>`).join('')
+  $('#result-list').html(html)   // 只更新列表这一块
 })
 ```
 
@@ -79,9 +79,9 @@ $.get('/api/tasks', function (tasks) {
 
 ```javascript
 // 阶段四：SPA 前后端分离，前端接管渲染（示意）
-const res = await fetch('/api/tasks')
-const tasks = await res.json()
-render(tasks)   // 前端把 JSON 渲染成整个应用的视图
+const res = await fetch('/api/search?q=pydantic')
+const results = await res.json()
+render(results)   // 前端把 JSON 渲染成整个应用的视图
 ```
 
 它解决了职责分离、多端复用、前后端并行交付的问题，也留下了第四笔债：首屏需要额外的请求与等待，SEO 需要 SSR 或预渲染兜底，前端自身也第一次背负了应用应有的复杂度。它不再是“给页面加点交互”，而是一个独立的应用。
@@ -93,8 +93,8 @@ render(tasks)   // 前端把 JSON 渲染成整个应用的视图
 ```javascript
 // 阶段五：框架接管状态 → 视图（Vue 3 示意）
 import { ref, computed } from 'vue'
-const tasks = ref([])
-const done = computed(() => tasks.value.filter(t => t.status === 'done'))
+const results = ref([])
+const pydanticCount = computed(() => results.value.filter(r => r.source.includes('pydantic')).length)
 ```
 
 它让状态到视图、构建到部署第一次有了章法，也留下了第五笔债：从业者要面对一整条陌生的工具链和陡峭的学习成本。这正是本章后续各节要逐一展开的内容。
@@ -122,17 +122,17 @@ const done = computed(() => tasks.value.filter(t => t.status === 'done'))
 
 ### 契约
 
-契约就是后端对外承诺的那份接口规范。后端暴露接口通常遵循一套约定，即 RESTful API：每个接口由资源路径 + HTTP 方法 + 状态码三样东西共同确定。例如 `GET /api/tasks` 表示获取任务列表，`POST /api/tasks` 表示创建任务，删除成功返回 `204`。为了让这份规范机器可读、可校验、可自动生成文档和客户端代码，业界用 OpenAPI 把它写成一份结构化描述：
+契约就是后端对外承诺的那份接口规范。后端暴露接口通常遵循一套约定，即 RESTful API：每个接口由资源路径 + HTTP 方法 + 状态码三样东西共同确定。例如 `GET /api/search?q=...` 表示搜索文档，`POST /api/favorites` 表示收藏，删除成功返回 `204`。为了让这份规范机器可读、可校验、可自动生成文档和客户端代码，业界用 OpenAPI 把它写成一份结构化描述：
 
 ```yaml
-# OpenAPI 片段：GET /api/tasks 的契约（示意）
+# OpenAPI 片段：GET /api/search 的契约（示意）
 paths:
-  /api/tasks:
+  /api/search:
     get:
-      summary: 获取任务列表
+      summary: 搜索文档
       responses:
         '200':
-          description: 返回任务数组
+          description: 返回文档数组
 ```
 
 契约同时锁定了路径、请求与响应形状、状态码。它一旦确定，前端可以照着它生成类型、写 mock、先行开发，后端可以照着它写测试，双方无需看到对方的代码即可并行推进。RESTful 与 OpenAPI 的完整细节已经在 HTTP 与 RESTful 一章展开，这里只需记住：契约是前后端协作里最值钱的那一个词，它是边界得以成立的技术载体。

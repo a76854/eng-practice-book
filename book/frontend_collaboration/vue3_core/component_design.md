@@ -8,12 +8,12 @@ kernelspec:
 
 学完本节，你能回答：
 
-- 一个"选日期 + 看天气"的页面，为什么要拆成多个组件，而不是写成一整页？
+- 一个"搜索框 + 结果列表"的页面，为什么要拆成多个组件，而不是写成一整页？
 - Props 和 Emits 分别解决哪个方向的通信？谁往下传、谁往上通知？
 - 前端在什么时候向后端发请求拉数据？这个时机由哪个钩子控制？
 - 什么时候该抽一个组件，什么时候该抽一个组合函数？
 
-响应式让单个页面内部"活"了起来。可一个天气查询页，模板、状态、请求逻辑都挤在一个文件里，越写越长，改一处要在整页里定位。这一节解决怎么把一个大页面拆成一块块零件，以及拆开的零件之间怎么说话。
+响应式让单个页面内部"活"了起来。可一个文档搜索页，搜索框、结果列表、加载态、错误态都挤在一个文件里，越写越长，改一处要在整页里定位。这一节解决怎么把一个大页面拆成一块块零件，以及拆开的零件之间怎么说话。
 
 > 组件像流水线上的标准零件：每个零件只认一种输入，做好了从固定口子把结果交出去，外壳不变、里面装的东西可以换。后端最熟的类比是：组件之于前端，如同函数之于后端，定义好参数和返回值，谁都能调、互不干扰。
 
@@ -21,27 +21,27 @@ kernelspec:
 
 ## 为什么要把页面拆成组件
 
-把"日期选择框 + 天气卡片 + 加载态 + 错误态"全写在一个文件里，是这个页面最真实的模样：改一处请求逻辑要在整页代码里定位，想把天气卡片复用到城市列表页就只能复制粘贴。组件把职责切成小块，每块自带输入输出，能独立看、独立改、独立复用。
+把"搜索框 + 结果列表 + 加载态 + 错误态"全写在一个文件里，是这个页面最真实的模样：改一处请求逻辑要在整页代码里定位，想把结果卡片复用到收藏页就只能复制粘贴。组件把职责切成小块，每块自带输入输出，能独立看、独立改、独立复用。
 
-天气查询页天然能切成三块：一个 `WeatherDatePicker` 负责选日期，一个 `WeatherCard` 负责把结果画成卡片，外面的父组件 `WeatherQuery` 负责统筹"选了哪个日期、当前结果是什么"。三块各自清楚，后面对接后端、加缓存、加单位切换，都只动对应那一块。
+文档搜索页天然能切成三块：一个 `SearchBar` 负责输入关键词并触发搜索，一个 `ResultCard` 负责把一条结果画成卡片，外面的父组件 `SearchView` 负责统筹"当前关键词是什么、结果有哪些"。三块各自清楚，后面对接后端、加缓存、加收藏按钮，都只动对应那一块。
 
 ## Props：父传子
 
 父组件通过 Props 把数据传给子组件，子组件拿到的是只读副本，自己不能改。这对应后端的"函数参数"：调用方传入，接收方只读。
 
 ```vue
-<!-- 父组件 WeatherQuery.vue：把查询结果传给子组件 -->
-<WeatherCard :weather="weather" />
+<!-- 父组件 SearchView.vue：把一条结果传给子组件 -->
+<ResultCard :result="results[0]" />
 
-<!-- 子组件 WeatherCard.vue：声明自己认哪些输入，只读展示 -->
+<!-- 子组件 ResultCard.vue：声明自己认哪些输入，只读展示 -->
 <script setup>
-defineProps({ weather: Object })
+defineProps({ result: Object })
 </script>
 
 <template>
-  <p>城市：{{ weather.city }}</p>
-  <p>温度：{{ weather.temperature }}°C</p>
-  <p>天气：{{ weather.condition }}</p>
+  <p>{{ result.title }}</p>
+  <p>{{ result.source }}</p>
+  <a :href="result.url">查看原文</a>
 </template>
 ```
 
@@ -54,22 +54,23 @@ defineProps({ weather: Object })
 子组件不该直接改父组件的状态，而是发一个事件通知父组件，由父组件决定怎么改。这对应后端的"回调"：子组件只上报，不越权。
 
 ```vue
-<!-- 子组件 WeatherDatePicker.vue：发出 update:date 事件 -->
+<!-- 子组件 SearchBar.vue：发出 update:query 事件 -->
 <script setup>
-defineEmits(['update:date'])
+defineEmits(['update:query'])
 </script>
 
 <template>
-  <input type="date" :value="date" @input="$emit('update:date', $event.target.value)" />
+  <input type="text" :value="query" @input="$emit('update:query', $event.target.value)" />
+  <button @click="$emit('search')">搜索</button>
 </template>
 
 <!-- 父组件：监听事件，自己改状态 -->
-<WeatherDatePicker :date="date" @update:date="date = $event" />
+<SearchBar :query="query" @update:query="query = $event" @search="doSearch" />
 ```
 
-上一节讲过的 `v-model`，用在组件上就是上面这套"传值 + 监听 update"的语法糖：`<WeatherDatePicker v-model:date="date" />` 一行顶两行。等到你在项目里看到 `v-model:xxx`，要能认出它背后是"父传 Props、子发 update 事件"这一对。
+上一节讲过的 `v-model`，用在组件上就是上面这套"传值 + 监听 update"的语法糖：`<SearchBar v-model:query="query" />` 一行顶两行。等到你在项目里看到 `v-model:xxx`，要能认出它背后是"父传 Props、子发 update 事件"这一对。
 
-还有一种"父想往子组件里塞一段自定义内容"的场景，比如天气卡片的备注区、操作按钮区想由父组件指定。这种需求用插槽：子组件留一个 `<slot>` 占位，父组件把内容填进去。默认插槽已覆盖绝大多数场景，命名插槽、作用域插槽等真用到时再查文档即可。
+还有一种"父想往子组件里塞一段自定义内容"的场景，比如结果卡片的操作区想由父组件指定。这种需求用插槽：子组件留一个 `<slot>` 占位，父组件把内容填进去。默认插槽已覆盖绝大多数场景，命名插槽、作用域插槽等真用到时再查文档即可。
 
 ## 生命周期：数据什么时候拉
 
@@ -79,13 +80,13 @@ defineEmits(['update:date'])
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 
-const weather = ref(null)
+const results = ref([])
 const loading = ref(false)
 
 onMounted(async () => {
   // 组件挂载到页面后执行一次，通常在这里拉后端数据
   loading.value = true
-  weather.value = await fetch('/api/weather/2024-01-15').then(r => r.json())
+  results.value = await fetch('/api/search?q=pydantic').then(r => r.json())
   loading.value = false
 })
 
@@ -103,11 +104,11 @@ onBeforeUnmount(() => {
 
 | 场景 | 抽什么 | 例子 |
 | --- | --- | --- |
-| 有界面结构要复用 | 组件 | `WeatherCard`、`WeatherDatePicker` |
-| 无界面、纯逻辑要复用 | 组合函数 | `useWeather`、`usePolling` |
-| 两者都有 | 组件包裹组合函数 | `WeatherQuery` 里用 `useWeather` |
+| 有界面结构要复用 | 组件 | `ResultCard`、`SearchBar` |
+| 无界面、纯逻辑要复用 | 组合函数 | `useSearch`、`usePolling` |
+| 两者都有 | 组件包裹组合函数 | `SearchView` 里用 `useSearch` |
 
-原则一句话：界面复用抽组件，逻辑复用抽组合函数，两者都要就把逻辑装进组件里的组合函数。前面讲过的 `useWeather` 就是"纯逻辑"那一边的典型。
+原则一句话：界面复用抽组件，逻辑复用抽组合函数，两者都要就把逻辑装进组件里的组合函数。前面讲过的 `useSearch` 就是"纯逻辑"那一边的典型。
 
 ## 本节小结
 

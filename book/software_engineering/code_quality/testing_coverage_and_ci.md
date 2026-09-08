@@ -208,21 +208,21 @@ def test_file_operations(tmp_path):
 import pytest
 
 @pytest.fixture
-def sample_task():
-    """创建一个示例 Task 对象，供多个测试复用"""
+def sample_doc():
+    """创建一个示例 Document 对象，供多个测试复用"""
     from dataclasses import dataclass
     @dataclass
-    class Task:
+    class Document:
         id: str
-        status: str
+        title: str
 
-    return Task(id="t-001", status="pending")
+    return Document(id="d01", title="BaseModel：模型基类")
 
-def test_task_status(sample_task):
-    assert sample_task.status == "pending"
+def test_doc_title(sample_doc):
+    assert sample_doc.title == "BaseModel：模型基类"
 
-def test_task_id(sample_task):
-    assert sample_task.id == "t-001"
+def test_doc_id(sample_doc):
+    assert sample_doc.id == "d01"
 ```
 
 **3. fixture 的 scope**

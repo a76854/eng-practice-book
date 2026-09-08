@@ -75,10 +75,10 @@ kernelspec:
 
 | 意图 | 把动词塞进 URL 的写法 | 资源加动词的 RESTful 写法 |
 |---|---|---|
-| 创建任务 | POST /createTask | POST /tasks |
-| 查询任务 | POST /getTask?id=1 | GET /tasks/1 |
-| 更新任务 | POST /updateTask | PUT /tasks/1 |
-| 删除任务 | POST /deleteTask | DELETE /tasks/1 |
+| 新建文档 | POST /createDoc | POST /docs |
+| 查询文档 | POST /getDoc?id=1 | GET /docs/1 |
+| 更新文档 | POST /updateDoc | PUT /docs/1 |
+| 删除文档 | POST /deleteDoc | DELETE /docs/1 |
 
 两种写法表面都能干活，收益却差很多。前一种把"做什么"藏进了地址或请求体，机器看不懂，重试策略无从制定，前端还得记一套动作名。后一种用统一的资源加方法表达，机器直接读懂：POST 是新建，GET 是读取，PUT 是替换，DELETE 是删除。
 

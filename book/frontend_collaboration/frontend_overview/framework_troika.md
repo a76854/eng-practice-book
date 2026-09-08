@@ -35,30 +35,29 @@ UI = f(state)
 
 ## 同一需求，三种表达
 
-下面用查询某一天的天气举一个例子，看看三种不同的框架的实现。页面包括一个日期输入框、一个查询按钮、加载状态、天气信息展示、错误提示。同一个需求，看三个框架各怎么写。
+下面用一个文档搜索举一个例子，看看三种框架的实现。页面包括一个搜索框、一个搜索按钮、加载状态、结果列表展示、错误提示。同一个需求，看三个框架各怎么写。
 
 ### React 风格：显式触发、不可变更新
 
 React 把“可预测”放在第一位。数据单向流动，状态变化通过不可变更新显式触发。开发者明确知道“什么时候变了、变成什么了”。
 
 ```javascript
-// React 组件 Weather.jsx
-import { useState, useEffect } from 'react'
+// React 组件 DocSearch.jsx
+import { useState } from 'react'
 
-export default function Weather() {
-  const [date, setDate] = useState('2024-01-15')
-  const [weather, setWeather] = useState(null)
+export default function DocSearch() {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const fetchWeather = async () => {
+  const search = async () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/weather/${date}`)
+      const res = await fetch(`/api/search?q=${query}`)
       if (!res.ok) throw new Error('请求失败')
-      const data = await res.json()
-      setWeather(data)
+      setResults(await res.json())
     } catch (err) {
       setError(err.message)
     } finally {
@@ -66,27 +65,17 @@ export default function Weather() {
     }
   }
 
-  // 首次加载或日期变化时自动查询
-  useEffect(() => {
-    fetchWeather()
-  }, [date])
-
   return (
     <div>
-      <input
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-      />
+      <input value={query} onChange={(e) => setQuery(e.target.value)} />
+      <button onClick={search}>搜索</button>
       {loading && <p>加载中...</p>}
       {error && <p style={{ color: 'red' }}>错误：{error}</p>}
-      {weather && (
-        <div>
-          <p>城市：{weather.city}</p>
-          <p>温度：{weather.temperature}°C</p>
-          <p>天气：{weather.condition}</p>
-        </div>
-      )}
+      <ul>
+        {results.map(r => (
+          <li key={r.url}><a href={r.url}>{r.title}</a></li>
+        ))}
+      </ul>
     </div>
   )
 }
@@ -95,62 +84,60 @@ export default function Weather() {
 关键特征都在代码里：
 - 状态用 `useState` 声明，每一块状态独立
 - 状态更新用 `setXxx(newValue)` 显式触发，旧值和新值是完全不同的两个对象
-- 副作用（数据请求）通过 `useEffect` 统一管理
-- 视图是状态的纯函数：给定一套 `date`、`weather`、`loading`、`error`，渲染结果完全确定
+- 副作用（数据请求）在点击事件里显式触发
+- 视图是状态的纯函数：给定一套 `query`、`results`、`loading`、`error`，渲染结果完全确定
 
-React 的风格可以概括为：**一切变化都是显式的，一切渲染都是可预测的。** 代价是开发者要写更多代码——状态管理、依赖数组、不可变更新，每一步都要手动处理。
+React 的风格可以概括为：**一切变化都是显式的，一切渲染都是可预测的。** 代价是开发者要写更多代码——状态管理、显式更新，每一步都要手动处理。
 
 ### Vue 风格：响应式代理、自动追踪
 
 Vue 把“渐进与直觉”放在第一位。模板贴近 HTML，响应式系统用 Proxy 自动追踪依赖，改数据即改视图。
 
 ```vue
-<!-- Vue 组件 Weather.vue -->
+<!-- Vue 组件 DocSearch.vue -->
 <script setup>
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 
-const date = ref('2024-01-15')
-const weather = ref(null)
+const query = ref('')
+const results = ref([])
 const loading = ref(false)
 const error = ref(null)
 
-const fetchWeather = async () => {
+const search = async () => {
   loading.value = true
   error.value = null
   try {
-    const res = await fetch(`/api/weather/${date.value}`)
+    const res = await fetch(`/api/search?q=${query.value}`)
     if (!res.ok) throw new Error('请求失败')
-    weather.value = await res.json()
+    results.value = await res.json()
   } catch (err) {
     error.value = err.message
   } finally {
     loading.value = false
   }
 }
-
-// 日期变化时自动触发
-watch(date, fetchWeather, { immediate: true })
 </script>
 
 <template>
   <div>
-    <input type="date" v-model="date" />
+    <input v-model="query" />
+    <button @click="search">搜索</button>
     <p v-if="loading">加载中...</p>
     <p v-if="error" style="color: red">错误：{{ error }}</p>
-    <div v-if="weather">
-      <p>城市：{{ weather.city }}</p>
-      <p>温度：{{ weather.temperature }}°C</p>
-      <p>天气：{{ weather.condition }}</p>
-    </div>
+    <ul>
+      <li v-for="r in results" :key="r.url">
+        <a :href="r.url">{{ r.title }}</a>
+      </li>
+    </ul>
   </div>
 </template>
 ```
 
 关键特征：
-- `ref()` 把普通值变成响应式代理，改 `date.value` 时所有依赖这个值的地方自动更新
-- `v-model` 是双向绑定语法糖：输入框的变化自动写回 `date.value`
-- `watch` 监听 `date` 的变化，变化时自动执行回调
-- 模板直接用 `v-if` 控制显示，`{{ }}` 插入值
+- `ref()` 把普通值变成响应式代理，改 `query.value` 时所有依赖这个值的地方自动更新
+- `v-model` 是双向绑定语法糖：输入框的变化自动写回 `query.value`
+- `@click` 把点击事件绑定到 `search` 方法
+- 模板用 `v-if` 控制显示、`v-for` 渲染结果列表、`{{ }}` 插入值
 
 Vue 的风格可以概括为：**想改就改，框架帮你追踪变化。** 代码更接近原生 HTML，心智负担小，新手也能快速上手。代价是响应式系统有一定黑盒性质，异步场景下要额外注意引用稳定性。
 
@@ -159,65 +146,54 @@ Vue 的风格可以概括为：**想改就改，框架帮你追踪变化。** �
 Angular 以“企业级完备”为出发点。官方提供路由、表单、HTTP、依赖注入的全套方案，通过 RxJS 流式管理异步数据。
 
 ```typescript
-// Angular 组件 weather.component.ts
-import { Component, inject, signal, computed, effect } from '@angular/core'
+// Angular 组件 doc-search.component.ts
+import { Component, inject, signal } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
-import { toSignal } from '@angular/core/rxjs-interop'
 
 @Component({
-  selector: 'weather',
+  selector: 'doc-search',
   template: `
     <div>
-      <input type="date" (input)="onDateChange($event)" [value]="date()" />
+      <input (input)="onInput($event)" [value]="query()" />
+      <button (click)="search()">搜索</button>
       @if (loading()) { <p>加载中...</p> }
       @if (error()) { <p style="color: red">错误：{{ error() }}</p> }
-      @if (weather()) {
-        <div>
-          <p>城市：{{ weather()?.city }}</p>
-          <p>温度：{{ weather()?.temperature }}°C</p>
-          <p>天气：{{ weather()?.condition }}</p>
-        </div>
-      }
+      <ul>
+        @for (r of results(); track r.url) {
+          <li><a [href]="r.url">{{ r.title }}</a></li>
+        }
+      </ul>
     </div>
   `
 })
-export class WeatherComponent {
+export class DocSearchComponent {
   private http = inject(HttpClient)
 
-  date = signal('2024-01-15')
-  weather = signal(null)
+  query = signal('')
+  results = signal<any[]>([])
   loading = signal(false)
-  error = signal(null)
+  error = signal<string | null>(null)
 
-  private weather$ = toObservable(this.date).pipe(
-    tap(() => { this.loading.set(true); this.error.set(null) }),
-    switchMap(date => this.http.get(`/api/weather/${date}`)),
-    catchError(err => {
-      this.error.set(err.message)
-      this.loading.set(false)
-      return EMPTY
-    }),
-    tap(() => this.loading.set(false))
-  )
-
-  // 将流的结果同步到 signal
-  constructor() {
-    effect(() => {
-      this.weather$.subscribe(data => this.weather.set(data))
-    })
+  onInput(event: Event) {
+    this.query.set((event.target as HTMLInputElement).value)
   }
 
-  onDateChange(event: Event) {
-    this.date.set((event.target as HTMLInputElement).value)
+  search() {
+    this.loading.set(true)
+    this.error.set(null)
+    this.http.get<any[]>(`/api/search?q=${this.query()}`).subscribe({
+      next: (data) => { this.results.set(data); this.loading.set(false) },
+      error: (err) => { this.error.set(err.message); this.loading.set(false) },
+    })
   }
 }
 ```
 
-Angular 的风格可以概括为：**框架替你管好一切，你只需要填业务逻辑。** 依赖注入、RxJS 流、信号响应式三者配合，形成一套完整的异步数据管理方案。代价是概念多、写法重、学习曲线陡。
+Angular 的风格可以概括为：**框架替你管好一切，你只需要填业务逻辑。** 依赖注入、HttpClient 的观察者流、信号响应式三者配合，形成一套完整的异步数据管理方案。代价是概念多、写法重、学习曲线陡。
 
 ### 三种框架的差异
 
-同一个天气查询需求，三种框架的写法迥异。差异的根源不在语法，而在它们对“状态怎么变、视图怎么跟着变”这件事给出了不同的答案。
+同一个文档搜索需求，三种框架的写法迥异。差异的根源不在语法，而在它们对“状态怎么变、视图怎么跟着变”这件事给出了不同的答案。
 
 | 维度 | React | Vue 3 | Angular |
 | --- | --- | --- | --- |

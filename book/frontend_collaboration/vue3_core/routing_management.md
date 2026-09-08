@@ -9,11 +9,11 @@ kernelspec:
 学完本节，你能回答：
 
 - 单页应用里，页面切换为什么不需要整页刷新？路由在这里扮演什么角色？
-- 路由表如何把 URL 映射到组件？`:date` 这种动态参数在前端怎么取？
+- 路由表如何把 URL 映射到组件？`:id` 这种动态参数在前端怎么取？
 - 未登录访问需要登录的页面时，前端在哪里拦截、怎么重定向？
 - 为什么要按路由懒加载组件？它对首屏加载有什么影响？
 
-组件解决了单个页面内部的拆分，但一个天气应用通常不止一个页面：查询页、某一天的详情页、城市列表、收藏页，还有登录页。这一节讲前端如何在多个页面之间切换、如何守住"未登录不能进"这道门。
+组件解决了单个页面内部的拆分，但一个文档搜索应用通常不止一个页面：搜索页、文档详情页、收藏页，还有登录页。这一节讲前端如何在多个页面之间切换、如何守住"未登录不能进"这道门。
 
 > 前端路由像一栋楼的前台加门禁。前台看门牌号（URL）把你带到对应的房间（组件），门禁在进房间前查你的身份（守卫），没权限就引你去登记（登录页）。而且房间只在你要进的那一瞬才点灯（懒加载），省下开灯的电。
 
@@ -25,7 +25,7 @@ kernelspec:
 
 ## 路由表
 
-一个最小路由表，把天气应用的几个页面挂到各自的 URL 上：
+一个最小路由表，把文档搜索应用的几个页面挂到各自的 URL 上：
 
 ```javascript
 // router.ts
@@ -34,10 +34,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', redirect: '/weather' },
-    { path: '/weather', component: () => import('./views/WeatherQuery.vue') },
-    { path: '/weather/:date', component: () => import('./views/WeatherDetail.vue') },
-    { path: '/cities', component: () => import('./views/CityList.vue') },
+    { path: '/', redirect: '/search' },
+    { path: '/search', component: () => import('./views/SearchView.vue') },
+    { path: '/docs/:id', component: () => import('./views/DocDetail.vue') },
     { path: '/favorites', component: () => import('./views/Favorites.vue'), meta: { requiresAuth: true } },
     { path: '/login', component: () => import('./views/Login.vue') },
   ],
@@ -46,7 +45,7 @@ const router = createRouter({
 export default router
 ```
 
-`/weather/:date` 里的 `:date` 是动态参数：访问 `/weather/2024-01-15` 就匹配到 `WeatherDetail.vue`，组件里用 `route.params.date` 拿到 `2024-01-15`。`redirect` 则把根路径 `/` 转到查询页。URL 默认走 history 模式（地址干净，如 `/weather`）；另一种 hash 模式地址带 `#`（如 `/#/weather`），无需服务端配合，真用到时按需选择即可。
+`/docs/:id` 里的 `:id` 是动态参数：访问 `/docs/d01` 就匹配到 `DocDetail.vue`，组件里用 `route.params.id` 拿到 `d01`。`redirect` 则把根路径 `/` 转到搜索页。URL 默认走 history 模式（地址干净，如 `/search`）；另一种 hash 模式地址带 `#`（如 `/#/search`），无需服务端配合，真用到时按需选择即可。
 
 ## 登录守卫
 
@@ -61,11 +60,11 @@ router.beforeEach((to) => {
   }
 })
 
-// 路由独享守卫：详情页先校验 date 是 YYYY-MM-DD 格式
+// 路由独享守卫：详情页先校验 id 非空
 {
-  path: '/weather/:date',
+  path: '/docs/:id',
   beforeEnter: (to) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(to.params.date)) return '/weather'
+    if (!to.params.id) return '/search'
   },
 }
 ```
@@ -74,18 +73,18 @@ router.beforeEach((to) => {
 
 ## 懒加载
 
-路由表里 `component: () => import('./views/WeatherQuery.vue')` 是动态导入。Vite 会把每个这样的组件拆成独立的 chunk，访问到那条路由时才下载，首屏只加载首页必需的代码。
+路由表里 `component: () => import('./views/SearchView.vue')` 是动态导入。Vite 会把每个这样的组件拆成独立的 chunk，访问到那条路由时才下载，首屏只加载首页必需的代码。
 
 ```javascript
 // 动态导入：访问时才加载该页面的代码
-const WeatherDetail = () => import('./views/WeatherDetail.vue')
+const DocDetail = () => import('./views/DocDetail.vue')
 ```
 
 一句话理解：不懒加载，首屏要把所有页面代码一次性下完；懒加载之后，首屏只下当前页，切到别的页再按需下。对页面多的后台应用，这是首屏明显变快的来源。
 
 ## 本节小结
 
-- 路由是"URL 到组件"的映射表，`:date` 动态参数对应一组路径，`redirect` 管默认跳转。
+- 路由是"URL 到组件"的映射表，`:id` 动态参数对应一组路径，`redirect` 管默认跳转。
 - 全局守卫 `beforeEach` 做鉴权拦截，路由独享 `beforeEnter` 做参数校验，分别对应后端的鉴权中间件与参数校验。
 - 懒加载用动态 `import()` 按路由拆包，访问时才下载，首屏只加载当前页。
 - 前端守卫管体验、后端鉴权管安全，两者职责不混。

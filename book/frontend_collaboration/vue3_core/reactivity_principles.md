@@ -13,7 +13,7 @@ kernelspec:
 - `computed` 和 `watch` 的分工是什么？什么情况下用哪个？
 - 看到一个页面，你能说出它的数据、派生值和副作用分别是什么吗？
 
-上一节把数据写进了页面：模板里写 `{{ weather.city }}`、`v-model="date"`，数据一到页面就摆好了。可还差一件最关键的事没讲：你改了 `date`，输入框的值、后面的天气卡片，为什么会自己跟着变？这一节掀开这层幕布，看响应式。
+上一节把数据写进了页面：模板里写 `{{ result.title }}`、`v-for="r in results"`，数据一到页面就摆好了。可还差一件最关键的事没讲：你改了 `results`，下面的结果列表为什么会自己跟着变？这一节掀开这层幕布，看响应式。
 
 > 你在表格里写下公式 `=A1+A2`，改 A1，结果格自己就重算了，不用手动刷新。响应式就是想让界面变成这样一张表：你只负责改数据，派生和刷新都自动发生。下面要讲的三件事，存数据、算派生、做副作用，都是在为这张表添零件。
 
@@ -21,41 +21,44 @@ kernelspec:
 
 ## 没有响应式之前，这活有多累
 
-回到第 8 章那个天气样例。它用最朴素的方式，把一个天气 JSON 画成卡片：
+回到第 8 章那个文档搜索样例。它用最朴素的方式，把一个搜索结果 JSON 画成列表：
 
 ```javascript
-// 原生写法：fetch 之后，每一处显示都要手动牵线
-const el = {
-  city: document.getElementById('city'),
-  temp: document.getElementById('temp'),
-  condition: document.getElementById('condition'),
+// 原生写法：fetch 之后，每一条结果都要手动建节点
+const list = document.getElementById('results')
+
+async function load(keyword) {
+  const res = await fetch(`/api/search?q=${keyword}`)
+  const results = await res.json()
+  list.innerHTML = ''
+  for (const r of results) {
+    const li = document.createElement('li')
+    const a = document.createElement('a')
+    a.href = r.url
+    a.textContent = r.title
+    li.appendChild(a)
+    list.appendChild(li)
+  }
 }
 
-async function load() {
-  const w = await fetch('/api/weather/2024-01-15').then(r => r.json())
-  el.city.textContent = w.city
-  el.temp.textContent = `${w.temperature}°C`
-  el.condition.textContent = w.condition
-}
-
-load()
+load('pydantic')
 ```
 
-这几个字段还算少。往后推一步：日期一换就要重新查、再牵三根线；加一个"加载中"的遮罩，又是一处要手动显隐；再加错误提示，再一处。真正有用的信息其实只有一条：`weather` 和 `date` 会变。可为了让界面跟得上，你得自己数着"有哪几次变化要同步"，漏掉任何一次，界面就与数据对不上。数据在 A 处，界面在 B 处，中间那根同步的线要你亲手牵着。响应式的全部含义，就是把牵线这件事交给框架。
+这几条结果还算少。往后推一步：关键词一换就要重新请求、清空再重建一次列表；加一个"加载中"的遮罩，又是一处要手动显隐；再加错误提示，再一处。真正有用的信息其实只有一条：`results` 和 `query` 会变。可为了让界面跟得上，你得自己数着"有哪几次变化要同步"，漏掉任何一次，界面就与数据对不上。数据在 A 处，界面在 B 处，中间那根同步的线要你亲手牵着。响应式的全部含义，就是把牵线这件事交给框架。
 
 ## ref：让一个值变成可观测的
 
-为什么普通变量不行？因为 `let date = '2024-01-15'` 这种赋值，JavaScript 本身提供不了"被修改了就通知一声"的能力，你改了它谁都收不到消息。Vue 用 `ref` 把值装进一层盒子，你通过 `date.value` 读写，读写都经过这个盒子，Vue 才有机会知道你改了什么。
+为什么普通变量不行？因为 `let query = 'pydantic'` 这种赋值，JavaScript 本身提供不了"被修改了就通知一声"的能力，你改了它谁都收不到消息。Vue 用 `ref` 把值装进一层盒子，你通过 `query.value` 读写，读写都经过这个盒子，Vue 才有机会知道你改了什么。
 
 ```javascript
 import { ref } from 'vue'
 
-const date = ref('2024-01-15')  // 一个可观测的盒子
-const weather = ref(null)       // 查询结果，先空着
-const loading = ref(false)      // 是否在加载中
+const query = ref('')         // 搜索关键词
+const results = ref([])       // 搜索结果，先空着
+const loading = ref(false)    // 是否在加载中
 
-date.value = '2024-01-16'       // JavaScript 里读写都要 .value
-console.log(date.value)         // 2024-01-16
+query.value = 'pydantic'      // JavaScript 里读写都要 .value
+console.log(query.value)      // pydantic
 ```
 
 这也就顺带回答了初学者最常问的问题：为什么模板里不用 `.value`、JavaScript 里却要？因为模板是 Vue 自己解析的，它认得 `ref` 这个盒子，会自动帮你拆开；而 JavaScript 代码是你写的，Vue 没法替你拆，你就得自己 `.value`。`.value` 不是多此一举，它是"读写要经过盒子"这件事在代码里留下的痕迹。
@@ -65,8 +68,8 @@ console.log(date.value)         // 2024-01-16
 ```javascript
 import { reactive } from 'vue'
 
-const form = reactive({ date: '2024-01-15', city: '北京' })
-form.date = '2024-01-16'   // 直接改属性，视图跟得上
+const form = reactive({ query: 'pydantic', limit: 10 })
+form.query = 'fastapi'   // 直接改属性，视图跟得上
 ```
 
 两者怎么选，一张表就够：
@@ -79,44 +82,44 @@ form.date = '2024-01-16'   // 直接改属性，视图跟得上
 
 ## computed：把算出来的值声明出来
 
-现在有了 `weather`，但后端的温度是摄氏度，页面还想要一份华氏。你当然可以每次用到时现算：
+现在有了 `results`，页面还想要一条"搜索结果共 N 条"的提示。你当然可以每次用到时现算：
 
 ```javascript
-const fahrenheit = Math.round(weather.value.temperature * 9 / 5 + 32)
+const count = results.value.length
 ```
 
-这么写能跑，但有两个毛病：一是每次界面更新都重新算一遍，哪怕温度根本没变；二是"换算"这段逻辑散落在模板和代码各处，改起来要到处翻。`computed` 就是冲这两点来的：它把"由谁算出"声明一次，框架替你缓存，依赖没变就不重算。
+这么写能跑，但有两个毛病：一是每次界面更新都重新数一遍，哪怕 `results` 根本没变；二是"计数"这段逻辑散落在模板和代码各处，改起来要到处翻。`computed` 就是冲这两点来的：它把"由谁算出"声明一次，框架替你缓存，依赖没变就不重算。
 
 ```javascript
 import { ref, computed } from 'vue'
 
-const weather = ref({ temperature: 12 })
-// 声明一个派生值：由 weather.temperature 推出，依赖不变就复用上次结果
-const fahrenheit = computed(() => Math.round(weather.value.temperature * 9 / 5 + 32))
+const results = ref([])
+// 声明一个派生值：由 results 推出，依赖不变就复用上次结果
+const resultCount = computed(() => results.value.length)
 ```
 
 `computed` 对应的后端心智是"物化视图"：底层数据变了，这个视图自动刷新；没人动底层数据时，它把上次算好的结果直接还给你。后端查库也有一样的设计，常用查询建个物化视图，省得每次重算。
 
 ## watch：给变化挂一个反应
 
-`computed` 管的是"算出一个值"，但有些事不是算值能解决的：日期一换，你要重新发个请求。这种"值变了就要去做"的动作，归 `watch` 管。
+`computed` 管的是"算出一个值"，但有些事不是算值能解决的：关键词一换，你要重新发个请求。这种"值变了就要去做"的动作，归 `watch` 管。
 
 ```javascript
 import { ref, watch } from 'vue'
 
-const date = ref('2024-01-15')
-const weather = ref(null)
+const query = ref('')
+const results = ref([])
 const loading = ref(false)
 
-// date 一变，就执行这段副作用：按新日期重新查天气
-watch(date, async (nv) => {
+// query 一变，就执行这段副作用：按新关键词重新搜索
+watch(query, async (nv) => {
   loading.value = true
-  weather.value = await fetch(`/api/weather/${nv}`).then(r => r.json())
+  results.value = await fetch(`/api/search?q=${nv}`).then(r => r.json())
   loading.value = false
-}, { immediate: true })   // immediate 让首次也执行一次，省一次手动调
+})
 ```
 
-至此，几个接口的分工可以一句话钉死：
+真实产品里，输入框触发搜索通常会加一个防抖，避免每敲一个字母都发一次请求；那句防抖就是"副作用该怎么触发"的工程细节。至此，几个接口的分工可以一句话钉死：
 
 | | 管什么 | 一句话 |
 | --- | --- | --- |
@@ -128,7 +131,7 @@ watch(date, async (nv) => {
 
 ## 一个容易踩的坑
 
-两个新手最常见的报错，都来自对"盒子"理解不牢：一是 JavaScript 里漏写 `.value`，把盒子当成了值本身；二是把 `reactive` 对象解构了（`const { date } = form`），一旦拆开就断了响应。规避的办法很简单：简单值统一用 `ref`，别为了少敲一个 `.value` 把自己绕进去。
+两个新手最常见的报错，都来自对"盒子"理解不牢：一是 JavaScript 里漏写 `.value`，把盒子当成了值本身；二是把 `reactive` 对象解构了（`const { query } = form`），一旦拆开就断了响应。规避的办法很简单：简单值统一用 `ref`，别为了少敲一个 `.value` 把自己绕进去。
 
 ## 本节小结
 
