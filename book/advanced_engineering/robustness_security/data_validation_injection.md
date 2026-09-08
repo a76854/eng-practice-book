@@ -8,11 +8,11 @@ kernelspec:
 
 > 学完本节，你能回答：SQL 注入如何通过字符串拼接发生？为什么占位符能根治它？XSS 与 CSRF 的攻击面分别为何处？校验与转义应分别放在哪一层？
 
-## 注入的本质：把数据当代码执行
+## 注入的本质
 
 无论 SQL 注入还是 XSS，根因都是**把外部输入直接拼进了代码或标记的语法位**。正确做法是区分“代码结构”与“数据内容”，用“参数化”或“转义”让数据永远只是数据。
 
-## SQL 注入：从拼接字符串到占位符
+## SQL 注入
 
 MeetingToText 的任务查询若写成字符串拼接：
 
@@ -70,7 +70,7 @@ with tempfile.TemporaryDirectory() as td:
 
 > **环境约定**：本书面向 Linux，`sqlite3` 占位符在所有平台行为一致，均为 `?`（qmark）或 `:name`（named）。路径示例 `pathlib.Path(td) / "inject.db"` 统一为 `/`；示例中统一用 `/` 书写即可。
 
-## XSS：转义输出而非过滤输入
+## XSS
 
 跨站脚本（XSS）发生在“用户输入被当作 HTML/JS 原样渲染”时。例如把 `"<script>alert(1)</script>"` 存入会议标题后，前端若用 `innerHTML` 直接插入，就会执行脚本。
 
@@ -120,7 +120,7 @@ except ValueError as e:
 # validation blocked: 标题含非法控制字符
 ```
 
-## CSRF：用同步随机令牌守住“写操作”
+## CSRF
 
 跨站请求伪造（CSRF）利用浏览器自动携带 Cookie 的特性，诱导用户在已登录状态下向目标站点发送非预期请求。防御要点：
 

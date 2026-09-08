@@ -26,7 +26,7 @@ kernelspec:
 
 静态检查工具的目标，就是把"审排版"从 Code Review 中剥离出来，交给机器自动化执行。
 
-## Ruff：风格检查与自动修复的一站式方案
+## Ruff
 
 ### 从三件套到一站式
 
@@ -95,7 +95,7 @@ def export(task, fmt):
 
 `ruff format` 的规则与 Black 兼容，因此不需要争论"该用哪种格式化风格"——Ruff 会告诉你标准答案。
 
-## `mypy`：类型检查的守门人
+## `mypy`
 
 如果说 Ruff 检查的是"代码写得规范吗"，那 `mypy` 检查的是"类型写得对吗"。
 
@@ -143,7 +143,7 @@ def process(items: list[str]) -> None:
 process([1, 2, 3])  # error: list item has incompatible type "int"; expected "str"
 ```
 
-## Ruff 与 mypy：两道防线的分工
+## Ruff 与 mypy
 
 | 维度 | Ruff | mypy |
 |------|------|------|
@@ -162,7 +162,7 @@ ruff format --check src/  # 格式化是否一致
 
 Ruff 负责"你写得规范吗"，mypy 负责"你写得对吗"。前者不保证逻辑正确，后者不保证排版统一。两者合起来，才是"最小可审查"的基线。
 
-## 工程化配置：`pyproject.toml`
+## 工程化配置
 
 延续第一章"单一事实源"的理念，Ruff 与 mypy 的配置都统一写入 `pyproject.toml`：
 

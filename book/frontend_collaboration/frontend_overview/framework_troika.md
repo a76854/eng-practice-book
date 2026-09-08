@@ -6,240 +6,253 @@ kernelspec:
 
 # 框架三驾马车
 
-> 学完本节，你能回答：React / Vue / Angular 各自把什么作为第一性原理？它们在视图表达、数据流与工程约束上的 trade-off 是什么？面对一个后端背景、交互中等的后台系统，你会用哪些客观维度做选型判断？
+学完本节，你能回答：
 
-## 为什么是“三驾马车”而不是“一统天下”
+- 前端框架要解决的第一性原理问题是什么？为什么说它是把状态可靠地变成视图？
+- React、Vue、Angular 各自把什么放在第一位？各自换来什么、牺牲什么？
+- 三者在视图表达、数据流与工程约束上的 trade-off 是什么？
+- 面对一个后端背景、交互中等的后台系统，你会用哪些客观维度做选型判断？
 
-前端框架要解决的核心问题只有一个：如何用可维护的方式把**状态（State）**变为**视图（View）**，并在用户交互后可靠地回到一致状态。三种主流框架对同一问题的不同回答，恰是它们的设计哲学差异：
+上一节理清了分离之后前端的职责：把 JSON 渲染成页面，把状态变成视图。但数据一变、页面跟着变这件事，靠上一代命令式地手写 DOM 操作会越来越难维护。框架，正是被这个难题逼出来的。
 
-- **React（Meta，2013—）**把“可预测”放在首位：UI 是状态的纯函数 `UI = f(state)`，数据单向流动，变化通过不可变更新显式触发。框架只做最薄的“视图层”，其余交给生态（路由、状态库自选）。
-- **Vue（Evan You，2014—）**把“渐进与直觉”放在首位：模板贴近 HTML 直觉，响应式自动追踪依赖，让“改数据即改视图”对新手也符合直觉；同时支持从“页面中一小块增强”平滑演进到“整站 SPA”。
-- **Angular（Google，2016—）**把“企业级完备”放在首位：以平台视角提供官方的路由、表单、HTTP、依赖注入与 RxJS 响应式流，强约定换来大型团队的长期一致性。
+> 建房子有三种做法。React 是一套结构标准——只规定梁柱怎么接，墙用什么材料、水电怎么走、家具怎么摆全由施工队自己定；Vue 是渐进式精装方案——从一面墙的改造到整栋楼的交付，每一步都贴着需求走，不会让你一上来就做全部决定；Angular 是开发商的一站式交钥匙工程——户型、水电、物业规范一次配齐，拎包入住，但改格局的代价更高。
 
-类比：React 像“乐高基础板”——只给最稳的地基，房子怎么盖由你挑砖；Vue 像“宜家样板间”——从单件家具到全屋定制都能递进；Angular 像“精装交付”——户型、水电、物业规范一次配齐，开箱即住但改格局成本更高。没有优劣，只有约束与代价的不同。
+本节站在后端视角，怎么读懂框架这个东西在解决什么、用什么代价解决。先立住那个所有框架共享的第一性原理，再逐一看三家对它的不同回答。
 
-> **中立性说明**：下文对比以三者的官方文档与稳定版本行为为准（React 18+ 函数组件与 Hooks、Vue 3 Composition API、Angular 17+ Standalone），不做性能绝对化断言；性能取决于场景、写法与构建配置，选型应以团队熟悉度、协作边界与长期维护成本为第一依据。
+## 框架的诞生
+
+在没有框架的年代，前端用 jQuery 命令式地改 DOM：用户输入一个字，就找到对应元素、改它的 `innerHTML`、顺手清理旧节点。一个任务列表过滤都写成一串 `document.getElementById(...)` 加手动拼接 HTML 的代码。
+
+当页面状态一多、交互一密，这套手工同步就成了谁也改不动的面条代码。问题出在“命令式”这件事本身：你要把“数据变了”翻译成“哪个 DOM 节点该改成什么”，这层翻译工作量和代码行数跟页面规模成正比，而页面规模每翻一倍，翻译的复杂度要翻四倍。
+
+框架把这件事倒了过来。不再是命令式地改 DOM，而是声明式地描述状态与视图之间的映射，由框架在状态变化时自动重算映射、更新视图。所有框架共享的正是这一条第一性原理：
+
+```text
+UI = f(state)
+```
+
+把状态如何变成视图交给框架自动维护，开发者只需要声明两件事：界面长什么样、数据是什么。这正是理解 React 与 Vue 差异的钥匙：它们对这同一个函数，给了不同的实现。
 
 ## 同一需求，三种表达
 
-以 MeetingToText 的“任务过滤输入框 + 列表”为例，看三者在**视图表达**与**状态归属**上的差异（均为示意，突出心智模型，不可直接运行）：
+下面用一个文档搜索举一个例子，看看三种框架的实现。页面包括一个搜索框、一个搜索按钮、加载状态、结果列表展示、错误提示。同一个需求，看三个框架各怎么写。
 
-React 风格（JSX + 单向 + Hooks，状态不可变更新）：
+### React 风格
+
+React 把“可预测”放在第一位。数据单向流动，状态变化通过不可变更新显式触发。开发者明确知道“什么时候变了、变成什么了”。
 
 ```javascript
-// 示意：React 组件 TaskList.jsx
-import { useState, useMemo } from 'react'
-export default function TaskList({ tasks }) {
-  const [keyword, setKeyword] = useState('')
-  const filtered = useMemo(
-    () => tasks.filter(t => (t.name || t.filename).includes(keyword)),
-    [tasks, keyword]
-  )
+// React 组件 DocSearch.jsx
+import { useState } from 'react'
+
+export default function DocSearch() {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const search = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/search?q=${query}`)
+      if (!res.ok) throw new Error('请求失败')
+      setResults(await res.json())
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <>
-      <input value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="搜索" />
-      <ul>{filtered.map(t => <li key={t.id}>{t.filename} — {t.status}</li>)}</ul>
-    </>
+    <div>
+      <input value={query} onChange={(e) => setQuery(e.target.value)} />
+      <button onClick={search}>搜索</button>
+      {loading && <p>加载中...</p>}
+      {error && <p style={{ color: 'red' }}>错误：{error}</p>}
+      <ul>
+        {results.map(r => (
+          <li key={r.url}><a href={r.url}>{r.title}</a></li>
+        ))}
+      </ul>
+    </div>
   )
 }
 ```
 
-Vue 风格（SFC + 模板 + 响应式，状态就地可变，视图自动跟随）：
+关键特征都在代码里：
+- 状态用 `useState` 声明，每一块状态独立
+- 状态更新用 `setXxx(newValue)` 显式触发，旧值和新值是完全不同的两个对象
+- 副作用（数据请求）在点击事件里显式触发
+- 视图是状态的纯函数：给定一套 `query`、`results`、`loading`、`error`，渲染结果完全确定
 
-```javascript
-// 示意：Vue 组件 App.vue（节选）
-// <script setup> + ref + computed + v-model + v-for
-import { ref, computed } from 'vue'
-const keyword = ref('')
-const tasks = ref([{ id: '1', filename: 'meeting.wav', status: 'done' }])
-const filtered = computed(() => tasks.value.filter(t => (t.name || t.filename).includes(keyword.value)))
-// 模板：<input v-model="keyword" /> + <li v-for="t in filtered" :key="t.id">
+React 的风格可以概括为：**一切变化都是显式的，一切渲染都是可预测的。** 代价是开发者要写更多代码——状态管理、显式更新，每一步都要手动处理。
+
+### Vue 风格
+
+Vue 把“渐进与直觉”放在第一位。模板贴近 HTML，响应式系统用 Proxy 自动追踪依赖，改数据即改视图。
+
+```vue
+<!-- Vue 组件 DocSearch.vue -->
+<script setup>
+import { ref } from 'vue'
+
+const query = ref('')
+const results = ref([])
+const loading = ref(false)
+const error = ref(null)
+
+const search = async () => {
+  loading.value = true
+  error.value = null
+  try {
+    const res = await fetch(`/api/search?q=${query.value}`)
+    if (!res.ok) throw new Error('请求失败')
+    results.value = await res.json()
+  } catch (err) {
+    error.value = err.message
+  } finally {
+    loading.value = false
+  }
+}
+</script>
+
+<template>
+  <div>
+    <input v-model="query" />
+    <button @click="search">搜索</button>
+    <p v-if="loading">加载中...</p>
+    <p v-if="error" style="color: red">错误：{{ error }}</p>
+    <ul>
+      <li v-for="r in results" :key="r.url">
+        <a :href="r.url">{{ r.title }}</a>
+      </li>
+    </ul>
+  </div>
+</template>
 ```
 
-Angular 风格（组件 + 服务 + 依赖注入 + RxJS 流，强约定）：
+关键特征：
+- `ref()` 把普通值变成响应式代理，改 `query.value` 时所有依赖这个值的地方自动更新
+- `v-model` 是双向绑定语法糖：输入框的变化自动写回 `query.value`
+- `@click` 把点击事件绑定到 `search` 方法
+- 模板用 `v-if` 控制显示、`v-for` 渲染结果列表、`{{ }}` 插入值
 
-```javascript
-// 示意：Angular 组件 task-list.component.ts
-import { Component, inject } from '@angular/core'
-import { TaskService } from './task.service' // 由 DI 容器提供，官方 HTTP/路由/表单均为同类机制
+Vue 的风格可以概括为：**想改就改，框架帮你追踪变化。** 代码更接近原生 HTML，心智负担小，新手也能快速上手。代价是响应式系统有一定黑盒性质，异步场景下要额外注意引用稳定性。
+
+### Angular 风格
+
+Angular 以“企业级完备”为出发点。官方提供路由、表单、HTTP、依赖注入的全套方案，通过 RxJS 流式管理异步数据。
+
+```typescript
+// Angular 组件 doc-search.component.ts
+import { Component, inject, signal } from '@angular/core'
+import { HttpClient } from '@angular/common/http'
+
 @Component({
-  selector: 'task-list',
+  selector: 'doc-search',
   template: `
-    <input [(ngModel)]="keyword" placeholder="搜索" />
-    <li *ngFor="let t of filtered()">{{ t.filename }} — {{ t.status }}</li>
+    <div>
+      <input (input)="onInput($event)" [value]="query()" />
+      <button (click)="search()">搜索</button>
+      @if (loading()) { <p>加载中...</p> }
+      @if (error()) { <p style="color: red">错误：{{ error() }}</p> }
+      <ul>
+        @for (r of results(); track r.url) {
+          <li><a [href]="r.url">{{ r.title }}</a></li>
+        }
+      </ul>
+    </div>
   `
 })
-export class TaskListComponent {
-  keyword = ''
-  private tasks = inject(TaskService) // 依赖注入：组件不自建依赖，由框架按作用域提供
-  filtered() { return this.tasks.list().filter(t => (t.name || t.filename).includes(this.keyword)) }
+export class DocSearchComponent {
+  private http = inject(HttpClient)
+
+  query = signal('')
+  results = signal<any[]>([])
+  loading = signal(false)
+  error = signal<string | null>(null)
+
+  onInput(event: Event) {
+    this.query.set((event.target as HTMLInputElement).value)
+  }
+
+  search() {
+    this.loading.set(true)
+    this.error.set(null)
+    this.http.get<any[]>(`/api/search?q=${this.query()}`).subscribe({
+      next: (data) => { this.results.set(data); this.loading.set(false) },
+      error: (err) => { this.error.set(err.message); this.loading.set(false) },
+    })
+  }
 }
 ```
 
-三段代码完成的是同一件事，但“谁持有状态、谁决定何时重渲染、谁提供周边能力”的答案不同：
+Angular 的风格可以概括为：**框架替你管好一切，你只需要填业务逻辑。** 依赖注入、HttpClient 的观察者流、信号响应式三者配合，形成一套完整的异步数据管理方案。代价是概念多、写法重、学习曲线陡。
+
+### 三种框架的差异
+
+同一个文档搜索需求，三种框架的写法迥异。差异的根源不在语法，而在它们对“状态怎么变、视图怎么跟着变”这件事给出了不同的答案。
 
 | 维度 | React | Vue 3 | Angular |
 | --- | --- | --- | --- |
-| 视图表达 | JSX（JS 中写类 HTML） | SFC 模板（HTML 超集，贴近原生） | 模板 + 指令（`*ngFor` / `[(ngModel)]`） |
-| 数据流 | 严格单向，`props` 下、`events` 上 | 默认单向，`v-model` 为语法糖（可显式拆为 `modelValue` + `update`） | 单向为主，双向绑定为可选糖，RxJS 流处理异步更原生 |
-| 状态更新 | 不可变更新 + `setState` 触发重渲染 | 可变更新 + Proxy 自动追踪（`ref`/`reactive`） | 可变或流（`Subject`/`Signal`）+ 变更检测（Zone 或 Signal） |
-| 组件通信 | props / callback / Context | props / emit / `provide/inject` / Pinia | Input/Output / Service + DI / RxJS |
-| 官方周边 | 轻内核，路由/状态由社区补齐 | 官方提供 Router / Pinia / Vite 插件 | 官方“全家桶”：Router / Forms / HttpClient / DI |
-| 学习曲线 | JS 心智要求高（闭包、不可变） | HTML 心智友好，渐进增强 | 概念多（装饰器、DI、RxJS），上手陡峭 |
-| 演进约束 | 灵活但需要团队自定规范 | 灵活且官方规范适中 | 强规范，适合 10+ 人长期协作 |
+| 视图表达 | JSX | SFC 模板 + `v-` 指令 | 模板 + `@` / `*` 指令 |
+| 状态更新 | 不可变 + 显式触发 | 可变 + Proxy 自动追踪 | 可变 + Signal / RxJS 流 |
+| 副作用管理 | `useEffect` 手动声明依赖 | `watch` / `watchEffect` | RxJS 管道 + `effect` |
+| 异步处理 | 开发者自行管理 | 开发者自行管理 | RxJS 原生流式管理 |
+| 数据流方向 | 严格单向 | 默认单向，`v-model` 是语法糖 | 单向为主，RxJS 流贯穿 |
+| 依赖注入 | 无内置（需 Context 或第三方） | 无内置（Provide / Inject 可用） | 内置 DI，贯穿全框架 |
+| 官方生态 | 轻内核，路由/状态靠社区选型 | 官方 Router / Pinia / Vite 插件 | 官方全家桶，一步到位 |
+| 学习曲线 | JS 心智要求高 | HTML 友好，渐进增强 | 概念多，上手最陡 |
 
-## 客观选型的五个维度
+### 为什么会有这些差异
 
-对后端背景的团队，可用以下维度做**不偏袒的 checklist**，而非“谁更流行”的投票：
+React 选择“显式”，因为它把可维护性放在第一位。当代码规模膨胀到成千上万个组件时，显式的数据流让你能追踪每一处变化。代价是写一个简单功能也要写不少代码。
 
-1. **团队熟悉度与招聘面**：React 生态岗位多、Vue 在中文文档与上手速度上有优势、Angular 在特定行业（金融、政企）存量大。熟悉度直接决定联调成本。
-2. **项目约束**：内容型官网（SEO 强）偏 SSR/SSG；后台管理系统（交互中等、表单多）三者皆可；需要“在既有服务端渲染页中只增强一块区域”时 Vue 的渐进能力更贴合。
-3. **规范诉求**：需要强一致的目录、依赖与测试脚手架 → Angular；希望团队自定规范、按需引入 → React；介于二者 → Vue。
-4. **生态与周边**：React 的生态宽度最大但选型成本高；Vue 的官方 Router/Pinia/Vite 链路更收敛；Angular 的官方方案最收敛但灵活性最低。
-5. **长期维护**：关注“三年后新人能否低成本接手”。文档完整度、升级迁移成本与团队已有的 Code Review 习惯，往往比“语法喜好”更重要。
+Vue 选择“自动”，因为它把上手体验放在第一位。后端开发者转前端，最怕的就是“不知道东西为什么会变”，Vue 的响应式让你可以像改普通变量一样改数据，心智负担最低。代价是自动追踪在某些边缘场景下会失效，需要额外处理。
 
-MeetingToText 的后台（任务列表、搜索、播放、纪要编辑）属于**交互中等、以后端 API 为核心**的系统，选型上更看重“后端开发者能快速读懂前端目录与契约、联调成本低”，这也是后续 [7.3 为何选择 Vue 3 + Vite](why_vue3_vite.md) 的判断起点之一，但不意味着在其他约束下 Vue 一定最优——约束变了，答案就该变。
+Angular 选择“完备”，因为它把长期维护放在第一位。依赖注入、RxJS、内置工具链——这些设计都指向一个目标：一个大型团队在五年后还能正常接手。代价是前期投入最高，改别人的代码最不灵活。
 
-## 可运行示例：用 Python 类比三种“状态 → 视图”链路
+三家都在解决同一个问题：如何让状态可靠地变成视图。只是它们押注在不同的解法上。
 
-示例（用纯 Python 类比三种框架的更新模型：React 的不可变快照、Vue 的代理自动追踪、Angular 的服务注入，本地可复现，无网络）：
+## 选型的五个客观维度
 
-```{code-cell} ipython3
-from dataclasses import dataclass, replace
-from typing import Callable
+对后端背景的团队，选型不该是谁更流行的投票，而是一张可复盘的清单：
 
-# 共享数据
-@dataclass(frozen=True)
-class Task:
-    id: str
-    filename: str
-    status: str
+**1. 团队熟悉度与招聘面**
 
-tasks_init = [Task("1", "meeting.wav", "done"), Task("2", "interview.mp3", "processing")]
+React 生态岗位最多，英文文档和社区讨论最丰富，招聘面最宽。Vue 在中文文档与上手速度上有明显优势，后端转前端的同事在 Vue 上更容易快速产出。Angular 在金融、政企等大型组织里存量最大，招聘面较窄，但维护人员的长期稳定性更高。
 
-def render(tasks: list[Task], keyword: str) -> str:
-    """模拟视图渲染：过滤 + 拼接为 HTML 片段"""
-    filtered = [t for t in tasks if keyword.lower() in t.filename.lower()]
-    lis = "\n".join(f'  <li>{t.filename} — {t.status}</li>' for t in filtered) or "  <li>暂无任务</li>"
-    return f"<ul>\n{lis}\n</ul>"
+**2. 项目约束**
 
-# 1) React 心智：不可变更新，setState 触发重渲染（显式）
-print("=== React 心智：不可变 + 显式 setState ===")
-state = {"keyword": "", "tasks": tasks_init}
-renders: list[str] = []
+内容型官网（SEO 强依赖）偏 SSR / SSG，三框架都有对应方案，但实现成本不同。后台管理系统（交互中等、表单多）三者皆可。如果项目要求“在既有服务端渲染页里只增强一块区域”，Vue 的渐进能力最贴合，React 也能做但配置更重，Angular 基本不适用。
 
-def set_state(patch: dict):
-    global state
-    state = {**state, **patch}  # 不可变合并，产生新对象
-    renders.append(render(state["tasks"], state["keyword"]))
+**3. 规范诉求**
 
-# 初始渲染
-renders.append(render(state["tasks"], state["keyword"]))
-print(renders[-1])
-# 用户输入 keyword
-set_state({"keyword": "meeting"})
-print(renders[-1])
-# 不可变追加任务（React 要求产生新数组）；此时 keyword 仍为 "meeting"
-new_tasks = [*state["tasks"], Task("3", "demo.wav", "pending")]
-set_state({"tasks": new_tasks})
-print(renders[-1])
-# keyword="meeting" 时 demo.wav 不应出现在过滤结果中
-assert "demo.wav" not in renders[-1]
-assert "meeting.wav" in renders[-1]
-# 清空过滤后再验证新增任务可见
-set_state({"keyword": ""})
-print(renders[-1])
-assert "demo.wav" in renders[-1]
-print(f"React 渲染次数: {len(renders)}（每次 setState 触发一次）")
-print()
+希望团队按官方规范走、不用争论目录结构和测试方案的，选 Angular。希望团队自定规范、按需引入、保留最大灵活度的，选 React。介于二者之间的，选 Vue——官方链路比 React 更收敛、比 Angular 更灵活。
 
-# 2) Vue 心智：代理自动追踪，改数据即改视图（隐式）
-print("=== Vue 心智：代理 + 自动追踪 ===")
-class VueReactive:
-    """极简代理：拦截属性写入并通知订阅者（类比 Vue 3 Proxy）"""
-    def __init__(self, data: dict):
-        super().__setattr__("_data", dict(data))
-        super().__setattr__("_subs", [])
-    def subscribe(self, fn: Callable):
-        self._subs.append(fn)
-    def __getattr__(self, key):
-        return self._data[key]
-    def __setattr__(self, key, value):
-        if key in ("_data", "_subs"):
-            super().__setattr__(key, value)
-        else:
-            self._data[key] = value
-            for fn in self._subs:
-                fn()
+**4. 生态与周边**
 
-vue_state = VueReactive({"keyword": "", "tasks": list(tasks_init)})
-vue_renders: list[str] = []
+React 生态最宽但选型成本高（你要从几十种路由方案里挑一个），Vue 的官方链路更收敛，Angular 的官方方案最收敛但灵活性最低。选型成本从低到高依次是 Angular < Vue < React，灵活性则反过来。
 
-def vue_effect():
-    vue_renders.append(render(vue_state.tasks, vue_state.keyword))
+**5. 长期维护**
 
-vue_state.subscribe(vue_effect)
-vue_effect()  # 首次收集依赖并渲染
-print(vue_renders[-1])
-vue_state.keyword = "interview"  # 直接可变赋值，自动触发
-print(vue_renders[-1])
-vue_state.tasks = [*vue_state.tasks, Task("3", "demo.wav", "pending")]
-print(vue_renders[-1])
-assert "interview.mp3" in vue_renders[1]
-print(f"Vue 渲染次数: {len(vue_renders)}（每次响应式写入自动触发）")
-print()
+关注三年后新人能否低成本接手。文档完整度、升级迁移成本，往往比语法喜好更重要。React 和 Vue 的升级策略相对温和，Angular 的大版本升级在早期有过较大的迁移成本，近几个版本已经平稳很多，但仍是需要考量的因素。
 
-# 3) Angular 心智：服务 + 依赖注入，组件通过服务获取数据
-print("=== Angular 心智：服务 + DI ===")
-class TaskService:
-    def __init__(self, initial: list[Task]):
-        self._tasks = list(initial)
-    def list(self):
-        return list(self._tasks)
-    def add(self, t: Task):
-        self._tasks.append(t)
+| 维度 | React | Vue | Angular |
+| --- | --- | --- | --- |
+| 选型成本 | 高（方案自搭） | 中等（官方方案+社区选型） | 低（官方全套） |
+| 上手速度 | 中等（需理解 JSX/不可变） | 快（模板贴近 HTML） | 慢（概念多） |
+| 灵活度 | 高 | 中等 | 低 |
+| 团队规模适配 | 不限 | 不限 | 大型团队最有优势 |
 
-class Injector:
-    """极简 DI 容器：按类型单例提供服务（类比 Angular DI）"""
-    def __init__(self):
-        self._providers: dict[type, object] = {}
-    def provide(self, cls, instance):
-        self._providers[cls] = instance
-    def inject(self, cls):
-        return self._providers[cls]
+一个交互中等、以后端 API 为核心的后台系统，选型上更看重后端开发者能快速读懂前端目录与契约、联调成本低。三个框架都能胜任这个场景，但 Vue 的上手曲线最低，React 的生态最宽，Angular 的规范最严。
 
-injector = Injector()
-injector.provide(TaskService, TaskService(tasks_init))
 
-class TaskListComponent:
-    def __init__(self, inj: Injector):
-        self.keyword = ""
-        self._svc: TaskService = inj.inject(TaskService)
-    def filtered(self):
-        return [t for t in self._svc.list() if self.keyword.lower() in t.filename.lower()]
-    def view(self):
-        return render(self._svc.list(), self.keyword)
+## 本节小结
 
-comp = TaskListComponent(injector)
-print(comp.view())
-comp.keyword = "meeting"
-print(comp.view())
-comp._svc.add(Task("3", "demo.wav", "pending"))
-print(comp.view())
-assert comp._svc is injector.inject(TaskService)  # DI 保证单例
-print("Angular 单例校验通过：组件与外部共享同一 TaskService 实例")
-print()
-print("三者等价性：最终 filtered 视图一致，差异在‘何时以及如何触发更新’")
-# 预期输出:
-# === React 心智：...
-# === Vue 心智：...
-# === Angular 心智：...
-# 三者等价性：...
-```
-
-> **工程启示**：框架是“约束的集合”，而非“能力的排名”。React 用显式换可预测，Vue 用代理换直觉，Angular 用约定换一致。读懂它们的约束，你就能在给定团队与项目约束下，给出可解释、可复盘的选型判断——这正是后端视角参与前端协作的关键能力。后续 [7.4 前端工程化基石](frontend_engineering_foundation.md) 将把“框架之外的工程三件套”补齐。
-
-```bash
-# 本地复现本节类比
-.venv/bin/python -c "from dataclasses import replace; print('dataclasses ok')"
-```
+- 框架是被手改 DOM 的不可维护性逼出来的，它把命令式改 DOM 升维成声明式描述状态到视图的映射。
+- 所有框架共享 `UI = f(state)` 这条第一性原理，React、Vue、Angular 是对它三种不同的兑现。
+- React 用显式换可预测，Vue 用自动追踪换直觉，Angular 用全家桶换长期一致。三家没有优劣，只有把什么放第一的取舍。
+- 选型是一张五维度清单（熟悉度、约束、规范、生态、长期维护）的权衡，而不是能力的排名。后端背景团队选型，上手成本与联调效率往往比生态宽度更重要。

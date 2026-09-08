@@ -7,6 +7,7 @@ book/_build/
 .omo
 evidence/
 ERRATA.md
+.env
 
 labs/**/__pycache__/
 labs/**/.venv/

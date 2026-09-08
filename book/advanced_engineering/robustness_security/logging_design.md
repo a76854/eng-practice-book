@@ -14,7 +14,7 @@ kernelspec:
 
 好的日志满足四点：可分级、可检索、可关联、可采样。
 
-## 结构化与分级：让日志可被机器处理
+## 结构化与分级
 
 **结构化**指每条日志是带固定字段的 JSON（或键值对），而非自由文本。必备字段至少包括：`timestamp`、`level`、`logger`、`msg`、`request_id` / `task_id`、`duration_ms`、`error_code`。额外上下文（如用户、模型名、音频时长）以扁平键追加，避免嵌套过深。
 
@@ -84,7 +84,7 @@ assert lines[2]["level"] == "ERROR" and "exc" in lines[2]
 # {"timestamp": "...", "level": "ERROR", ... "exc": "Traceback ..."}
 ```
 
-## ELK 初探：从日志到检索
+## ELK 初探
 
 单机日志用文件即可，分布式场景需要集中检索。ELK（Elasticsearch / Logstash 或 Beats / Kibana）是典型方案：
 

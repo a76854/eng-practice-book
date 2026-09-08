@@ -73,7 +73,7 @@ graph LR
 
 层层递进，层层加固。接下来我们逐层拆解。
 
-## 第1层：类型标注（`typing`）——锁住形状
+## 类型标注（`typing`）
 
 类型标注是"给函数签名装护栏"。它不改变运行时行为，但让编辑器、`mypy` 等工具能够提前识别类型错误。
 
@@ -229,7 +229,7 @@ print("MAX_RETRY:", MAX_RETRY)
 MAX_RETRY = 5
 ```
 
-## 第2层：`@dataclass`——固化数据结构
+## `@dataclass`
 
 当数据从"随意字典"升级为"固定结构"时，`dataclass` 是最轻量的形状固化工具。
 
@@ -381,7 +381,7 @@ print("EfficientTask:", t)
 
 > **工程启示**：字典适合临时拼接，`dataclass` 适合在模块边界与存储层之间传递的结构化数据。它让"有哪些字段、字段是什么类型、默认值是什么"从隐式约定变为显式定义。
 
-## 第3层：`pydantic.BaseModel`——边界运行时校验
+## `pydantic.BaseModel`
 
 `dataclass` 固化了形状，但默认不做运行时值校验。例如，你可以创建一个 `age: int` 字段并赋值为 `-5`，它在技术上"合法"，但在业务上"不合理"。
 
@@ -545,7 +545,7 @@ print("序列化为字典:", task.model_dump())
 print("序列化为JSON:", task.model_dump_json())
 ```
 
-### 配置项：`ConfigDict`
+### 配置项
 
 ```{code-cell} python
 from pydantic import BaseModel, ConfigDict

@@ -46,7 +46,7 @@ kernelspec:
 .venv/bin/python -c "import queue, threading; print(queue.Queue.__name__, threading.Thread.__name__)"
 ```
 
-## 可运行示例：最小队列抽象（不 import celery）
+## 最小队列抽象（不 import celery）
 
 示例（简化 broker/worker，无外部依赖）：
 

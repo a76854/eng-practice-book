@@ -47,6 +47,7 @@ jobs:
       - name: Build book (honest execution, log-gated)
         env:
           BASE_URL: /${{ github.event.repository.name }}
+          WEBSEARCH_API_KEY: ${{ secrets.WEBSEARCH_API_KEY }}
         run: |
           myst clean --execute -y
           myst build --html --execute --strict 2>&1 | tee /tmp/build.log

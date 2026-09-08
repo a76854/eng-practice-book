@@ -8,7 +8,7 @@ kernelspec:
 
 > 学完本节，你能回答：Docker 镜像的分层与缓存如何工作？为什么要把不常变的 `COPY pyproject.toml` 放在频繁变动的 `COPY m2t/` 之前？多阶段构建如何把编译时依赖与运行时镜像分离？
 
-## Dockerfile 的本质：分层叠加的只读快照
+## Dockerfile 的本质
 
 每一行 Dockerfile 指令都会在上一层的基础上产生一个新的只读层（layer），最终镜像是这些层的叠加。运行时在此之上挂载一个可写层，容器内的修改只落在可写层，不污染镜像层。
 
@@ -19,7 +19,7 @@ kernelspec:
 
 > **类比叠加**：镜像像“千层蛋糕”，每一层都是上一层的增量；缓存命中时直接复用已烤好的层，失效时该层及之后所有层重烤。
 
-## 层缓存：以“指令文本 + 上下文文件哈希”为键
+## 层缓存
 
 Docker 构建时会为每条指令计算缓存键：指令文本 + 被 `COPY` 的文件内容的哈希 + 前一层的哈希。若三者均未变，则直接命中缓存，跳过执行；若任一变化，则该层及之后所有层失效重建。
 
@@ -30,7 +30,7 @@ Docker 构建时会为每条指令计算缓存键：指令文本 + 被 `COPY` �
 
 反例：若先 `COPY . .` 再 `RUN pip install -e .`，则任何业务文件的改动都会使 `pip install` 层失效，CI 每次都要重装依赖，构建时间从秒级退化为分钟级。
 
-## 多阶段构建：把“构建时”与“运行时”分离
+## 多阶段构建
 
 多阶段构建用多个 `FROM` 段落：前一阶段用重型基座完成编译、安装或前端打包，后一阶段仅 `COPY --from=builder` 产物到轻量运行时。优势是运行时镜像不含编译器、源码与中间缓存，体积与攻击面同步下降。
 
@@ -50,7 +50,7 @@ MeetingToText 的典型二阶段：
 
 > **环境约定**：本书面向 Linux，`Dockerfile.backend` 中的路径统一为 Linux 风格 `/app`、`/data`，构建上下文的路径分隔符由 Docker 客户端处理，正文中的 `COPY m2t/ ./m2t/` 在 在 Linux 环境均一致。
 
-## 可运行示例一：解析内联 Dockerfile 的层与缓存
+## 解析内联 Dockerfile 的层与缓存
 
 示例：解析内联 Dockerfile 的层与缓存：
 
@@ -164,7 +164,7 @@ cat labs/lab08_fullstack_container/starter/Dockerfile
 # docker build -f labs/lab08_fullstack_container/starter/Dockerfile --dry-run 2>&1 | head -n 20  # 仅示意，实际构建需守护进程
 ```
 
-## 可运行示例二：为何 COPY 顺序决定构建速度
+## 为何 COPY 顺序决定构建速度
 
 示例：COPY 顺序与构建缓存：
 

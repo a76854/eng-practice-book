@@ -85,7 +85,7 @@ async def get_users(db: Session = Depends(get_db)):
 
 SQLAlchemy（同步版本）的查询操作是阻塞的。在查询执行期间，事件循环被占用。
 
-## 实验：阻塞的代价
+## 阻塞的代价
 
 下面用代码直观展示阻塞调用的影响。
 

@@ -8,7 +8,7 @@ kernelspec:
 
 > 学完本节，你能回答：Compose 用什么原语描述多容器的依赖与联动？`depends_on` 的 `service_healthy` 与普通启动先后有何区别？为何 MeetingToText 用 Nginx + 后端的二服务足以演示“前端静态 + 后端动态”的联动？
 
-## 为何需要编排：从单容器到拓扑
+## 为何需要编排
 
 单个容器只解决“一个进程的可复现”，真实系统是多个进程的协作：前端静态资源需由 Nginx 托管、后端提供 `/api` 动态接口、持久化可能由数据库或文件卷承载。三者的关系是拓扑而非清单——谁依赖谁、谁先就绪、谁暴露哪一端口、谁共享哪一数据卷，都需要声明式地描述而非口头约定。
 
@@ -46,7 +46,7 @@ services:
 
 > **环境约定**：本书面向 Linux，Compose 文件中的端口与路径在 在 Linux 环境均一致；`healthcheck` 的探测命令在容器内执行（Linux 环境），与宿主机操作系统无关；宿主机访问时统一用 `http://localhost:8000` 与 `http://localhost`。
 
-## 可运行示例一：用 PyYAML 解析并校验内联 Compose 拓扑
+## 用 PyYAML 解析并校验内联 Compose 拓扑
 
 示例：解析并校验内联 Compose 拓扑：
 
@@ -161,7 +161,7 @@ PY
 # docker compose -f docker-compose.yml config -q && echo "compose config ok"
 ```
 
-## 可运行示例二：拓扑推演与反例——为何需要 `service_healthy`
+## 拓扑推演与反例——为何需要 `service_healthy`
 
 示例：拓扑推演与健康检查：
 

@@ -4,157 +4,140 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-# 响应式原理
+# 数据如何驱动视图
 
-> 学完本节，你能用 `ref` 管理输入框状态，用 `computed` 做任务过滤派生，用 `watch` 处理副作用，并用 `npm run dev` 与 `vue-tsc --noEmit` 验证改动。
+学完本节，你能回答：
 
-## 先动手：TaskList 的 5 行核心
+- 用浏览器原生方式让"数据一变、界面就变"，为什么又累又容易错？
+- `ref` 和 `reactive` 解决了什么问题？为什么 `ref` 在 JavaScript 里要写 `.value`？
+- `computed` 和 `watch` 的分工是什么？什么情况下用哪个？
+- 看到一个页面，你能说出它的数据、派生值和副作用分别是什么吗？
 
-MeetingToText 的任务列表有一个真实需求：输入框输入 `meeting`，列表只显示文件名包含 `meeting` 的任务。别先背概念，先把 5 行跑起来。
+上一节把数据写进了页面：模板里写 `{{ result.title }}`、`v-for="r in results"`，数据一到页面就摆好了。可还差一件最关键的事没讲：你改了 `results`，下面的结果列表为什么会自己跟着变？这一节掀开这层幕布，看响应式。
 
-```javascript
-<script setup>
-import { ref, computed, watch } from 'vue'
-const keyword = ref('')
-const tasks = ref([{ name: 'meeting.wav' }, { name: 'interview.mp3' }])
-const filtered = computed(() => tasks.value.filter(t => t.name.includes(keyword.value)))
-watch(keyword, (nv) => console.log(`keyword -> ${nv}`))
-</script>
+> 你在表格里写下公式 `=A1+A2`，改 A1，结果格自己就重算了，不用手动刷新。响应式就是想让界面变成这样一张表：你只负责改数据，派生和刷新都自动发生。下面要讲的三件事，存数据、算派生、做副作用，都是在为这张表添零件。
 
-<template>
-  <input v-model="keyword" placeholder="filter tasks" />
-  <li v-for="t in filtered" :key="t.name">{{ t.name }}</li>
-</template>
-```
+这一节只讲三个最常用的接口：`ref`、`computed`、`watch`。顺序不是随意排的：先有数据（`ref`），才能有派生（`computed`），派生值变化时才谈得上副作用（`watch`）。顺着这条线走一遍，比背三个定义有用得多。
 
-改 `keyword.value = 'meeting'`，`filtered` 自动变，视图自动刷新。你不需要手动调用 `render()`。先记住这个体感，后面再给它起名。
+## 没有响应式之前，这活有多累
 
-## ref / reactive / computed / watch 的分工
-
-| API | 解决的问题 | 在 TaskList 里的用法 | 后端类比 |
-|-----|-----------|---------------------|---------|
-| `ref` | 单值响应式，`string`/`number`/`boolean` | `const keyword = ref('')`，输入框绑定 | 盒子里的可观测值，`.value` 读写触发更新 |
-| `reactive` | 对象或数组响应式，深层可用 | `const state = reactive({ tasks: [], loading: true })` | 可观测的 `dict` 或 `list` |
-| `computed` | 派生状态，自动缓存，依赖变才重算 | `const filtered = computed(() => tasks.value.filter(...))` | 物化视图，缓存的派生字段 |
-| `watch` | 显式监听某源，源变时执行副作用 | `watch(keyword, (nv) => fetchFiltered(nv))` | 显式订阅某 key |
-| `watchEffect` | 自动收集依赖，依赖变即重跑 | `watchEffect(() => console.log(filtered.value.length))` | 自动依赖追踪的订阅 |
+回到第 8 章那个文档搜索样例。它用最朴素的方式，把一个搜索结果 JSON 画成列表：
 
 ```javascript
-// 完整对照：TaskList 场景
-import { ref, reactive, computed, watch } from 'vue'
+// 原生写法：fetch 之后，每一条结果都要手动建节点
+const list = document.getElementById('results')
 
-const keyword = ref('')
-const state = reactive({ tasks: [{ name: 'meeting.wav' }, { name: 'interview.mp3' }, { name: 'demo.wav' }], loading: false })
+async function load(keyword) {
+  const res = await fetch(`/api/search?q=${keyword}`)
+  const results = await res.json()
+  list.innerHTML = ''
+  for (const r of results) {
+    const li = document.createElement('li')
+    const a = document.createElement('a')
+    a.href = r.url
+    a.textContent = r.title
+    li.appendChild(a)
+    list.appendChild(li)
+  }
+}
 
-// computed 带缓存：keyword 不变，多次读取不重算
-const filtered = computed(() => state.tasks.filter(t => t.name.includes(keyword.value)))
-
-// watch 做副作用：keyword 变化时打日志或请求后端
-watch(keyword, (nv, ov) => console.log(`filter ${ov} -> ${nv}, hits ${filtered.value.length}`))
+load('pydantic')
 ```
 
-> **常见坑**：`ref` 在 JS 中需 `.value`，模板中自动解包不用 `.value`；`reactive` 解构会丢失响应性，需 `toRefs` 或直接用 `ref`。
+这几条结果还算少。往后推一步：关键词一换就要重新请求、清空再重建一次列表；加一个"加载中"的遮罩，又是一处要手动显隐；再加错误提示，再一处。真正有用的信息其实只有一条：`results` 和 `query` 会变。可为了让界面跟得上，你得自己数着"有哪几次变化要同步"，漏掉任何一次，界面就与数据对不上。数据在 A 处，界面在 B 处，中间那根同步的线要你亲手牵着。响应式的全部含义，就是把牵线这件事交给框架。
 
-## 为什么改数据视图自动变
+## `ref`
 
-一句话：Vue 会记录 `computed` 和 `watch` 读取了哪些 `ref`，当源变化时自动重算或重跑。你只管改数据，视图交给框架同步。这就是“响应式”，先有体感，再有名字，不用关心内部如何追踪。
+为什么普通变量不行？因为 `let query = 'pydantic'` 这种赋值，JavaScript 本身提供不了"被修改了就通知一声"的能力，你改了它谁都收不到消息。Vue 用 `ref` 把值装进一层盒子，你通过 `query.value` 读写，读写都经过这个盒子，Vue 才有机会知道你改了什么。
 
-## 可运行示例：TaskList 过滤逻辑
+```javascript
+import { ref } from 'vue'
 
-用纯 Python 复现上面的过滤心智，不依赖任何响应式引擎，只看用法是否符合预期。
+const query = ref('')         // 搜索关键词
+const results = ref([])       // 搜索结果，先空着
+const loading = ref(false)    // 是否在加载中
 
-```{code-cell} ipython3
-# TaskList 过滤：ref -> computed -> watch 的用法心智
-tasks = ["meeting.wav", "interview.mp3", "demo.wav"]
-
-# ref 心智：一个盒子，存当前 keyword
-keyword = ""  # ref('')
-
-def filtered_tasks(kw, items):
-    """computed 心智：派生状态，依赖 kw 变化才重算"""
-    if not kw:
-        return list(items)
-    kw = kw.lower()
-    return [t for t in items if kw in t.lower()]
-
-# watch 心智：显式监听 keyword 变化执行副作用
-def on_keyword_change(new, old):
-    hits = filtered_tasks(new, tasks)
-    print(f"  watch: {old!r} -> {new!r}, hits {len(hits)}: {hits}")
-
-# 初始
-print(f"初始 keyword={keyword!r}: {filtered_tasks(keyword, tasks)}")
-assert len(filtered_tasks("", tasks)) == 3
-
-# 输入 meeting
-old, keyword = keyword, "meeting"
-on_keyword_change(keyword, old)
-assert filtered_tasks(keyword, tasks) == ["meeting.wav"]
-print(f"keyword={keyword!r}: {filtered_tasks(keyword, tasks)}")
-
-# 输入 mp3
-old, keyword = keyword, "mp3"
-on_keyword_change(keyword, old)
-assert filtered_tasks(keyword, tasks) == ["interview.mp3"]
-print(f"keyword={keyword!r}: {filtered_tasks(keyword, tasks)}")
-
-# 清空
-old, keyword = keyword, ""
-on_keyword_change(keyword, old)
-assert len(filtered_tasks(keyword, tasks)) == 3
-print(f"清空后: {filtered_tasks(keyword, tasks)}")
-print("TaskList 用法校验通过：ref 存状态，computed 做过滤，watch 做副作用")
+query.value = 'pydantic'      // JavaScript 里读写都要 .value
+console.log(query.value)      // pydantic
 ```
 
-## 本地验证：跑起来并通过类型检查
+这也就顺带回答了初学者最常问的问题：为什么模板里不用 `.value`、JavaScript 里却要？因为模板是 Vue 自己解析的，它认得 `ref` 这个盒子，会自动帮你拆开；而 JavaScript 代码是你写的，Vue 没法替你拆，你就得自己 `.value`。`.value` 不是多此一举，它是"读写要经过盒子"这件事在代码里留下的痕迹。
 
-写完 SFC 后，用两条命令验证，不用懂内部实现。
+`ref` 装的是单值。要装对象和数组，有它的兄弟 `reactive`，它让对象的每一层都可观测：
 
-```bash
-# 预览
-npm run dev
-# 类型检查，零错误才算改对
-npx vue-tsc --noEmit
+```javascript
+import { reactive } from 'vue'
+
+const form = reactive({ query: 'pydantic', limit: 10 })
+form.query = 'fastapi'   // 直接改属性，视图跟得上
 ```
 
-下面的 code-cell 在本书的 `.venv` 中模拟这两步的检查逻辑，缺工具时优雅跳过，保证构建可执行。
+两者怎么选，一张表就够：
 
-```{code-cell} ipython3
-import pathlib, shutil, subprocess
+| | ref | reactive |
+| --- | --- | --- |
+| 装什么 | 单值：字符串、数字、布尔 | 对象、数组 |
+| 怎么读写 | JavaScript 里 `.value`，模板里不用 | 直接 `.属性` |
+| 什么时候用 | 单个输入、开关、计数 | 一组彼此相关的状态（如表单） |
 
-# 1. 任务过滤的最小回归（不依赖 Vue 运行时）
-tasks = ["meeting.wav", "interview.mp3", "demo.wav"]
-keyword = "meeting"
-filtered = [t for t in tasks if keyword.lower() in t.lower()]
-assert filtered == ["meeting.wav"]
-print(f"回归通过：keyword={keyword!r} -> {filtered}")
+## `computed`
 
-# 2. 验证 SFC 与类型检查命令是否存在
-candidates = [
-    pathlib.Path("frontend/src/views/TasksListPage.vue"),
-    pathlib.Path("../MeetingToText/frontend/src/views/TasksListPage.vue"),
-    pathlib.Path("/home/huiguo/tools/MeetingToText/frontend/src/views/TasksListPage.vue"),
-]
-found = next((p for p in candidates if p.exists()), None)
-print(f"SFC exists: {found if found else 'skip (book repo standalone)'}")
+现在有了 `results`，页面还想要一条"搜索结果共 N 条"的提示。你当然可以每次用到时现算：
 
-if shutil.which("npx"):
-    try:
-        r = subprocess.run(["npx", "vue-tsc", "--noEmit", "--help"], capture_output=True, text=True, timeout=5)
-        print(f"vue-tsc help exit: {r.returncode}")
-        if r.returncode == 0:
-            print("可用命令：npx vue-tsc --noEmit  # 类型检查")
-            print("可用命令：npm run dev           # 本地预览")
-        else:
-            print("vue-tsc not ready, run: npm install")
-    except subprocess.TimeoutExpired:
-        print("vue-tsc check timed out, skip (run npx vue-tsc --noEmit manually)")
-        print("可用命令：npm run dev / npx vue-tsc --noEmit")
-else:
-    print("npx not found, skip vue-tsc check")
-    print("可用命令：npm run dev / npx vue-tsc --noEmit")
-
-print("验证结束：用法正确，命令可执行即算通过")
+```javascript
+const count = results.value.length
 ```
 
-> **与后续章节的衔接**：本节的响应式是 [8.2 组件化](component_design.md) 中 Props 响应式传递与 [8.4 Pinia](cross_component_state_pinia.md) 中 Store 响应式状态的基石，生命周期中的数据拉取将在 [8.3 路由](routing_management.md) 的守卫与懒加载中进一步展开。
+这么写能跑，但有两个毛病：一是每次界面更新都重新数一遍，哪怕 `results` 根本没变；二是"计数"这段逻辑散落在模板和代码各处，改起来要到处翻。`computed` 就是冲这两点来的：它把"由谁算出"声明一次，框架替你缓存，依赖没变就不重算。
+
+```javascript
+import { ref, computed } from 'vue'
+
+const results = ref([])
+// 声明一个派生值：由 results 推出，依赖不变就复用上次结果
+const resultCount = computed(() => results.value.length)
+```
+
+`computed` 对应的后端心智是"物化视图"：底层数据变了，这个视图自动刷新；没人动底层数据时，它把上次算好的结果直接还给你。后端查库也有一样的设计，常用查询建个物化视图，省得每次重算。
+
+## `watch`
+
+`computed` 管的是"算出一个值"，但有些事不是算值能解决的：关键词一换，你要重新发个请求。这种"值变了就要去做"的动作，归 `watch` 管。
+
+```javascript
+import { ref, watch } from 'vue'
+
+const query = ref('')
+const results = ref([])
+const loading = ref(false)
+
+// query 一变，就执行这段副作用：按新关键词重新搜索
+watch(query, async (nv) => {
+  loading.value = true
+  results.value = await fetch(`/api/search?q=${nv}`).then(r => r.json())
+  loading.value = false
+})
+```
+
+真实产品里，输入框触发搜索通常会加一个防抖，避免每敲一个字母都发一次请求；那句防抖就是"副作用该怎么触发"的工程细节。至此，几个接口的分工可以一句话钉死：
+
+| | 管什么 | 一句话 |
+| --- | --- | --- |
+| ref / reactive | 存数据 | 可观测的容器 |
+| computed | 算派生 | 由别的值推出、带缓存 |
+| watch | 做副作用 | 值变了顺手做点事 |
+
+用后端的话再翻译一遍：`ref`/`reactive` 是存储字段，`computed` 是派生查询，`watch` 是变更时触发的回调。存、算、响，这条线讲完，Vue 里"数据怎么动起来"就通了。
+
+## 一个容易踩的坑
+
+两个新手最常见的报错，都来自对"盒子"理解不牢：一是 JavaScript 里漏写 `.value`，把盒子当成了值本身；二是把 `reactive` 对象解构了（`const { query } = form`），一旦拆开就断了响应。规避的办法很简单：简单值统一用 `ref`，别为了少敲一个 `.value` 把自己绕进去。
+
+## 本节小结
+
+- 响应式解决的是"数据变了界面要手动改"这件苦差：原来中间那根同步的线要你亲手牵，现在交给框架。
+- `ref` 装单值、`reactive` 装对象，都是可观测的盒子，这正是 JavaScript 里要 `.value` 的由来。
+- `computed` 声明派生值、带缓存；`watch` 挂载副作用、变则执行。先存、再算、后响，顺序不是随意的。
+- 读一段 Vue 代码，先找数据（`ref`/`reactive`），再找派生（`computed`），最后找副作用（`watch`），三样齐了就懂了。
+
+金句：响应式不是魔法，它只是把"数据一变界面就变"这件本该由人盯着的苦差，变成了框架替你盯着的默认行为。

@@ -45,7 +45,7 @@ Shell 脚本的测试方式通常是"跑一遍，看输出对不对"。要模拟
 
 ---
 
-## 一个脚本：Excel 驱动的文件同步
+## 一个脚本
 
 假设你是某大型工厂的资料统计员。厂里正在进行知识库建设——各车间、各岗位的操作手册、设备图纸、检修记录、培训课件，需要统一归类造册，做成一份可检索的电子档案。
 
@@ -178,7 +178,7 @@ graph LR
 
 ## 核心模块拆解
 
-### `argparse`：让脚本像真正的 CLI 工具
+### `argparse`
 
 `argparse` 让脚本拥有专业的命令行接口，使用者通过参数控制行为，无需修改源码：
 
@@ -199,7 +199,7 @@ args = parser.parse_args()
 - 破坏性操作（如删除）默认需要确认或 `--yes` 开关
 - `--dry-run` 是安全开关，让用户先看后做
 
-### `pathlib`：可移植的路径操作
+### `pathlib`
 
 `pathlib` 是 Python 3.4+ 推荐的标准库，提供面向对象的路径操作：
 
@@ -223,7 +223,7 @@ if config.exists():
 
 相比 `os.path.join()` 的字符串拼接，`Path` 对象更直观、更安全，且跨平台兼容。
 
-### `shutil`：高级文件操作
+### `shutil`
 
 `shutil` 提供了 Shell 命令的 Python 等价物：
 
@@ -246,7 +246,7 @@ dst.parent.mkdir(parents=True, exist_ok=True)
 
 `shutil` 在 Windows、macOS、Linux 上行为一致，屏蔽了平台差异。
 
-### `subprocess`：调用外部命令
+### `subprocess`
 
 当需要调用外部命令（如 `ffmpeg`、`git`）时，使用 `subprocess` 模块：
 

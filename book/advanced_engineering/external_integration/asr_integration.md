@@ -28,7 +28,7 @@ MeetingToText 的上游是“任意用户上传的任意格式音频”，下游
 
 该流程与对象存储、网关鉴权同源，理解一次即可迁移。
 
-## 音频归一：声道与采样率
+## 音频归一
 
 `m2t/audio.py` 把归一拆为两步：
 
@@ -42,7 +42,7 @@ MeetingToText 的上游是“任意用户上传的任意格式音频”，下游
 .venv/bin/python -c "from m2t.audio import load_audio; print(load_audio.__doc__[:20])"
 ```
 
-## 结果归一：三种形状收敛为一种
+## 结果归一
 
 `m2t/asr.py` 的 `normalize_result` 把 FunASR 的不稳定回包收敛为 `[{speaker, text, start, end}]`（时间由毫秒转秒）：
 
@@ -50,7 +50,7 @@ MeetingToText 的上游是“任意用户上传的任意格式音频”，下游
 2. **`raw_text + timestamp` 回退**：用 `text` 与 `timestamp`（毫秒对）逐段对齐。
 3. **空结果**：返回 `[]`，由调用方决定是否提示“未识别到语音”。
 
-## 可运行示例：无真实模型的转写闭环
+## 无真实模型的转写闭环
 
 示例（音频归一与格式转换）：
 

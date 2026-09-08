@@ -4,116 +4,20 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-## 本章小结
+# 本章小结
 
-- **前端在架构中的边界是“谁来拼 HTML”与“URL 如何分层”**：后端模板在服务端直出 HTML，适合内容型与 SEO 强依赖场景；前后端分离让后端聚焦 JSON 接口、前端聚焦交互与状态，接口通过 `/api` 前缀与 OpenAPI 契约解耦，MeetingToText 选择后者以支撑“上传—转写—列表—纪要”的多端复用链路（见 [7.1 前端在架构中的角色](frontend_role_in_architecture.md)）。
-- **框架选型是约束的 trade-off，而非能力的排名**：React 以显式与可预测见长（`UI = f(state)`、单向、JSX），Vue 以渐进与直觉见长（模板、Proxy 自动追踪、SFC），Angular 以企业级完备见长（DI、RxJS、官方全家桶）；五维度 checklist（团队熟悉度、项目约束、规范诉求、生态宽度、长期维护）比“谁更流行”更可靠（见 [7.2 框架三驾马车](framework_troika.md)）。
-- **Vue 3 + Vite 的选型可解释为“贴合本课程约束”**：组合式 API 把同一关注点的状态与逻辑收拢并可函数级复用，Proxy 代理整个对象解决了新增属性与数组的响应式盲区，Vite 开发期按需 ESM + 依赖预构建（esbuild）让“改一行、瞬时可见”，生产期再由 Rollup 做 tree-shaking 与分包（见 [7.3 为何选择 Vue 3 + Vite](why_vue3_vite.md)）。
-- **前端工程化由“运行时 + 包管理 + 模块系统”三件套支撑**：Node.js 是前端工具的宿主运行时（Vite、`vue-tsc` 均跑在 Node 上），npm/pnpm 通过 lockfile 保证可复现、pnpm 以内容寻址 store + 符号链接实现省空间与严格依赖，ES Module 的静态 `import`/`export` 让工具可不执行代码即做依赖图与摇树——三者共同构成前端的“可复现、可审计、可按需”基座，与后端的 Python + `pyproject.toml` + `import` 形成镜像（见 [7.4 前端工程化基石](frontend_engineering_foundation.md)）。
-- **贯穿启示**：以后端视角读懂前端目录（`src/`/`components`/`router`）、契约（`GET /api/tasks` 与三态渲染）与产物（`dist/` 静态资源），是前后端有效协作的前提；后续 [第8章 Vue 3 核心机制与状态设计](../vue3_core/index.md) 将在该基座上展开响应式、组件化、路由与 Pinia 的完整链路。
+- **前端是被复杂度逼出来的独立角色**：从静态页面到 SPA，主线始终是把数据变成页面这件事交给更合适的一侧，每一步演进都解决了上一阶段的问题、又为下一阶段埋下债（见 [前端从哪来](frontend_origin.md)）。
+- **谁来渲染 HTML决定一切**：后端模板渲染在服务器出 HTML，前后端分离在浏览器出 JSON，职责、URL 分层与协作方式都跟着变；接口契约（路径、形状、状态码）是前后端并行开发的唯一交汇点，三态渲染是前端对接任何接口的标准姿态（见 [前端在架构中的角色](frontend_role_in_architecture.md)）。
+- **框架共享一条第一性原理 `UI = f(state)`**：React 用显式换可预测，Vue 用代理换直觉，Angular 用约定换一致；选型是五维清单（熟悉度、约束、规范、生态、长期维护）的权衡，而非能力排名（见 [框架三驾马车](framework_troika.md)）。
+- **前端工程化由运行时 + 包管理 + 模块系统三件套支撑**：Node 是前端的 Python 解释器，npm/pnpm 是前端的 pip，ES Module 是前端的 import，三者共同构成可复现、可审计、可按需的基座，与后端形成镜像（见 [前端工程化基石](frontend_engineering_foundation.md)）。
+- **总体启示**：以后端视角读懂前端目录（`src/`/`components`/`router`）、契约（`GET /api/search?q=...` 与三态渲染）与产物（`dist/` 静态资源），是前后端有效协作的前提；后续 [Vue3 核心机制与状态设计](../vue3_core/index.md) 将在此基座上展开响应式、组件化、路由与状态管理的完整链路。
 
-## 思考题
+---
 
-1. **渲染边界再辨析**：若 MeetingToText 新增一个面向搜索引擎的营销落地页，你会为该页选择“后端模板直出”还是“前后端分离 + SSR/预渲染”？请结合首屏、SEO 与部署复杂度说明判断依据与代价。
-2. **选型可复盘性**：假设团队从 3 人扩至 15 人，且需同时交付 Web 与小程序，你会如何重新评估 [7.2 的五维度 checklist](framework_troika.md) 的权重？哪一维度的变化最可能推翻“Vue 3 + Vite”的结论？
-3. **组合式 vs 选项式**：在什么规模下，组合式 API 的“按关注点收拢”会从优势变为负担（如过度抽象）？能否为 MeetingToText 的“任务轮询”逻辑设计一个“何时抽为 `usePolling`、何时留在组件内”的判断标准？
-4. **响应式的心智代价**：Proxy 的“改数据即改视图”降低了样板，但也让“何时触发更新”变得隐式。对比 React 的显式 `setState`，讨论隐式响应式在调试与可预测性上的利弊，并提出一种“让隐式变得可观测”的工程实践（如日志、devtools 或单向约束）。
-5. **Vite 的边界**：Vite 开发期按需的优势在何种场景下会削弱（如超大依赖、频繁跨包修改）？若你的后台系统需在无 Node 的内网环境交付 `dist/`，你会如何设计“开发期用 Vite、交付期仅交付静态资源”的可审计流水线？
-6. **包管理的诚实性**：pnpm 的严格依赖会让幽灵依赖直接失败，而 npm 的扁平可能让其“侥幸可跑”。讨论“严格失败”与“宽松兼容”对团队协作的长期影响：短期便利与长期可维护性应如何权衡？
-7. **ESM 静态性的启发**：ESM 的静态 `import` 让 tree-shaking 成为可能，Python 的 `import` 则更动态。能否为 MeetingToText 的 Python 工具链设计一种“静态可分析的插件注册”机制，以获得类似的“未使用即剔除”能力？这种机制会带来哪些约束？
+# 思考题
 
-示例（本章贯通校验：以后端视角串联“接口契约 → 响应式过滤 → 工程契约”，本地可复现，无网络）：
-
-```{code-cell} ipython3
-import json, pathlib, re
-from dataclasses import dataclass, asdict
-
-# ---- 1) 接口契约：后端返回的任务 JSON，前端据此做三态渲染（对接 7.1） ----
-@dataclass
-class Task:
-    id: str
-    filename: str
-    status: str
-
-tasks = [Task("1", "meeting.wav", "done"), Task("2", "interview.mp3", "processing"), Task("3", "demo.wav", "pending")]
-payload = {"tasks": [asdict(t) for t in tasks]}
-json_text = json.dumps(payload, ensure_ascii=False)
-data = json.loads(json_text)
-assert len(data["tasks"]) == 3
-print("契约校验通过：后端 JSON 可被前端解析，任务数", len(data["tasks"]))
-
-# ---- 2) 响应式过滤：Proxy 心智的 Python 类比（对接 7.2/7.3） ----
-class Reactive:
-    def __init__(self, d: dict):
-        object.__setattr__(self, "_d", dict(d))
-        object.__setattr__(self, "_subs", {})
-    def effect(self, key, fn):
-        self._subs.setdefault(key, []).append(fn)
-    def __getattr__(self, k):
-        return self._d[k]
-    def __setattr__(self, k, v):
-        if k in ("_d", "_subs"):
-            object.__setattr__(self, k, v)
-        else:
-            self._d[k] = v
-            for fn in self._subs.get(k, []):
-                fn()
-
-state = Reactive({"keyword": "", "tasks": list(tasks)})
-views: list[list[str]] = []
-
-def compute():
-    kw = state.keyword.lower()
-    views.append([t.filename for t in state.tasks if kw in t.filename.lower()])
-
-compute()
-state.effect("keyword", compute)
-state.keyword = "meeting"
-print("响应式过滤:", views[-1])
-assert views[-1] == ["meeting.wav"]
-state.keyword = ""
-print("清空过滤:", views[-1])
-assert len(views[-1]) == 3
-print("响应式校验通过：改数据即改视图")
-
-# ---- 3) 工程契约：package.json 的脚本与 ESM 静态可分析（对接 7.4） ----
-pkg = {
-    "name": "frontend-min",
-    "type": "module",
-    "dependencies": {"vue": "^3.5.13"},
-    "devDependencies": {"vite": "^6.0.0", "vue-tsc": "^2.0.0"},
-    "scripts": {"dev": "vite", "build": "vue-tsc --noEmit && vite build", "preview": "vite preview"},
-}
-assert pkg["type"] == "module"
-assert "dev" in pkg["scripts"] and "build" in pkg["scripts"]
-print("工程契约：type=module 且 dev/build 存在")
-
-esm_sample = "import { ref } from 'vue'\nimport { formatDuration } from './utils/format.js'\n"
-imps = re.findall(r"from\s+['\"]([^'\"]+)['\"]", esm_sample)
-print("ESM 静态导入:", imps)
-assert "vue" in imps
-print("ESM 静态分析通过：无需执行即可得依赖图")
-print()
-
-# ---- 4) 环境与协作：pathlib 统一路径，前后端通过契约协作 ----
-dist = pathlib.Path("frontend/dist/index.html")
-print("产物路径 (POSIX):", dist.as_posix())
-print("协作闭环：后端 JSON → 前端响应式过滤 → ESM 产物可部署为静态资源")
-print("本章贯通校验通过")
-# 预期输出:
-# 契约校验通过：后端 JSON 可被前端解析，任务数 3
-# 响应式过滤: ['meeting.wav']
-# 清空过滤: ['meeting.wav', 'interview.mp3', 'demo.wav']
-# 响应式校验通过：改数据即改视图
-# 工程契约：type=module 且 dev/build 存在
-# ESM 静态导入: ['vue', './utils/format.js']
-# ESM 静态分析通过：无需执行即可得依赖图
-# 产物路径 (POSIX): frontend/dist/index.html
-# 协作闭环：后端 JSON → 前端响应式过滤 → ESM 产物可部署为静态资源
-# 本章贯通校验通过
-```
-
-```bash
-# 本章贯通校验
-.venv/bin/python -c "import m2t, json; pkg={'type': 'module'}; print(m2t.__version__); print(pkg['type'])"
-```
+1. **演进逻辑**：前端从静态页面到 SPA 的演进，每一步都解决了上一阶段的问题，同时留下了新的代价。请任选一个阶段，说明它解决了什么、留下了什么债，并判断这笔债在今天是否还清。例如：Ajax 解决了页面免刷新问题，但留下了 DOM 操作难以维护的债——框架（React/Vue/Angular）是否已经彻底还清了这笔债？
+2. **渲染方式选型**：你要开发一个企业官网，主要展示公司介绍、产品列表和新闻动态，对 SEO 有强依赖，交互很少。另一组同学要开发一个数据分析后台，有大量表格筛选、图表切换、数据导出操作。请分别判断这两个项目适合后端模板渲染还是前后端分离，并说明判断依据。
+3. **接口契约与协作**：后端提供了 `GET /api/search?q=...` 接口，前端在开发时发现：搜索结果里除了 `title` 和 `url` 之外还有哪些字段不明确，空结果用空数组还是 `null` 表示没写清楚，接口文档里没有说明异常情况下的返回形状。请列出至少三个“接口契约”阶段就应该约定清楚的内容，并说明这些内容如果不提前约定，会在联调阶段产生什么代价。
+4. **框架选型复盘**：假设团队选择了 Vue 3 开发一个后台管理系统，项目推进三个月后发现：组件数量超过 80 个，状态管理变得混乱，新成员上手慢，频繁出现“改了 A 组件的数据，B 组件的视图不更新”的问题。请分析：这些问题更可能是 Vue 框架本身的缺陷，还是团队的使用方式存在问题？如果是使用方式的问题，应该如何在项目早期避免？如果是框架的问题，当初选型时本可以用哪个维度上的考量来避免？
+5. **前端三件套对照**：用后端的三件套（Python 解释器 + pip + import）来类比前端的三件套（Node.js + npm/pnpm + ES Module），请逐一说明对应关系，并指出这种类比在哪些方面成立、在哪些方面会失效（例如：前端代码最终跑在浏览器上，而不是 Node 运行时；pnpm 的严格依赖机制在后端生态中是否有对应物）。
