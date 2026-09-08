@@ -113,7 +113,7 @@ Python 生态里框架不少，上一节已经摆过 Django、Flask、FastAPI �
 
 **类型安全**：AI 应用的输入输出形状复杂，各类模型参数与嵌套结构交织。若没有边界校验，非法输入会深入业务层才爆炸。FastAPI 与 Pydantic 把请求与响应的形状从文档约束变成运行时校验，非法输入在边界即被拦截并返回明确的 422，下游拿到的是已校验、带类型的对象。再配合静态检查工具，形状错误在提交前就能被发现。
 
-## 从选型到组织：为什么需要分层
+## 为什么需要分层
 
 语言和框架都定了，还差最后一步：代码怎么组织。FastAPI 解决了"如何接收请求、校验参数、生成文档"，但它没有回答"业务逻辑放在哪、数据怎么存取"。如果图省事把这些全写进路由函数，会遇到三个真实的痛点：
 
@@ -129,7 +129,7 @@ Python 生态里框架不少，上一节已经摆过 Django、Flask、FastAPI �
 
 三层协作让变更沿边界收敛：改校验不碰存储，换数据库不改路由，增规则只在 Service 内调整。下面用三段代码在同一内核中顺序执行，逐层看清这条链路。
 
-## Repository 层：数据源的抽象
+## Repository 层
 
 本段定义 Repository 层：数据源的抽象。本例的数据来自外部搜索服务，抽象只承诺一个 `search` 方法，调用 WebSearch 的 HTTP API，把网页结果整理成首尾一致的 `Document`。
 
@@ -174,7 +174,7 @@ print("DocumentRepository 抽象与 WebSearchRepository 已定义")
 
 Repository 的存储抽象已就绪，初始为空，可被 Service 依赖注入。
 
-## Service 层：业务规则与依赖注入
+## Service 层
 
 本段定义 Service 层，承载搜索的业务规则（空关键词拦截、按 URL 去重），依赖注入 DocumentRepository，不感知 HTTP。
 
@@ -219,7 +219,7 @@ print("service ready: search works as expected")
 
 Service 的业务规则生效，空关键词被拦截、同一 URL 去重，搜索结果沿 DocumentRepository 落地。
 
-## Controller 层：HTTP 翻译与本地验证
+## Controller 层
 
 本段定义 Controller 层，用 FastAPI 路由与 Pydantic 模型暴露搜索接口，并用 TestClient 走通搜索与空关键词的链路。
 

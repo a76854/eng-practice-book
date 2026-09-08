@@ -62,7 +62,7 @@ def calculate_discount(price: float, user_type: str) -> float:
 2. **可执行的文档**：测试代码写清楚了"这个函数在各种输入下应该输出什么"，比文档更精确、更权威。
 3. **回归保护**：改了一行代码，跑一遍测试就知道有没有破坏已有功能——这是手动测试做不到的。
 
-## 测试金字塔：单元测试、集成测试、端到端测试
+## 测试金字塔
 
 测试不是"越多越好"，而是"不同层次做不同的事"。测试金字塔给出了三类测试的推荐比例：
 
@@ -131,7 +131,7 @@ def test_full_checkout_flow(client):
 
 ## pytest
 
-### 最简示例：发现与断言
+### 发现与断言
 
 `pytest` 的规则很简单：
 
@@ -167,7 +167,7 @@ pytest tests/test_math.py::test_add_positive
 pytest tests/ -v
 ```
 
-### `parametrize`：一组输入，一组期望
+### `parametrize`
 
 当同一个函数需要测试多组输入输出时，`parametrize` 避免重复写测试函数：
 
@@ -187,7 +187,7 @@ def test_add(a, b, expected):
     assert add(a, b) == expected
 ```
 
-### `fixture`：共享测试准备逻辑
+### `fixture`
 
 测试经常需要重复的准备动作——创建数据库连接、准备测试数据、创建临时目录。`fixture` 把准备逻辑抽取出来，自动注入到测试函数中。
 
@@ -239,7 +239,7 @@ def temp_file():
     pass
 ```
 
-### `mock`：隔离外部依赖
+### `mock`
 
 单元测试要求"隔离所有外部依赖"——不调用真实数据库、不发真实 HTTP 请求。`pytest` 配合 `monkeypatch` 或 `unittest.mock` 实现模拟：
 

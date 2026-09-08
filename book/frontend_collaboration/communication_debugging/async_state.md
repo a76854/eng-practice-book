@@ -4,7 +4,7 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-# 等一个结果：异步状态
+# 异步状态
 
 学完本节，你能回答：
 
@@ -42,7 +42,7 @@ kernelspec:
 </ul>
 ```
 
-## 竞态：后发的请求先到
+## 竞态
 
 三元组管住了"同时只能亮一个"，但还有一类更隐蔽的错：**竞态**。用户先搜"pydantic"，没等结果回来又搜"fastapi"，两个请求在路上赛跑。如果先发的"pydantic"后到，它会把"正在显示 fastapi 结果"的界面又覆盖成 pydantic 的——用户明明搜的是 fastapi，看到的却是 pydantic 的结果。
 

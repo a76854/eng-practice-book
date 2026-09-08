@@ -8,7 +8,7 @@ kernelspec:
 
 > 学完本节，你能用 `PyJWT` 签发与校验令牌，用 `Depends(verify_token)` 保护 FastAPI 路由，并说清 `Authorization: Bearer` 的传递与 `exp` 过期的校验点。
 
-## 从会话到令牌：为什么需要无状态
+## 从会话到令牌
 
 传统的服务端会话把用户状态存在内存或 Redis，浏览器只持有一个 `session_id`。多实例、跨域与移动端场景下，这要求服务端有状态、跨服务共享存储、每次请求查库。
 
@@ -16,7 +16,7 @@ JWT 把“已验证的身份断言”直接签发给客户端，服务端只做�
 
 类比：session 像“寄存手牌”，每次取物都要回柜台查询；JWT 像“盖章门票”，检票员只验章，不查存根。
 
-## 先动手：10 行签发与验签
+## 签发与验签
 
 别先背内部的编码与签名细节，先用库把登录签发和验签跑通。
 
@@ -56,7 +56,7 @@ JWT 形如 `header.payload.signature`，三段以点分隔。`header` 声明算�
 
 > **安全前提**：HS256 的密钥必须足够长且仅存于服务端环境变量或密钥管理服务；多服务验签可改用 RS256，私钥留服务端，公钥分发给验签方。
 
-## 服务端校验：Depends 与 Authorization Bearer
+## 服务端校验
 
 权限校验点应放在业务边界——FastAPI 的依赖或网关中间件，而不是散落在每个 handler 内部。客户端按 `Authorization: Bearer <token>` 携带令牌，服务端用 `Depends` 统一验签。
 
@@ -116,7 +116,7 @@ echo 'JWT_SECRET=dev-secret-change-in-prod-32bytes!!' >> .env
 curl -H "Authorization: Bearer <access_token>" http://localhost:8000/api/tasks
 ```
 
-## 令牌过期与 RBAC：校验点放在哪里
+## 令牌过期与 RBAC
 
 短有效期是 JWT 的核心约束。常见做法是访问令牌设为 15 分钟，随每个请求携带；刷新令牌设为 7 天，仅用于换取新访问令牌并可做撤回表。生产中用“短 access + 可撤回 refresh + 关键操作二次校验”来平衡无状态与可撤回的矛盾，本节不展开轮转代码，聚焦可用形态。
 

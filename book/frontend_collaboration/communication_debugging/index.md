@@ -23,8 +23,8 @@ kernelspec:
 本章以文档查询应用前后端打通为贯穿例子：前端搜索框输入关键词 `GET /api/search?q=...`，后端返回文档列表，前端渲染。动手练习交给实验指导书。章内结构如下：
 
 - [前后端是怎么连上的](communication_overview.md) —— 一次请求从浏览器到后端的完整链路，前后端各自的职责
-- [发出请求：fetch 与 axios](fetch_axios.md) —— 浏览器原生 `fetch` 与 `axios` 的分工与选型，搜索请求怎么写
-- [等一个结果：异步状态](async_state.md) —— `loading` / `error` / `data` 三态与竞态请求覆盖的规避
-- [对得上：契约落地](contract_alignment.md) —— OpenAPI 类型、统一信封、字段命名，以及契约的向后兼容演进
-- [跨过去：CORS 与开发代理](cors_proxy.md) —— 同源策略的原理，后端配置与开发期代理两种解法
-- [出了错：错误处理与联调定位](error_debugging.md) —— 按状态码分类处理与"四步定位法"，Network 面板取证
+- [fetch 与 axios](fetch_axios.md) —— 浏览器原生 `fetch` 与 `axios` 的分工与选型，搜索请求怎么写
+- [异步状态](async_state.md) —— `loading` / `error` / `data` 三态与竞态请求覆盖的规避
+- [契约落地](contract_alignment.md) —— OpenAPI 类型、统一信封、字段命名，以及契约的向后兼容演进
+- [CORS 与开发代理](cors_proxy.md) —— 同源策略的原理，后端配置与开发期代理两种解法
+- [错误处理与联调定位](error_debugging.md) —— 按状态码分类处理与"四步定位法"，Network 面板取证

@@ -56,7 +56,7 @@ print("models ready:", Document.__name__)
 
 模型与接口就位。两种数据来源各自一个抽象，这是本节的骨架：搜索与收藏可以独立替换、独立测试。
 
-## Repository 层：数据源的抽象
+## Repository 层
 
 这一层把"搜索"抽象成一次调用。基于 WebSearch 的 HTTP API 检索，把网页结果整理成 `Document`；未配置 key 时返回空。
 
@@ -84,7 +84,7 @@ repo = WebSearchRepository(os.environ.get("WEBSEARCH_API_KEY", ""))
 print("repository ready:", type(repo).__name__)
 ```
 
-## FavoriteRepository 层：把收藏写进 SQLite
+## FavoriteRepository 层
 
 收藏不能只活在内存里，进程一退出就没了。这一层用标准库 `sqlite3` 实现持久化，沿用第 5 章的参数化占位符，`doc_id` 上挂 `PRIMARY KEY`，把"不重复收藏"从业务规则变成数据库门卫。
 
@@ -128,7 +128,7 @@ assert favorite_repo.list_all() == []
 
 收藏存储就绪，初始为空。`PRIMARY KEY` 保证同一文档不会收藏两次，这与第 5 章"约束是数据库门卫"一脉相承。
 
-## Service 层：编排两种数据来源
+## Service 层
 
 这一层承载业务规则，不感知 HTTP。搜索时校验关键词、按 URL 去重；收藏时查重。它持有两个依赖——DocumentRepository 与 FavoriteRepository。
 
@@ -177,7 +177,7 @@ print("service ready")
 
 Service 不 import HTTP 模块，只面对两个接口。搜索与收藏的业务规则都落在这里，Controller 与两个数据源各司其职。
 
-## Controller 层：路由与状态码
+## Controller 层
 
 最上面一层只做 HTTP 翻译。搜索成功回 200；收藏成功回 201、重复回 409。
 

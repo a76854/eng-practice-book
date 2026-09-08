@@ -27,7 +27,7 @@ GitHub Actions 用 `.github/workflows/*.yml` 声明流水线，核心三层：
 
 触发事件的选择：`push` 保证“每次推送都验证”，`pull_request` 保证“合入前在目标分支上下文中再验证一次”，二者叠加可覆盖“分支推送”与“合入门禁”两类场景。本节给出的内联工作流示例正是此配置。
 
-## 教学样例：内联工作流 `ci.yml` 的门禁链路
+## 内联工作流 `ci.yml` 的门禁链路
 
 ```yaml
 name: CI
@@ -59,7 +59,7 @@ jobs:
 
 > **环境约定**：本书面向 Linux，流水线中的 `run` 默认在 `ubuntu-latest` 的 Linux 执行器上，路径为 Linux 风格 `/home/runner/work/...`；本地开发均用 `.venv` 复现同一套 `ruff` / `mypy` / `pytest` 命令，保证“本地绿、CI 亦绿”。
 
-## 可运行示例一：用 PyYAML 解析并校验内联工作流
+## 用 PyYAML 解析并校验内联工作流
 
 示例：解析并校验内联工作流：
 
@@ -203,7 +203,7 @@ PY
 .venv/bin/python -c "import yaml; yaml.safe_load('services: {web: {image: nginx}}'); print('compose yaml ok')"
 ```
 
-## 可运行示例二：为何门禁要分层、按序执行
+## 为何门禁要分层、按序执行
 
 示例：门禁分层与按序执行：
 

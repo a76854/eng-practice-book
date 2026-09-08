@@ -24,9 +24,9 @@ kernelspec:
 本章讲 Vue 的语法与机制，不依赖可运行环境：代码一律以围栏展示，动手练习交给实验指导书。章内结构如下：
 
 - [Vue 3 与 Vite](why_vue3_vite.md) —— 认识 Vue 3 的核心特性与组合式 API，以及为什么需要 Vite
-- [把数据写进页面](template_directives.md) —— 插值、绑定、条件、循环与 `v-model` 六样把数据接到界面
+- [模板与指令](template_directives.md) —— 插值、绑定、条件、循环与 `v-model` 六样把数据接到界面
 - [数据如何驱动视图](reactivity_principles.md) —— `ref`、`computed`、`watch` 如何让数据变化自动反映到界面
-- [把界面拆成组件](component_design.md) —— Props 向下、Emits 向上，以及挂载时拉取数据
+- [组件设计](component_design.md) —— Props 向下、Emits 向上，以及挂载时拉取数据
 - [多页面与登录守卫](routing_management.md) —— 路由表、登录守卫与懒加载三件事
 - [跨组件共享的状态](cross_component_state_pinia.md) —— State、Getter、Action 三层与后端状态的边界
 - [组件测试](component_testing.md) —— Vitest 与 `@vue/test-utils` 测渲染与交互，替代手动点页面

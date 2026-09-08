@@ -7,9 +7,9 @@ kernelspec:
 ## 本章小结
 
 - **Vue 3 是本章的框架载体**：单文件组件聚拢模板、逻辑与样式，组合式 API 按关注点组织代码，Proxy 把响应式补得更圆，Vite 拆分开开发期按需与生产期打包（见 [Vue 3 与 Vite](why_vue3_vite.md)）。
-- **模板把数据写进页面**：`{{ }}` 插值放进文字，`v-bind`（简写 `:`）绑进属性，`v-on`（简写 `@`）挂上事件；`v-if` 管条件渲染、`v-for` 管列表（`:key` 区分每项身份），`v-model` 是"传值 + 监听输入"的语法糖（见 [把数据写进页面](template_directives.md)）。
+- **模板把数据写进页面**：`{{ }}` 插值放进文字，`v-bind`（简写 `:`）绑进属性，`v-on`（简写 `@`）挂上事件；`v-if` 管条件渲染、`v-for` 管列表（`:key` 区分每项身份），`v-model` 是"传值 + 监听输入"的语法糖（见 [模板与指令](template_directives.md)）。
 - **响应式让"改数据"与"改视图"焊在一起**：`ref` 装单值、`reactive` 装对象，都是可观测容器；`computed` 管派生值（带缓存），`watch` 管副作用（源变即执行）。本质是"记录依赖 + 变化通知"，你只改数据，视图照着数据的形状自己变（见 [数据如何驱动视图](reactivity_principles.md)）。
-- **组件是带契约的部件**：Props 向下只读传数据、Emits 向上发事件通知、插槽留内容位，一套单向数据流覆盖父子通信；`onMounted` 是前端向后端拉数据的标准时机，`onBeforeUnmount` 用来清理（见 [把界面拆成组件](component_design.md)）。
+- **组件是带契约的部件**：Props 向下只读传数据、Emits 向上发事件通知、插槽留内容位，一套单向数据流覆盖父子通信；`onMounted` 是前端向后端拉数据的标准时机，`onBeforeUnmount` 用来清理（见 [组件设计](component_design.md)）。
 - **路由是"URL 到组件"的映射加一道门**：路由表把页面挂到路径上，`:date` 是动态参数；全局守卫 `beforeEach` 做鉴权、`beforeEnter` 做参数校验；懒加载用动态 `import()` 按路由拆包，首屏只加载当前页（见 [多页面与登录守卫](routing_management.md)）。
 - **Pinia 用三层管跨组件状态**：State 存原始状态、Getter 存派生只读、Action 是唯一写入口，单例让任何组件看到同一份；前端状态是缓存、后端是真相，刷新即以重新拉取为准（见 [跨组件共享的状态](cross_component_state_pinia.md)）。
 - **组件测试守住前端改动**：手动点页面慢且不完整，Vitest 的 `describe`/`it`/`expect` 与 pytest 是一套心智，`@vue/test-utils` 的 `mount` 测渲染（`wrapper.text()`）与交互（`emitted()`），和接口测试的"断言行为 + 替换依赖"同构（见 [组件测试](component_testing.md)）。

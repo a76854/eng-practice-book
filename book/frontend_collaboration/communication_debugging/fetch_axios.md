@@ -4,7 +4,7 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-# 发出请求：fetch 与 axios
+# fetch 与 axios
 
 学完本节，你能回答：
 
@@ -16,7 +16,7 @@ kernelspec:
 
 > 自己寄快递，要自己打包、自己填单、自己送到驿站；叫快递员上门，他带箱子、带面单、带保价，还能全程追踪。`fetch` 像自己寄，轻但什么都要自己来；`axios` 像叫上门，顺手但多一个依赖。寄什么不重要，怎么寄、丢了怎么办，才是选型的依据。
 
-## fetch：浏览器自带的
+## `fetch`
 
 `fetch` 是浏览器原生的请求 API，返回一个 Promise。发一次搜索请求长这样：
 
@@ -35,7 +35,7 @@ const results = await res.json()   // 响应体默认是流，要手动转成 JS
 
 正因为"什么都不包"，`fetch` 最轻、零依赖，简单场景一行就能用。
 
-## axios：包了一层顺手的
+## `axios`
 
 `axios` 在 `fetch` 之上包了工程里反复要写的那些事：
 
