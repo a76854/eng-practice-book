@@ -16,7 +16,7 @@ kernelspec:
 
 > 去罗马的路有很多，现在你要做的事不是挑选一条近的路，先走吧。走了才知道哪条路更适合你。
 
-本节不考虑选型，不讨论哪个框架更好^[小孩子才做选择，我全都要]，有什么优势，做的是就是简单介绍一下Vue3（读法view three^[如果你熟悉拼读的话，你能猜到vue的读音同view]），它有哪些能力、怎么组织代码、需要什么工具才能跑起来。后面的其他事情，只能靠各位读者自己探索了。
+本节不考虑选型，不讨论哪个框架更好^[小孩子才做选择，我全都要]，有什么优势，就是简单介绍一下Vue3（读法view three^[如果你熟悉拼读的话，你能猜到vue的读音同view]），它有哪些能力、怎么组织代码、需要什么工具才能跑起来。后面的其他事情，只能靠各位读者自己探索了。
 
 ## Vue 3 是什么
 
@@ -58,33 +58,41 @@ button { padding: 8px 16px; }
 
 Vue 3 提供两种组织组件逻辑的方式：选项式 API 与组合式 API。
 
-选项式 API 按选项切分：数据、方法、计算属性分别散落在 `data`、`methods`、`computed` 三块里。单个功能好读，但一个组件同时管列表加载、搜索过滤、播放状态时，同一个关注点的逻辑就被选项割裂到文件各处。
+选项式 API 按选项切分：数据、方法、计算属性分别散落在 `data`、`methods`、`computed` 三块里。单个功能好读，但一个组件同时管日期选择、天气请求、加载状态时，同一个关注点的逻辑就被选项割裂到文件各处。
 
 组合式 API 反过来按关注点收拢：把同一件事的状态与逻辑放进一个组合函数，复用靠普通函数而非混入。对照如下：
 
 ```javascript
-// 选项式（Vue 2 风格）：同一关注点被选项割裂
+// 选项式（Vue 2 风格）：同一关注点「天气查询」被选项割裂到各处
 export default {
-  data() { return { keyword: '', tasks: [] } },
-  methods: { search() { /* 过滤逻辑 */ }, load() { /* 拉取逻辑 */ } },
-  computed: { filtered() { return this.tasks.filter(/* ... */) } }
+  data() { return { date: '2024-01-15', weather: null, loading: false } },
+  methods: { async fetchWeather() { /* 拉取逻辑 */ } },
+  watch: { date() { this.fetchWeather() } }
 }
 ```
 
 ```javascript
-// 组合式（Vue 3 风格）：按关注点收拢，可抽成 useTaskList()
-import { ref, computed } from 'vue'
+// 组合式（Vue 3 风格）：按关注点收拢，可抽成 useWeather()
+import { ref, watch } from 'vue'
 
-function useTaskList() {
-  const keyword = ref('')
-  const tasks = ref([])
-  const filtered = computed(() => tasks.value.filter(t => t.filename.includes(keyword.value)))
-  return { keyword, tasks, filtered }
+function useWeather() {
+  const date = ref('2024-01-15')
+  const weather = ref(null)
+  const loading = ref(false)
+
+  async function fetchWeather() {
+    loading.value = true
+    weather.value = await fetch(`/api/weather/${date.value}`).then(r => r.json())
+    loading.value = false
+  }
+  watch(date, fetchWeather, { immediate: true })
+
+  return { date, weather, loading, fetchWeather }
 }
-// 组件里一行引入：const { keyword, tasks, filtered } = useTaskList()
+// 组件里一行引入：const { date, weather, loading } = useWeather()
 ```
 
-同一份搜索过滤逻辑，组合式把它收进了一个可复制、可测试的 `useTaskList()`。当它要跨组件复用时，前者要复制一堆散落的字段，后者只需调用同一个函数。`ref` 包装出一个响应式数据，`computed` 声明一个由其他状态推导出来的派生值，这两者是组合式 API 里最常用的两个原语。
+同一套天气查询逻辑，组合式把它收进了一个可复制、可测试的 `useWeather()`。当它要跨组件复用时，前者要复制一堆散落的字段，后者只需调用同一个函数。`ref` 包装出一个响应式数据，`watch` 在值变化时挂上一个反应，这两者是组合式函数里最常见的两个原语。
 
 ## Proxy 响应式：把改数据即改视图补圆
 
@@ -92,11 +100,11 @@ function useTaskList() {
 
 ```javascript
 // Vue 2 的盲区需要补丁
-// this.tasks[0] = newTask                 // 视图不更新
-// this.$set(this.tasks, 0, newTask)       // 必须显式补丁
+// this.cities[0] = '上海'                 // 视图不更新
+// this.$set(this.cities, 0, '上海')       // 必须显式补丁
 
 // Vue 3 的 Proxy 代理整个对象
-// state.tasks[0] = newTask                // 视图自动更新，无需补丁
+// state.cities[0] = '上海'                // 视图自动更新，无需补丁
 ```
 
 响应式背后的完整实现，放到后续的响应式原理一节展开。这里只需记住一句结论：代理整个对象，比逐个属性打补丁更不易漏。

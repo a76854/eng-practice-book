@@ -67,6 +67,7 @@ project:
     - file: book/frontend_collaboration/vue3_core/index.md
       children:
         - file: book/frontend_collaboration/vue3_core/why_vue3_vite.md
+        - file: book/frontend_collaboration/vue3_core/template_directives.md
         - file: book/frontend_collaboration/vue3_core/reactivity_principles.md
         - file: book/frontend_collaboration/vue3_core/component_design.md
         - file: book/frontend_collaboration/vue3_core/routing_management.md

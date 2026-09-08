@@ -13,58 +13,60 @@ kernelspec:
 - `computed` 和 `watch` 的分工是什么？什么情况下用哪个？
 - 看到一个页面，你能说出它的数据、派生值和副作用分别是什么吗？
 
-前端概况一章说过，Vue 用声明式描述"状态到视图"的映射，靠响应式实现"改数据即改视图"。这一节不急着下定义，先看看没有响应式时这件事有多累，再看 Vue 怎么把它接过去。
+上一节把数据写进了页面：模板里写 `{{ weather.city }}`、`v-model="date"`，数据一到页面就摆好了。可还差一件最关键的事没讲：你改了 `date`，输入框的值、后面的天气卡片，为什么会自己跟着变？这一节掀开这层幕布，看响应式。
 
-> 你在表格里写下公式 `=A1+A2`，改 A1，结果格自己就重算了，不用手动刷新。响应式就是想让界面变成这样一张表：你只负责改数据，派生和刷新都自动发生。下面要讲的三件事——存数据、算派生、做副作用——都是在为这张表添零件。
+> 你在表格里写下公式 `=A1+A2`，改 A1，结果格自己就重算了，不用手动刷新。响应式就是想让界面变成这样一张表：你只负责改数据，派生和刷新都自动发生。下面要讲的三件事，存数据、算派生、做副作用，都是在为这张表添零件。
 
-这一节只讲三个最常用的接口：`ref`、`computed`、`watch`。它们的顺序不是随意的：先有数据（`ref`），才能有派生（`computed`），派生值变化时才谈得上副作用（`watch`）。顺着这条线走一遍，比背三个定义有用得多。
+这一节只讲三个最常用的接口：`ref`、`computed`、`watch`。顺序不是随意排的：先有数据（`ref`），才能有派生（`computed`），派生值变化时才谈得上副作用（`watch`）。顺着这条线走一遍，比背三个定义有用得多。
 
 ## 没有响应式之前，这活有多累
 
-先用最朴素的方式做一个列表过滤：一个输入框，下面一个列表，输入什么，列表就只显示名字里含有它的项。
+回到第 8 章那个天气样例。它用最朴素的方式，把一个天气 JSON 画成卡片：
 
 ```javascript
-// 原生写法：数据是数据，界面是界面，中间的同步全靠手动牵线
-const tasks = [{ name: '买牛奶' }, { name: '写周报' }]
-const input = document.querySelector('input')
-const list = document.querySelector('#list')
-
-function render(keyword) {
-  const html = tasks
-    .filter(t => t.name.includes(keyword))
-    .map(t => `<li>${t.name}</li>`)
-    .join('')
-  list.innerHTML = html
+// 原生写法：fetch 之后，每一处显示都要手动牵线
+const el = {
+  city: document.getElementById('city'),
+  temp: document.getElementById('temp'),
+  condition: document.getElementById('condition'),
 }
 
-input.addEventListener('input', (e) => render(e.target.value))
-render('')
+async function load() {
+  const w = await fetch('/api/weather/2024-01-15').then(r => r.json())
+  el.city.textContent = w.city
+  el.temp.textContent = `${w.temperature}°C`
+  el.condition.textContent = w.condition
+}
+
+load()
 ```
 
-这十几行里真正有用的信息只有一条：`tasks` 和 `keyword` 会变。可是为了让界面跟得上，你得自己数着"有哪几次变化要同步"：初始要渲染一次、输入要渲染一次、以后增删数据还要各渲染一次。漏掉任何一次，界面就和数据对不上。数据在 A 处，界面在 B 处，中间那根"同步的线"要你亲手牵着，这就是所有前端框架要消灭的那份活。响应式的全部含义，就是把这条线交给框架。
+这几个字段还算少。往后推一步：日期一换就要重新查、再牵三根线；加一个"加载中"的遮罩，又是一处要手动显隐；再加错误提示，再一处。真正有用的信息其实只有一条：`weather` 和 `date` 会变。可为了让界面跟得上，你得自己数着"有哪几次变化要同步"，漏掉任何一次，界面就与数据对不上。数据在 A 处，界面在 B 处，中间那根同步的线要你亲手牵着。响应式的全部含义，就是把牵线这件事交给框架。
 
-## ref：让一个值变成"可观测"的
+## ref：让一个值变成可观测的
 
-为什么普通变量不行？因为 `let keyword = 'x'` 这种赋值，JavaScript 本身就提供不了"被修改了就通知一声"的能力——你改了它，谁都收不到消息。于是 Vue 用 `ref` 把值装进一层"盒子"，你通过 `keyword.value` 读写，读写都经过这个盒子，Vue 才有机会"知道"你改了什么。
+为什么普通变量不行？因为 `let date = '2024-01-15'` 这种赋值，JavaScript 本身提供不了"被修改了就通知一声"的能力，你改了它谁都收不到消息。Vue 用 `ref` 把值装进一层盒子，你通过 `date.value` 读写，读写都经过这个盒子，Vue 才有机会知道你改了什么。
 
 ```javascript
 import { ref } from 'vue'
 
-const keyword = ref('')      // 一个可观测的盒子，初始为空
+const date = ref('2024-01-15')  // 一个可观测的盒子
+const weather = ref(null)       // 查询结果，先空着
+const loading = ref(false)      // 是否在加载中
 
-keyword.value = '周报'       // JavaScript 里读写都要 .value
-console.log(keyword.value)   // 周报
+date.value = '2024-01-16'       // JavaScript 里读写都要 .value
+console.log(date.value)         // 2024-01-16
 ```
 
 这也就顺带回答了初学者最常问的问题：为什么模板里不用 `.value`、JavaScript 里却要？因为模板是 Vue 自己解析的，它认得 `ref` 这个盒子，会自动帮你拆开；而 JavaScript 代码是你写的，Vue 没法替你拆，你就得自己 `.value`。`.value` 不是多此一举，它是"读写要经过盒子"这件事在代码里留下的痕迹。
 
-`ref` 装的是单值。要装对象和数组，有它的兄弟 `reactive`，它让对象和数组的每一层都可观测，改属性、`push` 都能被察觉。
+`ref` 装的是单值。要装对象和数组，有它的兄弟 `reactive`，它让对象的每一层都可观测：
 
 ```javascript
 import { reactive } from 'vue'
 
-const state = reactive({ tasks: [], loading: false })
-state.tasks.push({ name: '买牛奶' })   // 直接改，视图跟得上
+const form = reactive({ date: '2024-01-15', city: '北京' })
+form.date = '2024-01-16'   // 直接改属性，视图跟得上
 ```
 
 两者怎么选，一张表就够：
@@ -73,47 +75,48 @@ state.tasks.push({ name: '买牛奶' })   // 直接改，视图跟得上
 | --- | --- | --- |
 | 装什么 | 单值：字符串、数字、布尔 | 对象、数组 |
 | 怎么读写 | JavaScript 里 `.value`，模板里不用 | 直接 `.属性` |
-| 什么时候用 | 输入框、开关、计数 | 一组彼此相关的状态 |
+| 什么时候用 | 单个输入、开关、计数 | 一组彼此相关的状态（如表单） |
 
-## computed：把"算出来的值"声明出来
+## computed：把算出来的值声明出来
 
-现在有了 `keyword`，你还缺一个"过滤后的列表"才能填进页面。你当然可以每次用到时现算：
+现在有了 `weather`，但后端的温度是摄氏度，页面还想要一份华氏。你当然可以每次用到时现算：
 
 ```javascript
-const filtered = tasks.value.filter(t => t.name.includes(keyword.value))
+const fahrenheit = Math.round(weather.value.temperature * 9 / 5 + 32)
 ```
 
-这么写能跑，但有两个毛病：一是每次界面更新都要重新过滤一遍，哪怕 `keyword` 根本没变；二是"过滤"这段逻辑散落在模板和代码各处，改起来要到处翻。`computed` 就是冲这两点来的：它把"由谁算出"声明一次，框架替你缓存，依赖没变就不重算。
+这么写能跑，但有两个毛病：一是每次界面更新都重新算一遍，哪怕温度根本没变；二是"换算"这段逻辑散落在模板和代码各处，改起来要到处翻。`computed` 就是冲这两点来的：它把"由谁算出"声明一次，框架替你缓存，依赖没变就不重算。
 
 ```javascript
 import { ref, computed } from 'vue'
 
-const keyword = ref('')
-const tasks = ref([{ name: '买牛奶' }, { name: '写周报' }])
-
-// 声明一个派生值：由 tasks 和 keyword 推出，依赖不变就复用上次结果
-const filtered = computed(() => tasks.value.filter(t => t.name.includes(keyword.value)))
+const weather = ref({ temperature: 12 })
+// 声明一个派生值：由 weather.temperature 推出，依赖不变就复用上次结果
+const fahrenheit = computed(() => Math.round(weather.value.temperature * 9 / 5 + 32))
 ```
 
-`computed` 对应的后端心智是"物化视图"：底层数据变了，这个"视图"自动刷新；没人动底层数据时，它把上次算好的结果直接还给你，不重算。巧合的是，后端查库也有一样的设计——常用查询建个物化视图，省的每次重算。
+`computed` 对应的后端心智是"物化视图"：底层数据变了，这个视图自动刷新；没人动底层数据时，它把上次算好的结果直接还给你。后端查库也有一样的设计，常用查询建个物化视图，省得每次重算。
 
-## watch：给变化挂一个"反应"
+## watch：给变化挂一个反应
 
-`computed` 管的是"算出一个值"，但有些事不是算值能解决的：关键词一变，你要发个请求、记条日志、往本地存一笔。这些"值变了就要去做"的动作，归 `watch` 管。
+`computed` 管的是"算出一个值"，但有些事不是算值能解决的：日期一换，你要重新发个请求。这种"值变了就要去做"的动作，归 `watch` 管。
 
 ```javascript
 import { ref, watch } from 'vue'
 
-const keyword = ref('')
+const date = ref('2024-01-15')
+const weather = ref(null)
+const loading = ref(false)
 
-// keyword 一变，就执行这段副作用
-watch(keyword, (nv, ov) => {
-  console.log(`关键词变了：${ov} -> ${nv}`)
-  // 通常在这里把新关键词发给后端，重新拉列表
-})
+// date 一变，就执行这段副作用：按新日期重新查天气
+watch(date, async (nv) => {
+  loading.value = true
+  weather.value = await fetch(`/api/weather/${nv}`).then(r => r.json())
+  loading.value = false
+}, { immediate: true })   // immediate 让首次也执行一次，省一次手动调
 ```
 
-至此，四个接口的分工可以一句话钉死：
+至此，几个接口的分工可以一句话钉死：
 
 | | 管什么 | 一句话 |
 | --- | --- | --- |
@@ -125,12 +128,12 @@ watch(keyword, (nv, ov) => {
 
 ## 一个容易踩的坑
 
-两个新手最常见的报错，都来自对"盒子"理解不牢：一是 JavaScript 里漏写 `.value`，把盒子当成了值本身；二是把 `reactive` 对象解构了（`const { tasks } = state`），一旦拆开就断了响应。规避的办法很简单：简单值统一用 `ref`，别为了少敲一个 `.value` 把自己绕进去。
+两个新手最常见的报错，都来自对"盒子"理解不牢：一是 JavaScript 里漏写 `.value`，把盒子当成了值本身；二是把 `reactive` 对象解构了（`const { date } = form`），一旦拆开就断了响应。规避的办法很简单：简单值统一用 `ref`，别为了少敲一个 `.value` 把自己绕进去。
 
 ## 本节小结
 
 - 响应式解决的是"数据变了界面要手动改"这件苦差：原来中间那根同步的线要你亲手牵，现在交给框架。
-- `ref` 装单值、`reactive` 装对象，都是"可观测的盒子"，这正是 JavaScript 里要 `.value` 的由来。
+- `ref` 装单值、`reactive` 装对象，都是可观测的盒子，这正是 JavaScript 里要 `.value` 的由来。
 - `computed` 声明派生值、带缓存；`watch` 挂载副作用、变则执行。先存、再算、后响，顺序不是随意的。
 - 读一段 Vue 代码，先找数据（`ref`/`reactive`），再找派生（`computed`），最后找副作用（`watch`），三样齐了就懂了。
 
