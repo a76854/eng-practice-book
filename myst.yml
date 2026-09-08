@@ -40,6 +40,7 @@ project:
         - file: book/backend_development/http_restful/http_and_restful.md
         - file: book/backend_development/http_restful/fastapi_routing.md
         - file: book/backend_development/http_restful/error_and_contract.md
+        - file: book/backend_development/http_restful/api_testing.md
         - file: book/backend_development/http_restful/summary_and_questions.md
     - file: book/backend_development/persistence_sql_orm/index.md
       children:
@@ -72,6 +73,7 @@ project:
         - file: book/frontend_collaboration/vue3_core/component_design.md
         - file: book/frontend_collaboration/vue3_core/routing_management.md
         - file: book/frontend_collaboration/vue3_core/cross_component_state_pinia.md
+        - file: book/frontend_collaboration/vue3_core/component_testing.md
         - file: book/frontend_collaboration/vue3_core/summary_and_questions.md
     - file: book/advanced_engineering/external_integration/index.md
       children:

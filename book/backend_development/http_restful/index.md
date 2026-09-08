@@ -10,6 +10,7 @@ kernelspec:
 > - 能够用方法、状态码与资源三条准则正确设计 HTTP 接口，并理解幂等性对重试与缓存的意义
 > - 能够用 FastAPI 落地方法、状态码、资源与三类参数，让类型标注在边界完成校验
 > - 能够用统一信封与全局异常处理器收敛错误，并用 OpenAPI 让文档与代码不脱节
+> - 能够把接口断言组织成 pytest 套件，用 fixture 与 dependency_overrides 隔离真实依赖，让接口行为可回归
 
 > **为什么需要掌握本章**
 > 后端的第一触点就是 HTTP：前端、网关、可观测与外部集成都通过它对话。把 HTTP 当作发送 JSON 的管道，会让状态码随意、幂等性丢失、错误格式各异，联调成本随之上扬。本章把 HTTP 用法、FastAPI 路由落地、统一响应与契约串成一条可验证的协作闭环，让契约在代码里可执行，而非在文档里漂移。
@@ -21,3 +22,4 @@ kernelspec:
 - [HTTP 与 RESTful](http_and_restful.md) —— 方法、状态码、资源三条准则的用法与幂等性的意义
 - [FastAPI 路由](fastapi_routing.md) —— 方法、状态码、资源与三类参数在 FastAPI 里的落地
 - [统一响应与契约](error_and_contract.md) —— 信封、全局异常处理器与 OpenAPI 的协作闭环
+- [接口测试](api_testing.md) —— 把 TestClient 断言组织成可回归的套件，用依赖替换隔离外部依赖
