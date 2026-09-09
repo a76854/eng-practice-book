@@ -282,3 +282,7 @@ make              # 不指定则执行第一个任务（all）
 
 [^vimtutor]:[菜鸟教程 vi/vim](https://www.runoob.com/linux/linux-vim.html)，或者使用`vimtutor`命令
 [^vimop]: man中的各种操作与vim的操作方法一致
+
+## 本节小结
+
+- AI 能生成命令，但在哪执行、操作风险，仍要人来判断，这就是为什么还要学命令行。

@@ -240,3 +240,9 @@ ruff check src/           # 必须通过（退出码 0）
 ruff format --check src/  # 检查格式化是否一致
 mypy src/                 # 必须通过（退出码 0）
 ```
+
+## 本节小结
+
+- 风格统一可以减少协作成本，Review 工程时就不用纠结细枝末节，专心看逻辑和设计。
+- Flake8 管理代码风格，Black 管理格式，isort 管理导入排序，三家归一就有了Ruff，加上 mypy 用于类型静态检查。
+- pre-commit 和 CI 门禁里面要设置自动化检查。

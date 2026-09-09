@@ -225,4 +225,11 @@ print(sys.prefix != sys.base_prefix)  # True 表示在虚拟环境中
 | 团队协作、CI/CD | `uv` | 解析与安装比 `pip` 快 10–100 倍；自动管理虚拟环境；生成 `uv.lock` 保证依赖一致性；兼容 `pyproject.toml` | 较新（2024 年才稳定），需团队统一；部分老旧生态或内部 PyPI 镜像可能不兼容 |
 | 已有 `requirements.txt` 的老项目 | `venv` + `pip install -r requirements.txt` | 无需改动现有工作流；迁移成本为零 | 无法利用 `pyproject.toml` 的元数据优势；依赖锁定靠手动 `pip freeze` |
 
+## 本节小结
+
+- 所有项目共用一个全局环境，版本打架、系统被污染，难以通用和复现。
+- 虚拟环境给每个项目独立的解释器入口、独立的包目录，并把 `sys.prefix` 和 `PATH` 指向自己。
+- `pyproject.toml` 写声明，虚拟环境用于隔离环境，pip 或 uv 负责安装。
+- 作业和小项目用 venv 加 pip，管理 Python 版本和原生依赖用 conda，团队协作用 uv。
+
 
