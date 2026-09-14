@@ -469,3 +469,10 @@ gitGraph
 
 [^svn]:一种版本管理工具
 [^gitpro]:Pro Git原书链接：https://bingohuang.gitbooks.io/progit2/content/
+
+## 本节小结
+
+- 复制文件夹管版本，回退时找不到北，协作时合不到一起，Git 的提交图就是为这两件事生的。
+- 每次提交只做一件事，信息写清改了什么和为什么，开分支开发，走 PR 合入。
+- main 必须随时可运行，分支开出来一两天就合回去，合入前要有人 Review，CI 要全绿。
+- 提交前看 status 和 diff，确认 gitignore，本地先跑一遍检查，推之前先拉，保证推上去的都是自己看过的东西。

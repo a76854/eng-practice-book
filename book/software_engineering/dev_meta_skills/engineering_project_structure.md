@@ -278,3 +278,8 @@ dev-dependencies = [
 写好这份文件后，`pip install -e .` 就能把项目装成可 `import` 的包，并可定义命令入口。`-e` 表示可编辑安装，源码改动无需重装即可生效，配合 `src` 布局可立即暴露导入或打包配置错误。
 
 [^1]:Python Enhancement Proposals（python增强提案\python改进建议书）
+
+## 本节小结
+
+- src 布局把源码各个职能部分分开，简洁直观。
+- 项目的信息都写进 `pyproject.toml`，构建后端、包名版本依赖、命令入口各有各的位置，工具配置也收在这里。
