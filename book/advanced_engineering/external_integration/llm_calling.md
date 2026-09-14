@@ -8,44 +8,31 @@ kernelspec:
 
 学完本节，你能回答：
 
-- 调外部服务的超时、重试、熔断，分别防什么
-- key 为什么只能放服务端，不能进前端
+- 一次大模型调用要经过哪几步，key 为什么只能放服务端
 - 流式响应解决什么问题，增量解析要注意什么
-- 结构化输出解决什么问题，收到后还要做什么
+- 结构化输出与函数调用分别解决什么问题
 - 调得起和丢不起，分别指哪两笔账
-
-
-前面三节的对象存储、缓存、队列，都是后端自己的手艺，可以先把基础设施搭好、跑通，再上生产。本节的新同事不一样：大模型的能力不在自家服务器上，只能通过网络，一次次地向服务方借。向外部借力这件事，本章还没有系统讲过，而它有自己的规矩。一次调用可能花上十几秒，按字数计费，失败的方式也五花八门。
-
-本节先给"调用外部服务"立一套通用规矩，超时、重试、熔断，这些规矩对大模型之外的支付、地图同样成立；再讲大模型自己的几件特殊事：怎么把问题送出去、怎么让答案边生成边回来、怎么让结果能被程序使用、怎么让它查到它不知道的东西；最后收在两笔账上，成本与安全。
 
 > 答案越易得，问题越珍贵。
 
-## 调用外部服务的通用姿势
+前面三节的对象存储、缓存、队列，都是后端自己的手艺，可以先把基础设施搭好、跑通，再上生产。本节的新同事不一样：大模型的能力不在自家服务器上，只能通过网络，一次次地向服务方借；一次调用可能花上十几秒，按字数计费，答案还要经过处理才能被程序使用。
 
-先从通用规矩开始。不管调的是大模型、支付还是地图，只要请求跨出自家机房，三件事要先定好。
-
-超时防的是永远等下去。外部服务也可能卡死，不给请求设截止时间，自己的线程就被它拖住。任何外部调用都要有超时，大模型这类生成式接口，30 秒起步。
-
-重试防的是抖一下。网络闪断、对方限流（429），这类错误过一会儿大概率能成功，值得重试，但要设次数上限并间隔退避；而 400 这类请求本身写错的错误，重试多少次都一样，不能重试。
-
-熔断防的是雪崩。下游持续出错时，继续把请求灌过去只会堆积，把自己的资源也耗光。熔断的做法是：连续失败到一定程度，直接停掉对它的调用，快速失败、走降级，过一会儿再放少量请求试探。
-
-还有一类交互方向相反的场景：不是我们请求别人，而是别人来通知我们。支付成功的通知、解析完成的回调，这类事件什么时候发生不由我们决定，做法是把自己的一个地址注册给对方，事件发生时由对方来调这个地址，这种模式叫 Webhook。收到的请求同样要验签、要幂等、要尽快返回，角色反过来，纪律不变。最后提醒一句：服务端代用户去请求外部 URL 时，目标地址要严格校验，否则它会变成攻击内网的跳板，这类漏洞叫 SSRF，[数据校验与注入防御](../robustness_security/data_validation_injection.md)一节会展开。
+本节从最小的一次调用讲起，把大模型的四种用法依次铺开：怎么把问题送出去、怎么让答案边生成边回来、怎么让结果能被程序校验、怎么让它查到它不知道的东西；最后收在两笔账上，成本与安全。
 
 ## 普通调用
 
-规矩立好，从最小的一次调用开始。
+从最小的一次调用开始。
 
-调用大模型就是往它的接口发一条 HTTP 请求，把问题装进去，把回答取出来。兼容 OpenAI 的接口协议目前是事实标准，多数云端厂商和本地部署方案都照着它提供。第一个要定的是钥匙放哪：API key 只放服务端。前端直接带 key 的后果是爬虫抄走随便刷，账单全算你头上；正确结构是前端调自家后端，自家后端带 key 出网。
+调用大模型就是往它的接口发一条 HTTP 请求，把问题装进去，把回答取出来。本节用 DeepSeek 的接口做示例（模型 `deepseek-flash`，即 DeepSeek-V4.1-Flash）：它兼容 OpenAI 协议，同类厂商与本地部署方案大多遵循同一协议，换一家只改地址与模型名。第一个要定的是钥匙放哪：API key 只放服务端。前端直接带 key 的后果是爬虫抄走随便刷，账单全算你头上；正确结构是前端调自家后端，自家后端带 key 出网。
 
 ```{code-cell} ipython3
+# 普通调用：有 key 实跑 DeepSeek，无 key 降级跳过
 import os
 import httpx
 
 api_key = os.environ.get("LLM_API_KEY")
-base_url = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1")
-model = os.environ.get("LLM_MODEL", "gpt-4o-mini")
+base_url = os.environ.get("LLM_BASE_URL", "https://api.deepseek.com")
+model = os.environ.get("LLM_MODEL", "deepseek-flash")
 
 if not api_key:
     print("未配置 LLM_API_KEY，跳过真实调用")
@@ -62,7 +49,7 @@ else:
     print(resp.json()["choices"][0]["message"]["content"])
 ```
 
-观测小结：有 key 时打出模型的一句话介绍，无 key 时只打印跳过信息，两种路径都不报错。`LLM_BASE_URL` 与 `LLM_MODEL` 可配，换厂商、切本地部署都只改环境变量，不改代码。
+观测小结：有 key 时真正调用 DeepSeek 并打印回答，无 key 时只打印跳过信息，两种路径都不报错。`LLM_BASE_URL` 与 `LLM_MODEL` 可配，换厂商、切本地部署都只改环境变量，不改代码。
 
 ## 流式响应
 
@@ -71,13 +58,14 @@ else:
 流式的思路是边算边回：模型每生成一小段就把这一小段推给客户端，界面渐渐长出来，首字时延从秒级降到百毫秒级。协议上通常用 SSE（Server-Sent Events）：服务器持续输出若干行文本，每行以 `data:` 开头携带一段增量，最后用 `[DONE]` 收尾。
 
 ```{code-cell} ipython3
+# 流式调用：逐段接收增量，拼出完整回答
 import json
 import os
 import httpx
 
 api_key = os.environ.get("LLM_API_KEY")
-base_url = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1")
-model = os.environ.get("LLM_MODEL", "gpt-4o-mini")
+base_url = os.environ.get("LLM_BASE_URL", "https://api.deepseek.com")
+model = os.environ.get("LLM_MODEL", "deepseek-flash")
 
 if not api_key:
     print("未配置 LLM_API_KEY，跳过真实调用")
@@ -99,8 +87,11 @@ else:
             payload = line[len("data:"):].strip()
             if payload == "[DONE]":
                 break
-            delta = json.loads(payload)["choices"][0]["delta"].get("content", "")
-            parts.append(delta)
+            chunk = json.loads(payload)
+            if not chunk["choices"]:
+                continue
+            delta = chunk["choices"][0]["delta"] or {}
+            parts.append(delta.get("content") or "")
     print(f"收到 {len(parts)} 个增量，拼出 {sum(len(p) for p in parts)} 字")
 ```
 
@@ -163,7 +154,6 @@ result = get_author(**json.loads(call["function"]["arguments"]))
 
 ## 本节小结
 
-- 调外部服务先立三条规矩，超时防永远等，可重试的才重试，下游持续失败就熔断降级。
 - key 只放服务端，前端调自家后端，自家后端带 key 出网，读取收敛在一处。
 - 流式让答案边生成边回来，增量逐段解析；结构化输出让结果能被程序校验和使用。
 - 模型不知道的别让它编，函数调用三步走，要调、去查、塞回再答，参数不对就拒。

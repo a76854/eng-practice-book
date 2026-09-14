@@ -100,6 +100,62 @@ flowchart LR
 
 误覆盖是另一类常见的翻车：同名 key 上传失败一半，或者盖掉了不该盖的版本。开启版本控制后，旧版本保留，删错能找回。最后别忘了用量告警：桶是后付费的，半夜被刷量时，先收到通知总比先收到账单好。
 
+## python 代码示例
+
+概念讲完，落到代码只是一个客户端的事。真实环境里，连接对象存储需要四样信息：服务地址、区域、访问密钥、桶名。云厂商与自建服务的差别只在地址：
+
+```python
+import os
+
+import boto3
+
+s3 = boto3.client(
+    "s3",
+    endpoint_url=os.environ.get("S3_ENDPOINT", "http://localhost:9000"),
+    aws_access_key_id=os.environ.get("S3_ACCESS_KEY"),
+    aws_secret_access_key=os.environ.get("S3_SECRET_KEY"),
+)
+```
+
+本地想连真的对象存储，用 MinIO 起一个即可（9000 是接口端口，9001 是控制台）：
+
+```bash
+docker run -d --name minio -p 9000:9000 -p 9001:9001 \
+  -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
+  quay.io/minio/minio server /data --console-address ":9001"
+```
+
+书中的构建环境没有真实对象存储，下面的例子用 moto 在进程内模拟 S3，boto3 的调用不用改一处；换成上面的真实配置，就是生产代码。
+
+```{code-cell} ipython3
+import boto3
+from moto import mock_aws
+
+BUCKET = "doc-originals"
+KEY = "docs/doc-001/original.txt"
+CONTENT = "pydantic 是一套数据校验工具。"
+
+with mock_aws():
+    s3 = boto3.client("s3", region_name="us-east-1")
+
+    s3.create_bucket(Bucket=BUCKET)
+    s3.put_object(Bucket=BUCKET, Key=KEY, Body=CONTENT.encode("utf-8"))
+
+    objects = s3.list_objects_v2(Bucket=BUCKET)["Contents"]
+    print(f"桶内对象数: {len(objects)}，key: {objects[0]['Key']}")
+
+    url = s3.generate_presigned_url(
+        "get_object", Params={"Bucket": BUCKET, "Key": KEY}, ExpiresIn=300
+    )
+    print(f"预签名 URL 前 60 字符: {url[:60]}")
+
+    body = s3.get_object(Bucket=BUCKET, Key=KEY)["Body"].read().decode("utf-8")
+    print(f"读回内容: {body}")
+    assert body == CONTENT
+```
+
+观测小结：建桶、上传、列出、签名、读回五步全部走通。退出 with 块，模拟出的桶随内存一起消失，随时可以重跑；预签名 URL 在真实环境由浏览器直接 GET，模拟环境不提供这个入口，替换连接参数后其余代码不变。
+
 ## 本节小结
 
 - 数据库保关系，对象存储保文件，大文件进表会拖慢备份与查询，多机下磁盘文件会找不到。

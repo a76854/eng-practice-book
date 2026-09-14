@@ -34,22 +34,48 @@ kernelspec:
 不管哪种队列，抽象都只有三个角色。生产者负责把任务提交进来；队列本身负责把任务排好、存住、等人来取；消费者负责取走任务、执行、汇报结果。用餐厅的比方说，生产者是发号的前台，队列是叫号系统，消费者是按号做菜的后厨。
 
 ```python
-# 生产者：HTTP 里只做入队，返回任务 ID（展示代码）
-producer.send("doc-parse", key=doc_id, value={"doc_id": doc_id, "file_key": key})
+# 生产者：先连 broker，再入队，HTTP 立即返回任务号
+import json
+
+from kafka import KafkaProducer
+
+producer = KafkaProducer(
+    bootstrap_servers="localhost:9092",
+    value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+)
+producer.send("doc-parse", key=doc_id.encode("utf-8"), value={"doc_id": doc_id, "file_key": key})
+producer.flush()
 return {"task_id": doc_id, "status": "pending"}
 ```
 
 Kafka 是这类系统里的老牌选手，把这套角色又展开成几个名词，和它打交道绕不开。topic 是任务类别的名字，一类任务一个 topic，比如解析任务叫 `doc-parse`；一个 topic 可以切成多个 partition（分区），消息按 key 散进不同分区，多个消费者就能并行地取，这是扛量的单位；consumer group（消费者组）是一组消费者的身份，组里每条消息只会被一个成员取走，往组里加机器就是加消费能力。消费者取任务的代码长这样：
 
 ```python
-# 消费者：取活干活，结果写回库（展示代码）
+# 消费者：连 broker 与消费者组，循环取活，结果写回库
+import json
+
+from kafka import KafkaConsumer
+
+consumer = KafkaConsumer(
+    "doc-parse",
+    bootstrap_servers="localhost:9092",
+    group_id="doc-parse-workers",
+    enable_auto_commit=False,
+    auto_offset_reset="earliest",
+)
 for msg in consumer:
-    result = parse_document(msg.value["file_key"])
-    db.execute("UPDATE documents SET indexed = 1 WHERE id = ?", (msg.key,))
+    result = parse_document(json.loads(msg.value)["file_key"])
+    db.execute("UPDATE documents SET indexed = 1 WHERE id = ?", (msg.key.decode("utf-8"),))
     consumer.commit()
 ```
 
 代码里的 commit 是向队列确认"这条我处理完了"。正是这个确认机制，引出了下一小节要讲的麻烦。
+
+Kafka 需要真实 broker 才能运行，书中构建不启动容器，本节示例是展示代码。本地要跑真实实例，一条命令起一个单节点 Kafka（官方镜像默认以单节点 KRaft 模式运行），`bootstrap_servers` 指向 `localhost:9092` 即可：
+
+```bash
+docker run -d --name kafka -p 9092:9092 apache/kafka:4.3.1
+```
 
 ## 重复投递
 
@@ -76,7 +102,7 @@ db.execute("INSERT INTO processed(msg_id) VALUES (?)", (msg_id,))
 
 设想一个真实顺序：用户点了上传，后端先把文档记录写进数据库，然后发送解析任务。数据库写成功了，发消息那一步赶上网路故障或进程重启，消息就永远没进队列。用户看到上传成功，文件却永远不会被解析，甚至没人发现。这个坑的解法叫发件箱（outbox）：把要发的消息当作业务数据的一部分，和业务记录写进同一个事务，先存进一张 outbox 表。
 
-```{mermaid}
+```mermaid
 flowchart LR
     A["HTTP 请求"] --> B["同一事务写业务<br/>加写 outbox 表"]
     B --> C["返回成功"]

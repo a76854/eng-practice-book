@@ -89,6 +89,50 @@ return json.loads(cached)
 
 到这里，缓存这一件事就讲完了。不过 Redis 的用途不止缓存：它读写快、支持过期、又能被多个服务共同访问，很多系统顺手把它当作一块共享的临时黑板。三件事最常见：登录态放 Redis，多台服务共享同一份会话，重启任意一台都不掉线；计数器做限流，某个 key 一分钟加了几次，超了直接拒绝；分布式锁，多台机器抢同一件活时，先到 Redis 里抢一把锁。每一件都值得单开一节，本书点到为止，用到时知道该找谁。
 
+## python 代码示例
+
+Redis 的连接信息比对象存储还简单：地址、端口、库号，外加密码（如有）。官方客户端是 redis-py：
+
+```python
+import os
+
+import redis
+
+r = redis.Redis(
+    host=os.environ.get("REDIS_HOST", "localhost"),
+    port=int(os.environ.get("REDIS_PORT", "6379")),
+    db=0,
+    password=os.environ.get("REDIS_PASSWORD") or None,
+    decode_responses=True,
+)
+```
+
+本地起一个同样是一条命令：
+
+```bash
+docker run -d --name redis -p 6379:6379 redis:7
+```
+
+书中构建环境没有真 Redis，示例用进程内替身：fakeredis 的接口与 redis-py 一致，下面把旁路缓存的读写跑一遍。
+
+```{code-cell} ipython3
+import json
+
+import fakeredis
+
+r = fakeredis.FakeRedis(decode_responses=True)
+
+KEY = "search:pydantic"
+r.set(KEY, json.dumps([{"title": "Pydantic 简介"}], ensure_ascii=False), ex=300)
+print("命中:", r.get(KEY))
+print("剩余有效期:", r.ttl(KEY), "秒")
+
+r.delete(KEY)
+print("删除后:", r.get(KEY))
+```
+
+观测小结：`set` 带 `ex` 就是"回填并设过期"，`ttl` 是剩余过期秒数，`delete` 就是写侧"删缓存"。fakeredis 与真实 Redis 在个别边界行为上有差异，严肃的验证仍以真实实例为准。
+
 ## 本节小结
 
 - 高频重复读最伤数据库，读多写少、丢了能重建、允许短暂不一致的数据值得放手边。
