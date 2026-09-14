@@ -4,7 +4,7 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-# 前后端是怎么连上的
+# 请求的链路
 
 学完本节，你能回答：
 

@@ -22,7 +22,7 @@ kernelspec:
 
 本章以文档查询应用前后端打通为贯穿例子：前端搜索框输入关键词 `GET /api/search?q=...`，后端返回文档列表，前端渲染。动手练习交给实验指导书。章内结构如下：
 
-- [前后端是怎么连上的](communication_overview.md) —— 一次请求从浏览器到后端的完整链路，前后端各自的职责
+- [请求的链路](communication_overview.md) —— 一次请求从浏览器到后端的完整链路，前后端各自的职责
 - [fetch 与 axios](fetch_axios.md) —— 浏览器原生 `fetch` 与 `axios` 的分工与选型，搜索请求怎么写
 - [异步状态](async_state.md) —— `loading` / `error` / `data` 三态与竞态请求覆盖的规避
 - [契约落地](contract_alignment.md) —— OpenAPI 类型、统一信封、字段命名，以及契约的向后兼容演进

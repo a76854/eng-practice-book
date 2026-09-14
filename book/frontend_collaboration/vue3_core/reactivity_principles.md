@@ -4,7 +4,7 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-# 数据如何驱动视图
+# 数据驱动视图
 
 学完本节，你能回答：
 

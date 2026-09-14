@@ -19,7 +19,7 @@ kernelspec:
 
 本章不依赖可运行的前端环境：前端源码以代码围栏展示，页面效果以本地构建的截图呈现，概念以 Mermaid 图与对比表格固定，把可运行示例交给 `samples/` 真样例与实验指导书承担。章内结构如下：
 
-- [前端从哪来](frontend_origin.md) —— 为什么会有独立的前端：从静态页面到 SPA 的演进如何把前端从一个附属角色推成独立工种
+- [前端的由来](frontend_origin.md) —— 为什么会有独立的前端：从静态页面到 SPA 的演进如何把前端从一个附属角色推成独立工种
 - [前端在架构中的角色](frontend_role_in_architecture.md) —— 后端模板渲染 vs 前后端分离：职责如何切、URL 与数据如何分工、接口契约如何落成三态渲染
 - [框架三驾马车](framework_troika.md) —— React / Vue / Angular 设计哲学对比：声明式、响应式与企业级约束的 trade-off
 - [前端工程化基石](frontend_engineering_foundation.md) —— Node.js、npm/pnpm、ES Module：前端如何拥有自己的运行时 + 包管理 + 模块系统
