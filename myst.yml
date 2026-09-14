@@ -86,10 +86,10 @@ project:
         - file: book/frontend_collaboration/communication_debugging/summary_and_questions.md
     - file: book/advanced_engineering/external_integration/index.md
       children:
-        - file: book/advanced_engineering/external_integration/third_party_service_integration.md
-        - file: book/advanced_engineering/external_integration/asr_integration.md
-        - file: book/advanced_engineering/external_integration/llm_api_design.md
-        - file: book/advanced_engineering/external_integration/async_task_queue_celery.md
+        - file: book/advanced_engineering/external_integration/object_storage.md
+        - file: book/advanced_engineering/external_integration/redis_cache.md
+        - file: book/advanced_engineering/external_integration/kafka_queue.md
+        - file: book/advanced_engineering/external_integration/llm_calling.md
         - file: book/advanced_engineering/external_integration/summary_and_questions.md
     - file: book/advanced_engineering/robustness_security/index.md
       children:
