@@ -8,6 +8,8 @@ kernelspec:
 
 > 学完本节，你能用 `PyJWT` 签发与校验令牌，用 `Depends(verify_token)` 保护 FastAPI 路由，并说清 `Authorization: Bearer` 的传递与 `exp` 过期的校验点。
 
+> 信任之前，先有验证。
+
 ## 从会话到令牌
 
 传统的服务端会话把用户状态存在内存或 Redis，浏览器只持有一个 `session_id`。多实例、跨域与移动端场景下，这要求服务端有状态、跨服务共享存储、每次请求查库。
