@@ -9,7 +9,7 @@ kernelspec:
 
 在 `src` 布局中，你会看到每个子目录下都有一个 `__init__.py` 文件。新手容易忽略它，甚至觉得"空文件碍事"。但它是 Python 包机制的核心。
 
-## 为什么需要 `__init__.py`
+## `__init__.py` 的作用
 
 一个目录只有包含 `__init__.py`，Python 才会将其识别为**包（Package）**，才能被 `import` 语句导入。
 

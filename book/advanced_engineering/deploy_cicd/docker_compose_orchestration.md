@@ -6,7 +6,9 @@ kernelspec:
 
 # Docker Compose 编排
 
-> 学完本节，你能回答：Compose 用什么原语描述多容器的依赖与联动？`depends_on` 的 `service_healthy` 与普通启动先后有何区别？为何 MeetingToText 用 Nginx + 后端的二服务足以演示“前端静态 + 后端动态”的联动？
+> 学完本节，你能回答：Compose 用什么原语描述多容器的依赖与联动？`depends_on` 的 `service_healthy` 与普通启动先后有何区别？为何文档查询应用用 Nginx + 后端的二服务足以演示“前端静态 + 后端动态”的联动？
+
+> 先来后到，是协作的默契。
 
 ## 为何需要编排
 
@@ -18,13 +20,13 @@ Docker Compose 用一个 `docker-compose.yml` 声明整个拓扑：`services` �
 
 ## Compose 的核心原语
 
-以下面的内联 Compose 拓扑为例（教学最小二服务，镜像 MeetingToText 的“前端静态 + 后端动态”分离）：
+以下面的内联 Compose 拓扑为例（教学最小二服务，镜像文档查询应用的“前端静态 + 后端动态”分离）：
 
 ```yaml
 services:
   backend:
     build: { context: ., dockerfile: Dockerfile }
-    environment: { MTT_DATA_DIR: /data }
+    environment: { DOCSEARCH_DATA_DIR: /data }
     healthcheck: { test: ["CMD", "python", "-c", "import urllib.request..."], interval: 30s }
     ports: ["8000:8000"]
   frontend:
@@ -35,7 +37,7 @@ services:
 
 逐项解读：
 
-- `services.backend.build`——后端的镜像如何构建（上下文与 Dockerfile 路径），构建输入与 11.2 节的层缓存直接相关。
+- `services.backend.build`——后端的镜像如何构建（上下文与 Dockerfile 路径），构建输入与上一节的层缓存直接相关。
 - `services.backend.healthcheck`——后端何时算“就绪”。用 `urllib.request` 探测 `http://127.0.0.1:8000/api/health`，`interval` / `timeout` / `retries` / `start_period` 共同定义“多久探一次、探多久算超时、重试几次、启动后宽限多久”。
 - `services.frontend.image`——前端用现成的 `nginx:alpine`，不需构建，拉取即可，体现“能用现成镜像就不自建”的最小可用原则。
 - `services.frontend.depends_on.backend.condition: service_healthy`——前端仅在后端健康检查通过后才启动。若只写 `depends_on: [backend]`，则仅保证启动顺序，不保证后端已就绪；`service_healthy` 则把“启动先后”升级为“就绪先后”，避免前端在后端尚未监听时就转发而报 502。
@@ -58,7 +60,7 @@ COMPOSE_YAML = """\
 services:
   backend:
     build: { context: ., dockerfile: Dockerfile }
-    environment: { MTT_DATA_DIR: /data }
+    environment: { DOCSEARCH_DATA_DIR: /data }
     healthcheck: { test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"], interval: 30s, timeout: 5s, retries: 10, start_period: 30s }
     ports: ["8000:8000"]
   frontend:
@@ -85,8 +87,8 @@ print("build:", backend.get("build"))
 assert backend.get("build", {}).get("dockerfile") == "Dockerfile"
 print("build.dockerfile OK:", backend["build"]["dockerfile"])
 print("environment:", backend.get("environment"))
-assert backend.get("environment", {}).get("MTT_DATA_DIR") == "/data"
-print("environment MTT_DATA_DIR OK")
+assert backend.get("environment", {}).get("DOCSEARCH_DATA_DIR") == "/data"
+print("environment DOCSEARCH_DATA_DIR OK")
 print("healthcheck:", backend.get("healthcheck"))
 hc = backend.get("healthcheck", {})
 assert "test" in hc and "interval" in hc
@@ -122,8 +124,8 @@ print("\n拓扑结论：Nginx(:80) --depends_on(healthy)--> backend(:8000) 的�
 # --- backend ---
 # build: {'context': '.', 'dockerfile': 'Dockerfile'}
 # build.dockerfile OK: Dockerfile
-# environment: {'MTT_DATA_DIR': '/data'}
-# environment MTT_DATA_DIR OK
+# environment: {'DOCSEARCH_DATA_DIR': '/data'}
+# environment DOCSEARCH_DATA_DIR OK
 # healthcheck: {'test': ['CMD', 'python', '-c', ...], 'interval': '30s', ...}
 # healthcheck interval: 30s timeout: 5s
 # healthcheck 探测路径 OK：含 api/health
@@ -146,7 +148,7 @@ compose = """\
 services:
   backend:
     build: { context: ., dockerfile: Dockerfile }
-    environment: { MTT_DATA_DIR: /data }
+    environment: { DOCSEARCH_DATA_DIR: /data }
     healthcheck: { test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"], interval: 30s }
     ports: ["8000:8000"]
   frontend:
@@ -173,7 +175,7 @@ COMPOSE_YAML = """\
 services:
   backend:
     build: { context: ., dockerfile: Dockerfile }
-    environment: { MTT_DATA_DIR: /data }
+    environment: { DOCSEARCH_DATA_DIR: /data }
     healthcheck: { test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"], interval: 30s, timeout: 5s, retries: 10, start_period: 30s }
     ports: ["8000:8000"]
   frontend:

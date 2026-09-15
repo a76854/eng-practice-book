@@ -6,7 +6,9 @@ kernelspec:
 
 # Dockerfile 最佳实践
 
-> 学完本节，你能回答：Docker 镜像的分层与缓存如何工作？为什么要把不常变的 `COPY pyproject.toml` 放在频繁变动的 `COPY m2t/` 之前？多阶段构建如何把编译时依赖与运行时镜像分离？
+> 学完本节，你能回答：Docker 镜像的分层与缓存如何工作？为什么要把不常变的依赖清单放在频繁变动的业务代码之前？多阶段构建如何把编译时依赖与运行时镜像分离？
+
+> 合理的顺序，本身就是效率。
 
 ## Dockerfile 的本质
 
@@ -25,30 +27,30 @@ Docker 构建时会为每条指令计算缓存键：指令文本 + 被 `COPY` �
 
 由此导出两条黄金规则：
 
-1. **把最不常变的放最前**：依赖清单（`pyproject.toml`、`requirements.txt`）数周才变一次，应先 `COPY` 并 `RUN pip install`，让该层长期命中缓存；业务代码（`m2t/`）每天都变，应后 `COPY`，避免频繁使依赖层失效。
+1. **把最不常变的放最前**：依赖清单（`requirements.txt`、`pyproject.toml`）数周才变一次，应先 `COPY` 并 `RUN pip install`，让该层长期命中缓存；业务代码（`src/`）每天都变，应后 `COPY`，避免频繁使依赖层失效。
 2. **合并可合并的 `RUN` 并清理缓存**：如 `apt-get update && apt-get install -y ... && rm -rf /var/lib/apt/lists/*` 写在同一 `RUN`，既减少层数，又避免 `apt` 缓存留在镜像中。
 
-反例：若先 `COPY . .` 再 `RUN pip install -e .`，则任何业务文件的改动都会使 `pip install` 层失效，CI 每次都要重装依赖，构建时间从秒级退化为分钟级。
+反例：若先 `COPY . .` 再 `RUN pip install -r requirements.txt`，则任何业务文件的改动都会使 `pip install` 层失效，CI 每次都要重装依赖，构建时间从秒级退化为分钟级。
 
 ## 多阶段构建
 
 多阶段构建用多个 `FROM` 段落：前一阶段用重型基座完成编译、安装或前端打包，后一阶段仅 `COPY --from=builder` 产物到轻量运行时。优势是运行时镜像不含编译器、源码与中间缓存，体积与攻击面同步下降。
 
-MeetingToText 的典型二阶段：
+文档查询后端的典型二阶段：
 
-- `builder` 阶段——`python:3.12` + `pip install -e ".[dev]"` + `npm run build`（若含前端）；
-- `runtime` 阶段——`python:3.12-slim` 仅拷入已安装的 `site-packages` 与静态产物。
+- `builder` 阶段用 `python:3.12`，装好依赖并执行前端打包（若含前端）；
+- `runtime` 阶段用 `python:3.12-slim`，仅拷入已安装的 `site-packages`、`src/` 与前端静态产物。
 
-实验八的 `labs/lab08_fullstack_container/starter/Dockerfile` 为保持“最小可运行”未显式分段，但已体现多阶段的核心思想——只拷入需要的 `m2t/` 与 `pyproject.toml`，避免把 `labs/`、`book/` 等无关上下文送入镜像；若需前端，可在同仓增加 `FROM node:20 AS frontend-builder` 再 `COPY --from=frontend-builder /app/dist`。
+实验八的 `labs/lab08_fullstack_container/starter/Dockerfile` 为保持“最小可运行”未显式分段，但已体现多阶段的核心思想：只拷入需要的 `requirements.txt` 与 `src/`，避免把 `labs/`、`book/` 等无关上下文送入镜像；若需前端，可在同仓增加 `FROM node:20 AS frontend-builder` 再 `COPY --from=frontend-builder /app/dist`。
 
 ## 最小可用原则与安全细节
 
-- **选择性 `COPY`**：只拷 `pyproject.toml` + `m2t/`，不 `COPY . .`，既加速上下文传输，也避免把 `.git`、`.venv`、模型权重误入镜像。
+- **选择性 `COPY`**：只拷 `requirements.txt` 与 `src/`，不 `COPY . .`，既加速上下文传输，也避免把 `.git`、`.venv`、数据文件误入镜像。
 - **`--no-cache-dir` 与 `--no-install-recommends`**：`pip install --no-cache-dir` 不保留 wheel 缓存，`apt-get install --no-install-recommends` 不装推荐但非必须的包，二者共同控制镜像体积。
 - **非 root 运行（生产建议）**：教学样例为简洁未切用户，生产应在 `RUN useradd -m app && USER app` 后再 `CMD`，降低容器逃逸后的权限。
 - **`EXPOSE` 仅声明**：`EXPOSE 8000` 不自动发布端口，发布由 `docker run -p` 或 Compose 的 `ports` 决定，声明的价值在于文档化与 `docker inspect` 可见。
 
-> **环境约定**：本书面向 Linux，`Dockerfile.backend` 中的路径统一为 Linux 风格 `/app`、`/data`，构建上下文的路径分隔符由 Docker 客户端处理，正文中的 `COPY m2t/ ./m2t/` 在 在 Linux 环境均一致。
+> **环境约定**：本书面向 Linux，镜像内路径统一为 Linux 风格 `/app`、`/data`，构建上下文的路径分隔符由 Docker 客户端处理，正文中的 `COPY src/ ./src/` 在 Linux 环境均一致。
 
 ## 解析内联 Dockerfile 的层与缓存
 
@@ -62,24 +64,20 @@ DOCKERFILE = """\
 FROM python:3.12-slim
 WORKDIR /app
 
-# System deps for soundfile/librosa (libsndfile1), keep layer cache friendly
-RUN apt-get update \\
-    && apt-get install -y --no-install-recommends libsndfile1 \\
-    && rm -rf /var/lib/apt/lists/*
+# 依赖层：清单数周才变，安装结果可长期命中缓存
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Layer-cache: copy dependency manifest first, so pip layer is cacheable
-COPY pyproject.toml README.md ./
-COPY m2t/ ./m2t/
+# 代码层：业务代码每天在变，只让这一层失效
+COPY src/ ./src/
 
-# Install teaching package (m2t) + runtime deps, no wheel cache
-RUN pip install --no-cache-dir -e .
-
-ENV MTT_DATA_DIR=/data
+ENV PYTHONPATH=/app/src
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV DOCSEARCH_DATA_DIR=/data
 RUN mkdir -p /data
 
 EXPOSE 8000
-
-CMD ["python", "-m", "m2t.cli", "serve", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "docsearch.main:app", "--host", "0.0.0.0", "--port", "8000"]
 """
 lines = DOCKERFILE.splitlines()
 
@@ -99,69 +97,31 @@ for cmd, arg, lineno in directives:
 
 # 统计与断言：教学样例应含的关键层
 cmds = [c for c, _, _ in directives]
-assert "FROM" in cmds, "缺少 FROM"
-assert "COPY" in cmds, "缺少 COPY"
-assert "RUN" in cmds, "缺少 RUN"
-assert "EXPOSE" in cmds, "缺少 EXPOSE"
-assert "CMD" in cmds, "缺少 CMD"
+for name in ("FROM", "COPY", "RUN", "EXPOSE", "CMD"):
+    assert name in cmds, f"缺少 {name}"
 print("\n层统计:", {k: cmds.count(k) for k in sorted(set(cmds))})
 
-# 校验 COPY 顺序：pyproject.toml 应在 m2t/ 之前，且二者均在 pip install 之前（缓存友好）
-copy_lines = [(arg, ln) for c, arg, ln in directives if c == "COPY"]
-run_pip_lines = [(arg, ln) for c, arg, ln in directives if c == "RUN" and "pip install" in arg]
-print("\nCOPY 指令行号:", [ln for _, ln in copy_lines])
-print("RUN pip install 行号:", [ln for _, ln in run_pip_lines])
+# 缓存友好的关键在顺序：清单的 COPY 在安装之前，代码的 COPY 在安装之后
+dep_copy = next(ln for c, arg, ln in directives if c == "COPY" and "requirements.txt" in arg)
+pip_ln = next(ln for c, arg, ln in directives if c == "RUN" and "pip install" in arg)
+code_copy = next(ln for c, arg, ln in directives if c == "COPY" and "src/" in arg)
+print("\n依赖清单 COPY 行:", dep_copy, "| pip install 行:", pip_ln, "| 业务代码 COPY 行:", code_copy)
+assert dep_copy < pip_ln < code_copy
+print("COPY 顺序 OK：清单在安装前，代码在安装后（代码改动不会使依赖层失效）")
 
-# 找到 COPY pyproject 与 COPY m2t 的相对顺序
-copy_text = " ".join(arg for c, arg, _ in directives if c == "COPY")
-assert "pyproject.toml" in copy_text and "m2t/" in copy_text
-# 文本顺序即 Dockerfile 顺序：pyproject.toml 先出现
-assert copy_text.index("pyproject.toml") < copy_text.index("m2t/")
-print("COPY 顺序 OK：pyproject.toml 在 m2t/ 之前（依赖层可长期缓存）")
+# 体积与启动细节
+assert "--no-cache-dir" in DOCKERFILE, "建议 pip install --no-cache-dir"
+assert "PYTHONDONTWRITEBYTECODE" in DOCKERFILE, "建议关闭字节码写入，省去无谓的体积"
+print("体积控制 OK：--no-cache-dir 与 PYTHONDONTWRITEBYTECODE 均已配置")
 
-# 校验 pip install 在所有 COPY 之后（先拷清单再安装，符合缓存规则）
-if copy_lines and run_pip_lines:
-    max_copy_ln = max(ln for _, ln in copy_lines)
-    min_pip_ln = min(ln for _, ln in run_pip_lines)
-    # 注意：教学样例中 pip install 在 COPY 之后，满足缓存友好
-    print(f"最大 COPY 行 {max_copy_ln} < 最小 pip install 行 {min_pip_ln} ?",
-          max_copy_ln < min_pip_ln)
-    assert max_copy_ln < min_pip_ln
-
-# 校验清理与体积控制细节
-full_text = DOCKERFILE
-assert "--no-cache-dir" in full_text, "建议 pip install --no-cache-dir"
-assert "rm -rf /var/lib/apt/lists/*" in full_text, "建议清理 apt 缓存"
-assert "--no-install-recommends" in full_text, "建议 apt --no-install-recommends"
-print("体积控制 OK：--no-cache-dir / 清理 apt 缓存 / --no-install-recommends 均已配置")
-
-print("\n解析结论：该 Dockerfile 遵循‘先依赖清单、后业务代码’的缓存友好顺序，且包含体积控制细节")
-# 预期输出:
-# === Dockerfile 指令序列（层视角） ===
-#   L01 FROM       python:3.12-slim
-#   L02 WORKDIR    /app
-#   L05 RUN        apt-get update ...
-#   L10 COPY       pyproject.toml README.md ./
-#   L11 COPY       m2t/ ./m2t/
-#   L14 RUN        pip install --no-cache-dir -e .
-#   L16 ENV        MTT_DATA_DIR=/data
-#   L17 RUN        mkdir -p /data
-#   L19 EXPOSE     8000
-#   L21 CMD        ["python", "-m", "m2t.cli", "serve", ...]
-# 层统计: {'CMD': 1, 'COPY': 2, 'ENV': 1, 'EXPOSE': 1, 'FROM': 1, 'RUN': 3, 'WORKDIR': 1}
-# COPY 指令行号: [10, 11]
-# RUN pip install 行号: [14]
-# COPY 顺序 OK：pyproject.toml 在 m2t/ 之前（依赖层可长期缓存）
-# 最大 COPY 行 11 < 最小 pip install 行 14 ? True
-# 体积控制 OK：...
-# 解析结论：...
+print("\n解析结论：依赖清单与业务代码分层，顺序满足缓存友好，且包含体积控制细节")
 ```
 
 ```bash
 # 本地查看 Dockerfile 层
 cat labs/lab08_fullstack_container/starter/Dockerfile
-# 若已安装 Docker，仅查看解析后的配置（本章不要求守护进程，教学中可选）
-# docker build -f labs/lab08_fullstack_container/starter/Dockerfile --dry-run 2>&1 | head -n 20  # 仅示意，实际构建需守护进程
+# 若已安装 Docker，可查看构建上下文与解析结果（本章不要求守护进程）
+docker build -f labs/lab08_fullstack_container/starter/Dockerfile --dry-run 2>&1 | head -n 20
 ```
 
 ## 为何 COPY 顺序决定构建速度
@@ -170,6 +130,7 @@ cat labs/lab08_fullstack_container/starter/Dockerfile
 
 ```{code-cell} ipython3
 import hashlib
+
 
 # 模拟 Docker 的层缓存键：hash(指令文本 + 文件内容哈希 + 前一层哈希)
 def layer_hash(instruction: str, file_content: str | None, prev_hash: str) -> str:
@@ -180,38 +141,37 @@ def layer_hash(instruction: str, file_content: str | None, prev_hash: str) -> st
     h.update(prev_hash.encode())
     return h.hexdigest()[:12]
 
+
 def simulate_build(copy_order: str) -> list[str]:
-    """copy_order: 'good' 为先拷 pyproject 再拷 m2t，'bad' 为一次性 COPY ."""
+    """copy_order 为 good 时先拷清单再装依赖，为 bad 时一次性 COPY . ."""
     prev = "from:python3.12-slim"
     layers: list[str] = []
-    # 固定依赖清单内容（不常变）
-    pyproject_content = "name=m2t version=0.1.0 dependencies=[numpy]"
-    # 业务代码内容（常变）
-    m2t_v1 = "def transcribe(): return 'v1'"
-    m2t_v2 = "def transcribe(): return 'v2' # 业务改动"
+    # 依赖清单（数周才变）
+    requirements = "fastapi==0.141.1\nuvicorn==0.34.0"
+    # 业务代码（每天在变）
+    app_v1 = "def search(q: str) -> list[str]:\n    return []"
+    app_v2 = "def search(q: str) -> list[str]:\n    return [q]  # 业务改动"
     if copy_order == "good":
-        # 好顺序：分两层
-        h1 = layer_hash("COPY pyproject.toml", pyproject_content, prev)
-        layers.append(f"COPY pyproject.toml -> {h1}")
-        h2 = layer_hash("RUN pip install", pyproject_content, h1)
-        layers.append(f"RUN pip install   -> {h2}")
-        h3 = layer_hash("COPY m2t/", m2t_v1, h2)
-        layers.append(f"COPY m2t/ v1      -> {h3}")
-        # 第二次构建：仅 m2t 变化
-        h3b = layer_hash("COPY m2t/", m2t_v2, h2)
-        layers.append(f"COPY m2t/ v2      -> {h3b} (仅此层失效)")
-        # pip 层 h2 未失效，可重用
+        h1 = layer_hash("COPY requirements.txt", requirements, prev)
+        layers.append(f"COPY requirements.txt -> {h1}")
+        h2 = layer_hash("RUN pip install", requirements, h1)
+        layers.append(f"RUN pip install       -> {h2}")
+        h3 = layer_hash("COPY src/", app_v1, h2)
+        layers.append(f"COPY src/ v1          -> {h3}")
+        h3b = layer_hash("COPY src/", app_v2, h2)
+        layers.append(f"COPY src/ v2          -> {h3b} (仅此层失效)")
         layers.append(f"复用 pip 层: {h2} 命中缓存")
     else:
-        h1 = layer_hash("COPY . .", pyproject_content + m2t_v1, prev)
-        layers.append(f"COPY . . v1       -> {h1}")
-        h2 = layer_hash("RUN pip install", pyproject_content + m2t_v1, h1)
-        layers.append(f"RUN pip install v1-> {h2}")
-        h1b = layer_hash("COPY . .", pyproject_content + m2t_v2, prev)
-        layers.append(f"COPY . . v2       -> {h1b} (业务改动导致整层失效)")
-        h2b = layer_hash("RUN pip install", pyproject_content + m2t_v2, h1b)
-        layers.append(f"RUN pip install v2-> {h2b} (被迫重装依赖)")
+        h1 = layer_hash("COPY . .", requirements + app_v1, prev)
+        layers.append(f"COPY . . v1           -> {h1}")
+        h2 = layer_hash("RUN pip install", requirements + app_v1, h1)
+        layers.append(f"RUN pip install v1    -> {h2}")
+        h1b = layer_hash("COPY . .", requirements + app_v2, prev)
+        layers.append(f"COPY . . v2           -> {h1b} (业务改动导致整层失效)")
+        h2b = layer_hash("RUN pip install", requirements + app_v2, h1b)
+        layers.append(f"RUN pip install v2    -> {h2b} (被迫重装依赖)")
     return layers
+
 
 print("=== 好顺序：先清单后代码（缓存友好） ===")
 for line in simulate_build("good"):
@@ -221,33 +181,17 @@ print("\n=== 差顺序：一次性 COPY . . ===")
 for line in simulate_build("bad"):
     print(" ", line)
 
-print("\n结论：好顺序让‘业务改动’仅使最后一层失效，pip 层命中缓存；差顺序则业务改动导致依赖层连带失效")
-# 校验：好顺序的两次 pip 哈希相同，差顺序不同
 good = simulate_build("good")
 bad = simulate_build("bad")
 assert "命中缓存" in good[-1]
 assert bad[1] != bad[3]
-print("缓存行为校验通过")
-# 预期输出:
-# === 好顺序：先清单后代码（缓存友好） ===
-#   COPY pyproject.toml -> <12位哈希>
-#   RUN pip install   -> <12位哈希>
-#   COPY m2t/ v1      -> <12位哈希>
-#   COPY m2t/ v2      -> <12位哈希> (仅此层失效)
-#   复用 pip 层: <12位哈希> 命中缓存
-# === 差顺序：一次性 COPY . . ===
-#   COPY . . v1       -> <12位哈希>
-#   RUN pip install v1-> <12位哈希>
-#   COPY . . v2       -> <12位哈希> (业务改动导致整层失效)
-#   RUN pip install v2-> <12位哈希> (被迫重装依赖)
-# 结论：...
-# 缓存行为校验通过
+print("\n缓存行为校验通过：好顺序只让代码层失效，差顺序连带依赖层一起重来")
 ```
 
-> **工程启示**：Dockerfile 不是脚本的堆砌，而是对“变更频率”的显式排序。把最稳定的放最前、最易变的放最后，才能让缓存命中率最大化；多阶段则把“构建时工具”与“运行时依赖”解耦，二者共同决定镜像的构建速度与体积。与 [第1章 工程化项目结构](../../software_engineering/dev_meta_skills/engineering_project_structure.md) 的“可复现依赖”相互印证——Dockerfile 把 `pyproject.toml` 的可复现性延伸到系统库与文件布局。
+> **工程启示**：Dockerfile 不是脚本的堆砌，而是对“变更频率”的显式排序。把最稳定的放最前、最易变的放最后，才能让缓存命中率最大化；多阶段则把“构建时工具”与“运行时依赖”解耦，二者共同决定镜像的构建速度与体积。与 [第1章 工程化项目结构](../../software_engineering/dev_meta_skills/engineering_project_structure.md) 的“可复现依赖”相互印证，Dockerfile 把依赖清单与目录布局的可复现性延伸到系统库与文件结构。
 
 ```bash
 # 对比两种 COPY 顺序的构建时间思想实验（无需真实构建，纯文本推演）
-# 好：COPY pyproject.toml -> RUN pip install -> COPY m2t/  (业务改动仅重建最后一层)
-# 差：COPY . .            -> RUN pip install               (业务改动重建所有层)
+# 好：COPY requirements.txt -> RUN pip install -> COPY src/  (代码改动仅重建最后一层)
+# 差：COPY . .              -> RUN pip install -r requirements.txt (代码改动重建所有层)
 ```

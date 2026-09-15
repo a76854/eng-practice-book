@@ -1,12 +1,12 @@
-# Lab08 starter, minimal two-service compose (hermetic, validates with yaml.safe_load)
-# Mirrors deploy-demo/docker-compose.yml: nginx static on :80 + backend on :8000
+# Lab08 starter: 最小两服务编排（hermetic，可用 yaml.safe_load 校验）
+# 后端在 :8000，前端用 nginx:alpine 托管静态页在 :80
 services:
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     environment:
-      MTT_DATA_DIR: /data
+      DOCSEARCH_DATA_DIR: /data
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
       interval: 30s

@@ -1,12 +1,12 @@
 # Lab03 starter 说明
 
-本目录是实验三的起点骨架，对应 `book/lab_guide/cli/index.md`。
+本目录是实验三的起点骨架，对应 `book/lab_guide/cli.md`。
 
 ## 包含内容
 
 - `main.py`：带 `argparse` 子命令的最小可运行 CLI，含 `transcribe` 与 `info` 两个子命令，能打印 `--help`。
 - `pyproject.toml`：最小项目声明，保持与实验一和实验二一致的 PEP 621 风格。
-- `requirements.txt`：空依赖声明，本实验仅用标准库即可完成，复用 `m2t` 时按需安装教学包依赖。
+- `requirements.txt`：空依赖声明，本实验仅用标准库即可完成。
 
 核心设计是把业务与 IO 分开：`transcribe_file` 只做转写逻辑，`main()` 只做参数解析与文件读写，方便后续被 Web 层或其他调用方复用。
 
@@ -31,28 +31,22 @@ python main.py info
 python -m py_compile main.py
 ```
 
-> 提示：示例中的 `sample.wav` 可换成任意已存在的音频路径。骨架的 `transcribe_file` 为占位逻辑，便于先跑通 CLI 再替换为真实复用。
+> 提示：示例中的 `sample.wav` 可换成任意已存在的音频路径。骨架的 `transcribe_file` 为占位逻辑，便于先跑通 CLI 再替换为真实实现。
 
-## 只读复用 m2t
+## 替换占位实现
 
-教学包 `m2t` 为只读依赖，实验中可直接导入其音频与 ASR 能力：
+`transcribe_file` 是留给你的替换点。骨架只回显文件大小，实验里应把它改成真实调用，并保持两件事：
 
-```bash
-python -c "from m2t.audio import load_audio, resample_audio; help(load_audio)"
-python -c "from m2t.asr import normalize_result; help(normalize_result)"
-```
-
-在 `main.py` 中建议这样用：
+- 异常在函数内收口成可读文案，不把堆栈抛给终端；
+- 返回值仍是字符串，调用方与格式化逻辑保持不变。
 
 ```python
-try:
-    from m2t.audio import load_audio
-    HAS_M2T = True
-except ImportError:
-    HAS_M2T = False
+def transcribe_file(audio_path, *, language=None) -> str:
+    # 调用外部服务或本地推理，失败时抛出可读异常
+    ...
 ```
 
-不要拷贝 `m2t` 源码到本实验目录，也不要修改 `m2t` 包内容。所有增强写在 `transcribe_file` 内部。
+不要引入 Web 框架，也不要让业务函数依赖 `argparse`。
 
 ## 环境说明
 

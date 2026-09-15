@@ -4,23 +4,23 @@ numbering: false
 
 # 实验三 CLI 音频转写工具
 
-本实验对应理论 [第1章 开发者的元技能](../../software_engineering/dev_meta_skills/index.md) 与 [第9章 与外部世界的集成](../../advanced_engineering/external_integration/index.md)。建议先通读第1章 1.4 节的自动化脚本与第9章 9.1 至 9.2 节的第三方服务集成与音频归一，再动手。你会在本实验中以纯命令行形态完成 MeetingToText 的首个可交付切片，体会不依赖 Web 框架时如何把业务逻辑与输入输出干净分开。
+本实验对应理论 [开发者的元技能](../../software_engineering/dev_meta_skills/index.md) 与 [与外部世界的集成](../../advanced_engineering/external_integration/index.md)。建议先通读 [Python 自动化脚本](../../software_engineering/dev_meta_skills/python_automation_scripts.md) 与 [大模型调用方法](../../advanced_engineering/external_integration/llm_calling.md)，留意外部调用的错误收敛与脱敏，再动手。你会在本实验中以纯命令行形态完成一个可交付切片，体会不依赖 Web 框架时如何把业务逻辑与输入输出干净分开。
 
 ## 实验目标
 
 - 能用 `argparse` 实现带子命令的命令行工具，使 `python main.py --help` 与 `python main.py transcribe --help` 均可打印清晰帮助。
 - 能将转写业务逻辑抽成纯函数，输入为音频路径与选项，输出为文本或结构化结果，命令行层只做参数解析与文件读写。
 - 能在不引入 Web 框架的前提下完成一次端到端转写闭环，并说清 CLI 形态相比 Web 形态的取舍与演进路径。
-- 能只读复用教学包 `m2t` 中的 `m2t.audio` 与 `m2t.asr`，解释为何教学包设计为只读依赖而非可改实现。
+- 能为转写核心设计可替换的占位实现，说明业务逻辑为何不应绑定具体的外部服务。
 - 能为 CLI 设计可验证的错误处理与退出码，使参数错误、文件不存在、格式不支持时给出可读提示而非堆栈。
 
 ## 任务步骤
 
 ### 步骤 1 阅读理论与现状
 
-1. 阅读 [第1章 1.5 Python 自动化脚本](../../software_engineering/dev_meta_skills/python_automation_scripts.md) 中关于 `argparse`、`subprocess` 与脚本封装的讨论，理解为何超过 10 行的自动化一律用 Python 而非 Shell。
-2. 阅读 [第9章 9.1 第三方服务集成模式](../../advanced_engineering/external_integration/third_party_service_integration.md) 与 [9.2 语音识别接入](../../advanced_engineering/external_integration/asr_integration.md)，留意音频格式归一、结果多形状归一与错误脱敏的思想。
-3. 在书仓根目录尝试 `python -c "from m2t.audio import load_audio; print(load_audio.__doc__[:80])"`，确认只读导入可用，无需启动真实 ASR 服务。
+1. 阅读 [Python 自动化脚本](../../software_engineering/dev_meta_skills/python_automation_scripts.md) 中关于 `argparse`、`subprocess` 与脚本封装的讨论，理解为何超过 10 行的自动化一律用 Python 而非 Shell。
+2. 阅读 [大模型调用方法](../../advanced_engineering/external_integration/llm_calling.md)，留意结构化输出与错误脱敏：外部结果的形状需要归一，异常要转成可读文案，这与 CLI 的错误路径设计同源。
+3. 在书仓根目录确认环境可用：`.venv/bin/python -c "import sys; print(sys.version.split()[0])"`。本实验只用标准库，不需要真实模型或外部服务。
 
 ### 步骤 2 读懂起手骨架
 
@@ -31,7 +31,7 @@ numbering: false
 ### 步骤 3 抽离转写核心逻辑
 
 1. 设计一个纯函数 `transcribe_file(audio_path: str | Path, *, language: str | None = None) -> str`，职责是接收音频路径并返回转写文本，不负责参数解析与打印。
-2. 在函数内部只读复用 `m2t.audio.load_audio` 与 `m2t.audio.resample_audio` 完成音频读取与归一，或在无音频文件时用可控的占位逻辑模拟结果，保持函数可被直接导入测试。
+2. 函数内部用可控的占位逻辑模拟转写结果：有音频文件时读取基本信息，没有时返回固定文本，保证函数可被直接导入测试，不依赖任何外部服务。
 3. 函数应对文件不存在、格式不支持、采样率异常等情况抛可读异常，由调用方统一转成面向用户的错误信息与非零退出码，而不是让堆栈直接暴露给终端。
 
 ### 步骤 4 完善命令行界面
@@ -50,7 +50,7 @@ numbering: false
 
 1. 运行 `python -m py_compile starter/main.py` 与 `python starter/main.py --help`，确认语法与帮助均正常。
 2. 用 `git status` 确认无 `.venv`、`__pycache__`、`*.egg-info` 等不应提交的内容，提交信息能讲清 CLI 分层思路。
-3. 准备课堂演示：能现场解释为何要把业务逻辑与 IO 分开，以及只读复用 `m2t` 相比直接拷贝代码的协作收益。
+3. 准备课堂演示：能现场解释为何要把业务逻辑与 IO 分开，以及把转写核心与外部服务解耦之后带来的替换收益。
 
 ## 验收标准
 
@@ -59,7 +59,7 @@ numbering: false
 - [ ] `python starter/main.py --help` 与 `python starter/main.py transcribe --help` 均退出码为 0，帮助信息包含子命令、选项与描述。
 - [ ] 转写核心抽成独立函数，CLI 层只做参数解析与文件读写，函数可被 `import` 直接调用。
 - [ ] 至少一个子命令支持输入音频、输出路径与格式选项，参数校验失败时给出可读提示且非零退出。
-- [ ] 已只读复用 `m2t.audio` 或 `m2t.asr` 相关能力，未直接改动教学包源码，能解释只读边界。
+- [ ] 转写核心以可替换的占位实现完成，函数不依赖外部服务即可被 `import` 并直接测试。
 - [ ] 对文件不存在与格式不支持等错误路径有覆盖，能演示其提示与退出码。
 - [ ] `python -m py_compile starter/main.py` 通过，`git status` 干净，无生成物残留。
 - [ ] 能口头说明 CLI 形态与后续 Web 形态的演进关系，以及业务与 IO 解耦的收益。

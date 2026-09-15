@@ -8,6 +8,8 @@ kernelspec:
 
 > 学完本节，你能回答：CI 与 CD 各自在交付的哪一环起作用？GitHub Actions 的工作流、作业与步骤如何对应“校验—测试—编排预检”的门禁链路？为什么流水线要在 `push` 与 `pull_request` 两个事件上都触发？
 
+> 把关越早，代价越小。
+
 ## 从人肉上线到自动化门禁
 
 手工上线常见三错：① 漏跑检查（lint 过了但类型检查没跑）；② 环境漂移（本地通过，CI 因依赖不同失败）；③ 回归靠记忆（改动后忘了验证编排）。CI（持续集成）把“每次提交必经的校验”自动化，CD（持续交付/部署）把“已验证的产物可一键发布”自动化，二者共同构成“提交即验证、验证即门禁”的交付流水线。
@@ -15,7 +17,7 @@ kernelspec:
 - **CI**：在代码合入前自动完成 Lint、类型检查、单元测试、编排校验等门禁，失败则阻断合入。
 - **CD**：在 CI 通过后自动完成构建、推送镜像、部署到预发或生产（本章聚焦 CI 与交付就绪，生产发布由运维策略决定是否自动）。
 
-MeetingToText 的门禁链路与此一一对应：`ruff check` 守风格、`mypy` 守类型契约、`pytest` 守行为回归、`docker compose config -q` 守拓扑合法性；四者任一失败，提交即红灯。
+文档查询后端的门禁链路与此一一对应：`ruff check` 守风格、`mypy` 守类型契约、`pytest` 守行为回归、`docker compose config -q` 守拓扑合法性；四者任一失败，提交即红灯。
 
 ## GitHub Actions 的三层模型
 
@@ -40,9 +42,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev]" && pip install pyyaml
+      - run: pip install -r requirements.txt -r requirements-dev.txt
       - run: ruff check .
-      - run: mypy m2t --ignore-missing-imports
+      - run: mypy src --ignore-missing-imports
       - run: python -m pytest -q
       - run: docker compose -f docker-compose.yml config -q
 ```
@@ -50,9 +52,9 @@ jobs:
 逐项解读：
 
 - `actions/checkout@v4`——把提交的代码检出到执行器，否则后续步骤无代码可检。
-- `actions/setup-python@v5`——固定 `python-version: "3.12"`，与 `pyproject.toml` 的 `requires-python >=3.12` 对齐，避免“本地 3.12 通过、CI 3.11 失败”的漂移。
-- `pip install -e ".[dev]"`——安装教学包与开发依赖，使 `import m2t` 与 `ruff` / `mypy` / `pytest` 可用；`pyyaml` 供编排校验的 Python 解析（与本章 Compose 小节一致）。
-- `ruff check .` / `mypy m2t --ignore-missing-imports` / `pytest -q`——三道质量门禁分别守“风格与常见缺陷”“类型契约”“行为回归”，顺序上先快后慢，失败早暴露。
+- `actions/setup-python@v5`——固定 `python-version: "3.12"`，与项目约定的 Python 版本对齐，避免“本地 3.12 通过、CI 3.11 失败”的漂移。
+- `pip install -r requirements.txt -r requirements-dev.txt`——前者是运行时依赖，后者是 `ruff` / `mypy` / `pytest` / `pyyaml` 等开发依赖；拆成两份，镜像与流水线各取所需。
+- `ruff check .` / `mypy src --ignore-missing-imports` / `pytest -q`——三道质量门禁分别守“风格与常见缺陷”“类型契约”“行为回归”，顺序上先快后慢，失败早暴露。
 - `docker compose config -q`——不启动容器，仅校验 Compose YAML 合法性与可渲染性，守“拓扑门禁”。`-q` 静默模式，合法则零退出码，非法则非零失败。
 
 > **中立性说明**：GitHub Actions 适合 GitHub 托管项目的开箱即用；GitLab CI、Jenkins、CircleCI 等在自托管与企业集成上各有优势，门禁链路的思想一致——把“本地可跑”的校验固化为“提交必跑”的自动化。
@@ -78,9 +80,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev]" && pip install pyyaml
+      - run: pip install -r requirements.txt -r requirements-dev.txt
       - run: ruff check .
-      - run: mypy m2t --ignore-missing-imports
+      - run: mypy src --ignore-missing-imports
       - run: python -m pytest -q
       - run: docker compose -f docker-compose.yml config -q
 """
@@ -137,40 +139,10 @@ print("setup-python version:", py_ver)
 assert "3.12" in str(py_ver)
 install_runs = [r for r in runs if "pip install" in r]
 print("install step:", install_runs[0][:80] if install_runs else "MISSING")
-assert any('pip install -e ".[dev]"' in r for r in runs)
-print("版本与安装 OK：python 3.12 + pip install -e '.[dev]'（与 pyproject.toml 对齐）")
+assert any("pip install -r requirements.txt" in r for r in runs)
+print("版本与安装 OK：python 3.12 + requirements.txt 与 requirements-dev.txt 分开安装")
 
 print("\n流水线结论：该 Workflow 在 push/pull_request 上触发，于 ubuntu-latest 上串行执行‘检出→装环境→装依赖→四道门禁’")
-# 预期输出:
-# === Workflow 顶层 ===
-# name: CI
-# on: {'push': None, 'pull_request': None}
-# 触发事件 OK：push + pull_request（覆盖推送与合入两类场景）
-# === Jobs ===
-# jobs: ['verify']
-# runs-on: ubuntu-latest
-# runs-on OK：ubuntu-latest（与本地 Linux 容器一致）
-# === Steps（ 7 步） ===
-#   1. actions/checkout@v4
-#      uses: actions/checkout@v4
-#   2. actions/setup-python@v5
-#      uses: actions/setup-python@v5
-#   3. Install deps
-#      run: pip install -e ".[dev]" && pip install pyyaml
-#   4. Lint (ruff)
-#      run: ruff check .
-#   5. Type check (mypy)
-#      run: mypy m2t --ignore-missing-imports
-#   6. Tests (pytest)
-#      run: python -m pytest -q
-#   7. Validate compose
-#      run: docker compose -f docker-compose.yml config -q
-# Actions 复用 OK：checkout + setup-python
-# 门禁链路 OK：ruff + mypy + pytest + docker compose config -q 四道门禁齐全
-# setup-python version: 3.12
-# install step: pip install -e ".[dev]" && pip install pyyaml
-# 版本与安装 OK：python 3.12 + pip install -e '.[dev]'（与 pyproject.toml 对齐）
-# 流水线结论：...
 ```
 
 ```bash
@@ -188,9 +160,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev]" && pip install pyyaml
+      - run: pip install -r requirements.txt -r requirements-dev.txt
       - run: ruff check .
-      - run: mypy m2t --ignore-missing-imports
+      - run: mypy src --ignore-missing-imports
       - run: python -m pytest -q
       - run: docker compose -f docker-compose.yml config -q
 """
@@ -198,7 +170,7 @@ print(yaml.safe_load(ci)["jobs"]["verify"]["runs-on"])
 PY
 # 本地复刻流水线的四道门禁
 .venv/bin/python -m ruff check . 2>&1 | head -n 20
-.venv/bin/python -m mypy m2t --ignore-missing-imports 2>&1 | head -n 20
+.venv/bin/python -m mypy src --ignore-missing-imports 2>&1 | head -n 20
 .venv/bin/python -m pytest -q 2>&1 | tail -n 20
 .venv/bin/python -c "import yaml; yaml.safe_load('services: {web: {image: nginx}}'); print('compose yaml ok')"
 ```
@@ -222,9 +194,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev]" && pip install pyyaml
+      - run: pip install -r requirements.txt -r requirements-dev.txt
       - run: ruff check .
-      - run: mypy m2t --ignore-missing-imports
+      - run: mypy src --ignore-missing-imports
       - run: python -m pytest -q
       - run: docker compose -f docker-compose.yml config -q
 """
@@ -268,7 +240,7 @@ print(f"分层节省：{(1 - good_cost/bad_cost)*100:.1f}% 的 CI 时间（在�
 # 3) 校验“本地可复现”——流水线的每一步在 .venv 中均可等价复刻
 print("\n=== 本地复现性 ===")
 print("  本地 ruff:  .venv/bin/python -m ruff check .")
-print("  本地 mypy:  .venv/bin/python -m mypy m2t --ignore-missing-imports")
+print("  本地 mypy:  .venv/bin/python -m mypy src --ignore-missing-imports")
 print("  本地 pytest:.venv/bin/python -m pytest -q")
 print("  本地 compose 校验: .venv/bin/python -c \"import yaml,pathlib; yaml.safe_load(...)\"")
 print("本地复现性 OK：CI 的每一步在开发者机器上均可等价执行，无黑盒")
@@ -282,36 +254,14 @@ print("  pull_request：覆盖‘合入前在目标分支上下文中再验证�
 assert "push" in on and "pull_request" in on
 print("触发覆盖 OK：push + pull_request 双事件，无漏检窗口")
 
-print("\n流水线启示：CI 的价值不在‘多跑几个命令’，而在把‘本地可跑’固化为‘提交必跑、失败必拦’的门禁；与 11.2 的层缓存、11.3 的拓扑校验共同构成‘可复现的交付’")
-# 预期输出:
-# === 门禁顺序（索引越小越先执行） ===
-#   ruff: 3
-#   mypy: 4
-#   pytest: 5
-#   compose: 6
-# 顺序 OK：ruff → mypy → pytest（先快后慢，失败早暴露）
-# === 分层门禁的成本思想 ===
-# 好：ruff 失败即止，成本 5s；差：跑完全量才知失败，成本 45s
-# 分层节省：88.9% 的 CI 时间（在高频提交下尤为显著）
-# === 本地复现性 ===
-#   本地 ruff:  .venv/bin/python -m ruff check .
-#   本地 mypy:  .venv/bin/python -m mypy m2t --ignore-missing-imports
-#   本地 pytest:.venv/bin/python -m pytest -q
-#   本地 compose 校验: .venv/bin/python -c "import yaml,pathlib; ..."
-# 本地复现性 OK：CI 的每一步在开发者机器上均可等价执行，无黑盒
-# === 触发事件覆盖 ===
-# on: ['push', 'pull_request']
-#   push：覆盖‘分支推送即验证’，防止‘本地绿、远端红’滞后发现
-#   pull_request：覆盖‘合入前在目标分支上下文中再验证’，守合入前最后一道门
-# 触发覆盖 OK：push + pull_request 双事件，无漏检窗口
-# 流水线启示：...
+print("\n流水线启示：CI 的价值不在‘多跑几个命令’，而在把‘本地可跑’固化为‘提交必跑、失败必拦’的门禁；与上一节的层缓存、编排小节的拓扑校验共同构成‘可复现的交付’")
 ```
 
-> **工程启示**：流水线的四道门禁分别守“风格—类型—行为—拓扑”，与 [第2章 构筑代码质量的护城河](../../software_engineering/code_quality/index.md) 的质量护城河、[第10章 日志与错误边界](../robustness_security/index.md) 的可观测约定相互印证——没有门禁的交付如同没有护城河的代码库，迟早在回归中付出代价；而门禁的本地可复现性，则让“CI 红灯”在开发者本机即可预判与修复。
+> **工程启示**：流水线的四道门禁分别守“风格—类型—行为—拓扑”，与 [第2章 构筑代码质量的护城河](../../software_engineering/code_quality/index.md) 的质量护城河、[健壮性与安全底线](../robustness_security/index.md) 的可观测约定相互印证——没有门禁的交付如同没有护城河的代码库，迟早在回归中付出代价；而门禁的本地可复现性，则让“CI 红灯”在开发者本机即可预判与修复。
 
 ```bash
 # 查看 CI 流水线声明
 cat .github/workflows/ci.yml 2>/dev/null || echo "以正文内联工作流示例为准"
 # 本地等价复刻
-.venv/bin/python -m ruff check . && .venv/bin/python -m mypy m2t --ignore-missing-imports && .venv/bin/python -m pytest -q && echo "local gate green"
+.venv/bin/python -m ruff check . && .venv/bin/python -m mypy src --ignore-missing-imports && .venv/bin/python -m pytest -q && echo "local gate green"
 ```

@@ -6,104 +6,102 @@ kernelspec:
 
 ## 本章小结
 
-- **认证与授权以签名为边界**：JWT 用 `header.payload.signature` 实现无状态验签，头部声明算法、载荷承载断言、签名保证不可篡改；短有效期访问令牌 + 可撤回刷新令牌 + RBAC 中间件，是“无状态可用”与“可控撤回”的平衡点，校验点应收敛在网关或 `Depends`，而非散落在业务代码。
-- **防注入分层、各司其职**：SQL 注入的根因是字符串拼接，参数化查询（`?` 占位符）让“结构与数据”分离而根治；XSS 的防线在“校验输入 + 转义输出”（`html.escape` 与框架默认转义）并辅以 CSP；CSRF 则靠写操作的同步随机令牌与 `SameSite` Cookie 共同守住“已登录”信任边界。
-- **结构化日志是可观测的起点**：每条日志应包含 `timestamp` / `level` / `request_id` / `task_id` 与业务上下文，以 JSON 结构化输出，按 `DEBUG/INFO/WARNING/ERROR` 分级并对高频 `INFO` 采样；ELK 的采集-索引-呈现三层把单机日志升级为可按字段检索、可聚合告警的集中观测。
-- **错误边界与优雅降级让故障可预期**：在外部调用边界统一捕获、区分可重试与不可重试、做有界指数退避并脱敏对外；主路径不可用时用缓存或规则做可感知的降级（`degraded: true`），保证“可用但可解释”，而非把堆栈抛给用户。
-- **贯穿启示**：本章把 MeetingToText 的“上传 → 转写 → 摘要 → 导出”链路按“不受信任的输入”与“不可靠的依赖”重新审视——输入侧用校验与转义守门，身份侧用 JWT 与 RBAC 鉴权，可观测侧用结构化日志留痕，故障侧用边界与降级兜底；四层共同构成系统的安全与健壮性底线，后续部署与 CI/CD 都建立在这一底线之上。
+- **身份边界靠验签守住**：会话把状态留在服务端，令牌把状态交给客户端，两种取舍对应不同的部署形态；校验点收敛成依赖，权限判断只发生在已验签的载荷上；访问令牌短、刷新令牌长且可作废；密码用慢哈希加盐存储，密钥只放环境变量或密钥管理服务。
+- **数据边界分两道关**：校验管数据的形状与业务规则，进出方向各一道；转义管内容进入渲染上下文后的安全，两者不能互相替代。SQL 注入靠参数化根治，标识符只能白名单；XSS 靠校验加转义并以 CSP 兜底；CSRF 靠同步令牌与 Cookie 属性配合。
+- **依赖边界把故障关进笼子**：捕获放在与外部打交道的仓库层，接住之后先分类再脱敏；重试必须有界并带退避，前提是操作幂等；主路径不可用时给出次优结果，并用 `degraded` 与来源字段把降级的成色说清楚。
+- **追溯边界让故障有据可查**：结构化 JSON 字段、分级、按 `request_id` 哈希采样、写入端脱敏，四件事缺一不可；字段先立住，规模小时用 `grep`，规模大了再接入采集、索引与呈现的集中式方案，并把检索升级为告警。
+- **四道边界合成一条底线**：身份说明"谁"，数据说明"可不可信"，依赖说明"坏了怎么办"，日志说明"怎么看"，它们共同把"主路径能跑"提升为"在坏的情况下也可预期"，下一章的部署与持续集成就建立在这条底线之上。
 
 ## 思考题
 
-1. **JWT 撤回**：无状态令牌难以单条撤回，短有效期与刷新轮转在多大程度上缓解了该问题？若要实现“用户改密后立即踢掉所有令牌”，你会如何设计版本号或撤回表而不让每次验签都查库？
-2. **HS256 vs RS256**：单体与多服务验签场景下，二者的密钥分发与轮转有何差异？轮转期间如何做到新旧密钥并存校验而不让已签发令牌瞬间失效？
-3. **校验与转义的归属**：为什么“输入校验”不能替代“输出转义”？在 MeetingToText 的“会议标题”与“转写正文”两类数据上，二者的策略应有何不同？
-4. **参数化的边界**：`sqlite3` 的 `?` 占位符能防注入，但表名与列名无法参数化。若需支持用户选择排序字段，你会如何用白名单校验而非拼接来保证安全？
-5. **日志的噪声与成本**：全量 `INFO` 在高并发下会带来存储与费用压力，采样虽能降本但可能丢掉关键失败。结合 `request_id` 哈希采样，讨论如何让“同一请求的多次日志同进同出”且不丢 `ERROR`。
-6. **脱敏与排障的矛盾**：日志脱敏（如 `sk-***`）保护了密钥，却也让排障需要原文。如何在“可排障”与“不泄露”之间设计分级脱敏与受控访问？
-7. **重试的副作用**：对非幂等的“创建任务”做重试，可能产生重复写入。结合幂等键与 `m2t.store.TaskStore` 的主键约束，讨论如何让重试安全且不引入额外锁。
-8. **降级的诚实性**：缓存回退虽提升可用性，却可能让用户误以为是最新结果。如何在响应与界面上让“降级”可感知（如 `degraded` 标记），又不引起不必要的恐慌？
-9. **错误码设计**：面向用户的错误码与面向运维的 `error_code` 应如何分层？当 LLM 返回限流与超时两类错误时，前端应分别给出何种文案与重试指引？
-10. **端到端演练**：为 MeetingToText 的“上传 → 转写 → 摘要”三段各注入一次故障（校验失败、ASR 超时、LLM 限流），推演日志、告警、重试与降级如何协同，才能让一次故障的排查时间控制在分钟级。
+1. **令牌撤回**：无状态令牌难以单条撤回，短有效期与刷新轮转让窗口变得有限。若要求"用户改密后立即踢掉所有已签发令牌"，用令牌版本号与每次验签查库两种做法各自的代价是什么？在什么规模下会选后者？
+2. **签名算法的选择**：HS256 用共享密钥签发与校验，RS256 用私钥签发、公钥校验。多服务验签场景下，两者的密钥分发与轮换差别在哪？轮换期间如何让新旧密钥并存校验，而不让已签发的令牌集体失效？
+3. **校验与转义的归属**：为什么"输入校验通过"不能替代"输出转义"？在文档查询里，搜索关键词与外部返回的标题这两类数据，校验策略与转义策略应有何不同？
+4. **参数化的边界**：占位符能防住值的注入，但表名、列名与排序方向无法参数化。若允许用户选择排序字段，白名单该如何设计与维护，才能既不遗漏合法取值，又不至于每加一个字段就改一次代码？
+5. **密码哈希的成本**：慢哈希加盐把穷举成本抬高，也把每次登录的开销抬高。请判断参数该怎样选，配合什么限流策略，才能让正常用户几乎无感，而攻击者的成本高到不愿尝试。
+6. **日志的噪声与成本**：全量 `INFO` 在高并发下带来存储与费用压力，采样虽能降本却可能丢掉关键失败。结合 `request_id` 哈希采样，说明如何保证同一请求的日志同进同出，同时不丢 `ERROR` 与降级事件。
+7. **脱敏与排障的矛盾**：日志脱敏保护了密钥与个人信息，却让排障时的原文不再随手可得。请设计一套分级脱敏与受控访问方案，说明谁在什么条件下可以看到哪一级内容，以及事后如何审计这次查看。
+8. **重试的副作用**：对非幂等的写操作直接重试会产生重复记录，文档查询的收藏接口靠主键拒绝了重复。请分析在什么样的事务边界与去重策略下，重试才是安全的，以及重试次数与退避上限应该依据什么确定。
+9. **降级的诚实性**：缓存回退提升了可用性，却可能让用户以为看到的是最新结果。请为搜索结果页设计降级提示的文案与呈现方式，说明如何让用户察觉得到，又不至于引起不必要的恐慌。
+10. **端到端演练**：为"搜索、收藏、摘要"三段各注入一次故障：关键词校验失败、外部搜索超时、摘要接口限流。请推演日志、告警、重试与降级如何协同，并说明要把一次故障的定位时间压到分钟级，哪些字段与索引是必须提前准备的。
 
-示例（本章贯通校验：用教学包串联“校验 → 签发 → 日志 → 降级”最小闭环）：
+本章把四道边界串成一个闭环：校验过的输入、可信的身份、有界的重试、可感知的降级、可检索的日志。下面用一段代码把它们连起来跑一次，不依赖任何外部服务：
 
 ```{code-cell} ipython3
-import tempfile, pathlib, json, html, logging, io, hmac, hashlib, base64, time
+import hashlib
+import html
+import io
+import logging
+import os
+import time
 
-from m2t.store import TaskStore
+import jwt
 
-# 1) 输入校验 + 转义（10.2）
-def validate_and_escape(raw: str) -> str:
-    s = raw.strip()
-    if not (1 <= len(s) <= 200):
-        raise ValueError("长度非法")
-    return html.escape(s, quote=True)
+SECRET = os.getenv("JWT_SECRET", "dev-secret-change-in-prod-32bytes!!")
 
-# 2) 自签 JWT（10.1，HS256，stdlib）
-SECRET = b"demo-secret-32bytes-change-in-prod!!"
-def b64e(b: bytes) -> str:
-    return base64.urlsafe_b64encode(b).decode().rstrip("=")
-def b64d(s: str) -> bytes:
-    return base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
-def issue_access(sub: str) -> str:
-    h = b64e(json.dumps({"alg":"HS256","typ":"JWT"}, separators=(",",":"), ensure_ascii=False).encode())
-    p = b64e(json.dumps({"sub":sub,"roles":["user"],"iat":int(time.time()),"exp":int(time.time())+900,"iss":"m2t"}, separators=(",",":"), ensure_ascii=False).encode())
-    sig = hmac.new(SECRET, f"{h}.{p}".encode(), hashlib.sha256).digest()
-    return f"{h}.{p}.{b64e(sig)}"
 
-# 3) 结构化日志（10.3）
+def require_keyword(raw: str) -> str:
+    keyword = raw.strip()
+    if not (1 <= len(keyword) <= 100):
+        raise ValueError("关键词长度非法")
+    return keyword
+
+
+def render_snippet(raw: str) -> str:
+    return f"<p>{html.escape(raw, quote=True)}</p>"
+
+
+def hash_password(password: str) -> str:
+    salt = os.urandom(16)
+    digest = hashlib.scrypt(password.encode(), salt=salt, dklen=32, n=2**14, r=8, p=1)
+    return f"scrypt${salt.hex()}${digest.hex()}"
+
+
+def issue_token(sub: str) -> str:
+    now = int(time.time())
+    payload = {"sub": sub, "roles": ["user"], "iat": now, "exp": now + 900, "iss": "doc-search"}
+    return jwt.encode(payload, SECRET, algorithm="HS256")
+
+
+def search_with_fallback(query: str, fetch, cache: dict[str, list[str]]) -> dict:
+    try:
+        results = fetch(query)
+        cache[query] = results
+        return {"results": results, "degraded": False}
+    except TimeoutError as exc:
+        if query in cache:
+            return {"results": cache[query], "degraded": True, "reason": str(exc)}
+        return {"results": [], "degraded": True, "reason": str(exc)}
+
+
+def healthy_search(query: str) -> list[str]:
+    return [f"doc-for-{query}"]
+
+
+def broken_search(query: str) -> list[str]:
+    raise TimeoutError("search timeout")
+
+
 buf = io.StringIO()
 handler = logging.StreamHandler(buf)
-handler.setFormatter(logging.Formatter("%(levelname)s %(message)s [%(task_id)s]"))
-logger = logging.getLogger("m2t.ch10.summary")
+handler.setFormatter(logging.Formatter("%(levelname)s %(message)s"))
+logger = logging.getLogger("doc_search.summary")
 logger.setLevel(logging.INFO)
 logger.handlers.clear()
 logger.addHandler(handler)
 logger.propagate = False
 
-# 4) 降级（10.4）
-def summarize_with_fallback(transcript: str) -> dict:
-    try:
-        if "timeout" in transcript:
-            raise TimeoutError("LLM timeout")
-        return {"minutes": f"摘要：{transcript[:10]}", "degraded": False}
-    except Exception as e:
-        return {"minutes": f"关键词：{transcript[:10]} [降级]", "degraded": True, "reason": str(e)}
+cache: dict[str, list[str]] = {}
 
-with tempfile.TemporaryDirectory() as td:
-    db = pathlib.Path(td) / "ch10_summary.db"
-    store = TaskStore(db)
-    # 校验 + 转义
-    safe_title = validate_and_escape('<b>会议</b> & 健壮性')
-    print("escaped title:", safe_title)
-    assert "&lt;b&gt;" in safe_title
+print("转义后:", render_snippet(require_keyword('<b>pydantic</b> 校验')))
+print("同一密码两次哈希不同:", hash_password("correct-horse") != hash_password("correct-horse"))
 
-    # JWT 签发
-    tok = issue_access("user42")
-    assert tok.count(".") == 2
-    print("jwt ok:", tok[:24] + "...")
+decoded = jwt.decode(issue_token("user42"), SECRET, algorithms=["HS256"], issuer="doc-search")
+print("令牌身份:", decoded["sub"], "角色:", decoded["roles"])
 
-    # 存储 + 日志
-    store.create("ch10", "meeting.wav", full_text=safe_title)
-    row = store.get("ch10")
-    logger.info("任务已创建", extra={"task_id": row["id"]})
-    print("stored:", row["filename"], row["status"])
-    print("log:", buf.getvalue().strip().splitlines()[-1])
-
-    # 降级
-    normal = summarize_with_fallback("与外部世界的集成")
-    degraded = summarize_with_fallback("timeout 触发降级")
-    print("normal degraded:", normal["degraded"])
-    print("degraded:", degraded["degraded"], degraded["minutes"][:12])
-    assert normal["degraded"] is False
-    assert degraded["degraded"] is True
-    print("闭环校验通过：校验 -> JWT -> 存储+日志 -> 降级")
-# 预期输出:
-# escaped title: &lt;b&gt;会议&lt;/b&gt; &amp; 健壮性
-# jwt ok: eyJ...
-# stored: meeting.wav pending
-# log: INFO 任务已创建 [ch10]
-# normal degraded: False
-# degraded: True 关键词：
-# 闭环校验通过：校验 -> JWT -> 存储+日志 -> 降级
+normal = search_with_fallback("pydantic", healthy_search, cache)
+degraded = search_with_fallback("pydantic", broken_search, cache)
+logger.info("搜索结束 degraded=%s source=%s", degraded["degraded"], "cache" if degraded["results"] else "empty")
+print("正常:", normal["degraded"], "降级:", degraded["degraded"])
+print("日志:", buf.getvalue().strip())
 ```

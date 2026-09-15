@@ -2,7 +2,7 @@
 
 为什么这样分层：后端用 FastAPI 声明上传与流式契约，SSE 用生成器逐块产出
 text/event-stream，前端用 EventSource 逐 delta 渲染，二者通过同一 wire 格式对齐。
-本地无真实 ASR 与 LLM 时，只读复用 m2t 的归一与脱敏 mock，保证本机可演示。
+本地无真实模型与外部服务时，用自己实现的归一与脱敏函数保证本机可演示。
 
 Run:
   python main.py --help
@@ -50,9 +50,37 @@ def parse_sse(lines: Iterator[str]) -> str:
     return "".join(buf)
 
 
+def normalize_result(raw: list[dict]) -> list[dict]:
+    """把外部结果的多种形状归一成统一段结构 [{speaker, text, start, end}]。
+
+    骨架先支持 sentence_info 这一种形状，学生在实验步骤 3 中补上其余形状。
+    """
+    segments: list[dict] = []
+    for item in raw:
+        for sent in item.get("sentence_info", []):
+            segments.append(
+                {
+                    "speaker": f"说话人{sent.get('spk', 0) + 1}",
+                    "text": sent.get("text", ""),
+                    "start": sent.get("start", 0) / 1000,
+                    "end": sent.get("end", 0) / 1000,
+                }
+            )
+    return segments
+
+
+def safe_error_message(exc: Exception) -> str:
+    """把外部异常映射成可读文案，不带出密钥、地址与堆栈。"""
+    name = type(exc).__name__
+    if name in ("TimeoutError", "ReadTimeout", "ConnectTimeout"):
+        return "外部服务响应超时，请稍后重试"
+    if name in ("RateLimitError", "TooManyRequests"):
+        return "外部服务限流，请稍后重试"
+    return "转写失败，请稍后重试"
+
+
 def demo_transcribe_result() -> list[dict]:
-    """返回 mock 转写结果，经 m2t.asr.normalize_result 归一，可在本机演示。"""
-    # 形状同 m2t.asr 的 sentence_info，演示归一后的统一段结构
+    """返回 mock 转写结果，经本地归一函数整理成统一段结构，可在本机演示。"""
     mock_raw = [
         {
             "sentence_info": [
@@ -61,16 +89,7 @@ def demo_transcribe_result() -> list[dict]:
             ]
         }
     ]
-    try:
-        from m2t.asr import normalize_result
-
-        return normalize_result(mock_raw)
-    except Exception:
-        # 回退：直接返回归一后的近似结构，保证无 m2t 时仍可演示
-        return [
-            {"speaker": "说话人1", "text": "大家好，今天讨论外部集成", "start": 0.0, "end": 1.2},
-            {"speaker": "说话人2", "text": "流式响应能降低首字时延", "start": 1.2, "end": 2.5},
-        ]
+    return normalize_result(mock_raw)
 
 
 def demo_summary_text() -> str:
@@ -118,16 +137,11 @@ def run_terminal_demo(chunk_size: int, delay: float) -> int:
     print()
 
     # 脱敏演示
-    try:
-        from m2t.llm import map_llm_error
-
-        sensitive = RuntimeError("request to https://api.example.com failed, key=sk-abc123")
-        safe = map_llm_error(sensitive)
-        print(f"[llm] safe message: {safe}")
-        assert "sk-abc123" not in safe
-        print("[llm] 脱敏校验通过：响应不含密钥")
-    except Exception as exc:
-        print(f"[llm] 脱敏模块未可用，跳过验证: {exc}")
+    sensitive = RuntimeError("request to https://api.example.com failed, key=sk-abc123")
+    safe = safe_error_message(sensitive)
+    print(f"[llm] safe message: {safe}")
+    assert "sk-abc123" not in safe
+    print("[llm] 脱敏校验通过：响应不含密钥")
 
     print()
     print("[hint] 启动服务: python main.py --serve --port 8000")
@@ -175,15 +189,9 @@ def create_app():  # type: ignore[no-untyped-def]
             segments = demo_transcribe_result()
             return {"filename": payload.filename, "segments": segments}
         except Exception as exc:
-            try:
-                from m2t.llm import map_llm_error
-
-                safe = map_llm_error(exc)
-            except Exception:
-                safe = "转写失败，请稍后重试"
             from fastapi import HTTPException
 
-            raise HTTPException(status_code=500, detail=safe) from exc
+            raise HTTPException(status_code=500, detail=safe_error_message(exc)) from exc
 
     @app.get("/api/summary/stream")
     async def summary_stream(chunk_size: int = 3) -> StreamingResponse:  # type: ignore[no-untyped-def]

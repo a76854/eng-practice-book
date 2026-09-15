@@ -1,6 +1,6 @@
 # 实验八 里程碑 B 与 C 全栈容器化与答辩
 
-> 对应理论 [第11章 部署、容器化与持续集成](../../book/advanced_engineering/deploy_cicd/index.md) · 4 学时 · 任务说明与验收标准同 `book/lab_guide/container/index.md`
+> 对应理论 [部署、容器化与持续集成](../../book/advanced_engineering/deploy_cicd/index.md) · 4 学时 · 任务说明与验收标准同 `book/lab_guide/container.md`
 
 ## 实验目标
 
@@ -13,7 +13,7 @@
 
 ### 步骤 1 阅读理论
 
-通读第11章 11.1 至 11.4 节，关注部署演进、层缓存、多阶段与 Compose 编排，并对照 `deploy-demo/` 的教学资产。
+通读部署、容器化与持续集成一章，关注部署演进、层缓存、多阶段与 Compose 编排，并对照 `starter/` 的 Dockerfile 与 Compose 声明。
 
 ### 步骤 2 读懂骨架
 
@@ -21,7 +21,7 @@
 
 ### 步骤 3 Dockerfile
 
-补齐基座、系统层、先拷 `pyproject.toml` 再拷 `m2t/` 的顺序、`pip install --no-cache-dir` 与 `EXPOSE` / `CMD`。
+补齐基座、先拷 `requirements.txt` 再拷 `src/` 的顺序、`pip install --no-cache-dir` 与 `EXPOSE` / `CMD`。
 
 ### 步骤 4 Compose 编排
 
@@ -52,4 +52,4 @@
 
 ## 起手代码
 
-见 `starter/` 目录。先用 `python -c "import yaml; yaml.safe_load(open('starter/docker-compose.yml'))"` 做 YAML 预演，再对照 `deploy-demo/Dockerfile.backend` 与 `deploy-demo/docker-compose.yml` 理解最小两服务的意图。
+见 `starter/` 目录。先用 `python -c "import yaml; yaml.safe_load(open('starter/docker-compose.yml'))"` 做 YAML 预演，再对照 Dockerfile 的层顺序与 Compose 的健康依赖理解最小两服务的意图。

@@ -1,19 +1,19 @@
 # 实验七 前后端联调与流式响应集成
 
-> 对应理论 [第9章 与外部世界的集成](../../book/advanced_engineering/external_integration/index.md) · 6 学时 · 任务说明与验收标准同 `book/lab_guide/fullstack_streaming/index.md`
+> 对应理论 [与外部世界的集成](../../book/advanced_engineering/external_integration/index.md) · 6 学时 · 任务说明与验收标准同 `book/lab_guide/fullstack_streaming.md`
 
 ## 实验目标
 
 - 用 FastAPI 实现上传与 SSE 流式接口，理解 `text/event-stream` 与增量 `delta` 拼回全量的协作。
 - 用 EventSource 在前端做流式渲染，体会首字时延从秒级降至百毫秒级的体感差异。
-- 打通录音上传到实时转写到 AI 总结的链路，用 `m2t` 只读 mock 在本机复现，失败时保持脱敏与可观测。
+- 打通上传到转写到总结的链路，用本地 mock 在本机复现，失败时保持脱敏与可观测。
 - 按 OpenAPI 契约完成联调，能定位跨域、事件格式与增量拼接等常见问题。
 
 ## 任务步骤
 
 ### 步骤 1 阅读理论
 
-通读第9章 9.1 至 9.3 节，关注超时重试脱敏、音频归一与流式 SSE，并浏览 `m2t/asr.py` 与 `m2t/llm.py` 的只读 mock 能力。
+通读与外部世界集成一章中的大模型调用方法，关注流式响应、超时重试与错误脱敏，再阅读骨架里 `normalize_result` 与 `safe_error_message` 两个自实现函数的写法。
 
 ### 步骤 2 读懂骨架
 

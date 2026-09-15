@@ -4,13 +4,13 @@ numbering: false
 
 # 实验七 前后端联调与流式响应集成
 
-本实验对应理论 [第9章 与外部世界的集成](../../advanced_engineering/external_integration/index.md)。建议先通读第9章 9.1 至 9.3 节的第三方集成模式、语音识别接入与大模型流式接口，再阅读 `m2t/asr.py` 的 `normalize_result` 与 `m2t/llm.py` 的 `LLMClient` / `map_llm_error`，最后参考 `book/advanced_engineering/external_integration/demo_llm_stream.py` 的 SSE 仿真思路，再动手。你会在本实验中用 FastAPI 打通录音上传、实时转写与 AI 总结的完整链路，用 EventSource 在前端做流式渲染，并在本机用 mock 完成可演示的联调闭环。
+本实验对应理论 [与外部世界的集成](../../advanced_engineering/external_integration/index.md)。建议先通读 [大模型调用方法](../../advanced_engineering/external_integration/llm_calling.md) 的普通调用、流式响应与结构化输出三节，理解超时、限流与错误脱敏为何要收敛在一处，再动手。你会在本实验中用 FastAPI 打通上传、转写与总结的完整链路，用 EventSource 在前端做流式渲染，并在本机用 mock 完成可演示的联调闭环。
 
 ## 实验目标
 
 - 能用 FastAPI 声明上传与流式接口，解释 SSE 的 `text/event-stream` 与 `data:` 行格式，以及为何流式能降低首字时延。
 - 能说清前端如何用 EventSource 订阅流式响应，处理增量 `delta`、拼出全量、以及在断连时重连或提示。
-- 能串联录音上传、实时转写与 AI 总结的链路，解释每一跳的失败域与脱敏边界，并用 `m2t` 只读 mock 在无网络时本地复现。
+- 能串联上传、转写与总结的链路，解释每一跳的失败域与脱敏边界，并用本地 mock 在无网络时复现。
 - 能按 OpenAPI 契约完成前后端联调，解释接口字段、状态码与错误文案如何对齐，避免前后端各自为政。
 - 能在浏览器与 curl 两侧验证流式链路，定位跨域、事件格式或前端未增量渲染等常见联调问题并修复。
 
@@ -18,11 +18,11 @@ numbering: false
 
 ### 步骤 1 阅读理论与现状
 
-1. 阅读 [第9章 9.1 第三方服务集成模式](../../advanced_engineering/external_integration/third_party_service_integration.md) 中关于超时、重试与错误脱敏的讨论，理解为何外部调用的配置与错误映射要收敛在一处。
-2. 阅读 [第9章 9.2 语音识别接入](../../advanced_engineering/external_integration/asr_integration.md) 与 [9.3 大模型接口设计](../../advanced_engineering/external_integration/llm_api_design.md)，重点关注音频格式归一、结果多形状归一、结构化输出与 SSE 增量解析。
-3. 打开 `m2t/asr.py` 与 `m2t/llm.py`，阅读 `normalize_result` 对三种结果形状的归一与 `LLMClient` 的懒创建、超时与脱敏逻辑，明确本实验可只读复用这些 mock 能力，无需真实模型与密钥。
+1. 阅读 [大模型调用方法](../../advanced_engineering/external_integration/llm_calling.md) 中关于超时、限流与错误脱敏的讨论，理解为何外部调用的配置与错误映射要收敛在一处。
+2. 阅读 [流式响应](../../advanced_engineering/external_integration/llm_calling.md) 与 [结构化输出](../../advanced_engineering/external_integration/llm_calling.md) 两节，重点关注增量解析、输出校验与统一段结构的形状。
+3. 自己实现两个小函数并写进骨架：一个把外部结果的多种形状归一成 `[{speaker, text, start, end}]`，一个把异常映射为固定中文文案。本实验不依赖任何外部服务，无需真实模型与密钥。
 
-> 环境约定：本书面向 Linux，本实验的前后端命令在 Linux 上一致，路径示例统一写 `/`，`pathlib.Path` 自动适配 `\`。启动后端时默认 `http://127.0.0.1:8000`，跨域由后端 CORS 放开，前端静态页直接用 `file://` 或同源 `http://` 打开皆可。
+> 环境约定：本书面向 Linux，本实验的前后端命令在 Linux 上一致，路径示例统一写 `/`。启动后端时默认 `http://127.0.0.1:8000`，跨域由后端 CORS 放开，前端静态页直接用 `file://` 或同源 `http://` 打开皆可。
 
 ### 步骤 2 读懂起手骨架
 
@@ -34,9 +34,9 @@ numbering: false
 
 1. 以 `starter/main.py` 为起点，完善 FastAPI 的流式链路：
    - `GET /api/health` 返回 `{"status": "ok"}`，供前端与 curl 做连通性检查。
-   - `POST /api/transcribe` 接收上传或 JSON 占位，内部只读调用 `m2t.asr.normalize_result` 对 mock 结果做归一，返回统一段结构 `[{speaker, text, start, end}]`，失败时用固定中文文案脱敏。
-   - `GET /api/summary/stream` 为 SSE 接口，设置 `text/event-stream` 与 `Cache-Control: no-cache`，用生成器按 `chunk_size` 逐块 `yield f"data: {json.dumps({'delta': chunk}, ensure_ascii=False)}\n\n"`，最后 `yield "data: [DONE]\n\n"`，无真实 LLM 时用本地假文本或只读复用 `m2t.llm` 的 mock 生成。
-2. 保持错误脱敏，任何异常不把原始堆栈或密钥透传到响应，统一经 `map_llm_error` 或固定文案返回。
+   - `POST /api/transcribe` 接收上传或 JSON 占位，内部调用你自己实现的归一函数，把 mock 结果整理成统一段结构 `[{speaker, text, start, end}]`，失败时用固定中文文案脱敏。
+   - `GET /api/summary/stream` 为 SSE 接口，设置 `text/event-stream` 与 `Cache-Control: no-cache`，用生成器按 `chunk_size` 逐块 `yield f"data: {json.dumps({'delta': chunk}, ensure_ascii=False)}\n\n"`，最后 `yield "data: [DONE]\n\n"`，无真实大模型时用本地假文本生成。
+2. 保持错误脱敏，任何异常不把原始堆栈或密钥透传到响应，统一经你自己实现的错误映射或固定文案返回。
 3. 在 `main.py` 中保留 `fake_sse_stream` 与 `parse_sse` 的本地仿真，便于 `python main.py` 不启动服务也能演示 wire 格式。
 
 ### 步骤 4 实现前端 EventSource 流式渲染
@@ -67,7 +67,7 @@ numbering: false
 逐条自查，全部勾选即视为完成：
 
 - [ ] `starter/main.py` 含 FastAPI 的健康检查、转写占位与 SSE 流式接口，响应头含 `text/event-stream`，事件行符合 `data:` 格式并以 `data: [DONE]` 结束。
-- [ ] 转写结果经 `m2t.asr.normalize_result` 或等价 mock 归一，返回统一段结构，错误经 `map_llm_error` 或固定文案脱敏，不透传密钥与堆栈。
+- [ ] 转写结果经自己实现的归一函数整理成统一段结构，错误经自己实现的映射或固定文案脱敏，不透传密钥与堆栈。
 - [ ] `starter/index.html` 用 EventSource 订阅流式接口，增量 `delta` 逐块渲染，收到 `[DONE]` 后正确关闭并显示完成态，断连与解析失败有容错。
 - [ ] 录音上传到实时转写到 AI 总结的链路在本机可演示，首字时延可体感，浏览器与 curl 两侧均能消费同一 SSE 接口。
 - [ ] 跨域、事件格式与增量拼接等联调问题可定位并修复，能口头解释 SSE 与一次性 JSON 在时延与渲染上的差异。
