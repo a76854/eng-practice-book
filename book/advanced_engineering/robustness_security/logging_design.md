@@ -4,39 +4,44 @@ kernelspec:
   display_name: Python 3 (book)
 ---
 
-# 日志系统设计
+# 日志与可观测
 
-> 学完本节，你能回答：为什么“能打印”不等于“可观测”？结构化日志要包含哪些字段？日志分级如何与告警联动？ELK 的三件套各自解决什么问题？
+学完本节，你能回答：
+
+- "能打印"和"可观测"差在哪里
+- 一条日志最少要带哪些字段，级别该怎么分
+- 采样必然丢信息，怎么做到丢得可控
+- 日志怎么从"事后能查"走到"出事前能告警"
 
 > 无从追溯的事，等于没有发生。
 
-## 日志是系统的黑匣子
+前三节都在处理故障，接住异常、判断重试、准备回退，可这些动作如果没有留下痕迹，出事之后只能靠猜。本节是横跨全章的追溯层：无论故障发生在身份、数据还是依赖上，最后都要能在日志里找到它。这也是它放在章末的原因，前几节埋下的降级与错误码，到这里才汇成一条可检索的线索。
 
-没有日志的系统像没有黑匣子的飞机——出事后无法复盘。MeetingToText 的“上传 → 转写 → 摘要 → 导出”链路中，任意一步的超时、限流或格式异常，都需要靠日志回答“何时、何地、何因、对谁”。随意 `print` 的问题在于：无级别、无时间、无请求上下文、无法按字段检索。
+## 从打印到结构化
 
-好的日志满足四点：可分级、可检索、可关联、可采样。
+用 `print` 记事的做法在开发阶段够用，到了线上会同时暴露四个问题：没有级别，分不清是日常信息还是故障；没有时间，无法算清两个事件隔了多久；没有上下文，看不出这条日志属于哪次请求；格式自由，机器没法按字段检索与聚合。可观测的第一个门槛，就是让日志从"能读"变成"能算"。
 
-## 结构化与分级
+结构化的做法是让每条日志成为一个带固定字段的 JSON 对象。
 
-**结构化**指每条日志是带固定字段的 JSON（或键值对），而非自由文本。必备字段至少包括：`timestamp`、`level`、`logger`、`msg`、`request_id` / `task_id`、`duration_ms`、`error_code`。额外上下文（如用户、模型名、音频时长）以扁平键追加，避免嵌套过深。
+| 字段 | 作用 |
+| --- | --- |
+| `timestamp` | 事件发生的时间，统一用 UTC |
+| `level` | 级别，用于过滤与告警 |
+| `logger` | 来源模块，定位代码位置 |
+| `msg` | 人读的一句话 |
+| `request_id` | 串起同一次请求的所有日志 |
+| `doc_id` | 业务对象标识，按对象复盘 |
+| `duration_ms` | 耗时，用于性能分析 |
+| `error_code` | 稳定的错误标识，用于统计与告警 |
 
-**分级**遵循：
-
-- `DEBUG`：开发调试，生产默认关闭。
-- `INFO`：关键路径里程碑（任务创建、转写完成），默认开启。
-- `WARNING`：可恢复的异常（重试、降级），需关注但不告警。
-- `ERROR`：需人工介入的失败（DB 写入失败、签名校验失败），触发告警。
-- `CRITICAL`：进程不可用，通常直接告警并重启。
-
-采样策略：对高频 `INFO` 可按 `request_id` 哈希采样（如 10%），对 `ERROR` 全量保留，避免存储爆炸又不丢关键失败。
-
-> **隐私红线**：日志中绝不出现密钥、令牌原文、完整 Cookie 或用户敏感字段；必要时做脱敏（如 `sk-abc123` → `sk-***`）。
-
-示例：结构化与分级日志：
+字段不必求多，够用即可；多出来的上下文用扁平键追加，避免嵌套过深导致检索语句复杂。下面这段代码实现一个 JSON 格式化器，并打印三条不同级别的日志：
 
 ```{code-cell} ipython3
-import logging, json, io, sys, time
+import io
+import json
+import logging
 from datetime import datetime, timezone
+
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
@@ -46,108 +51,125 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "msg": record.getMessage(),
         }
-        # 把 extra 传入的上下文原样带出（如 request_id、task_id）
-        for k in ("request_id", "task_id", "duration_ms", "error_code"):
-            if hasattr(record, k):
-                payload[k] = getattr(record, k)
-        if record.exc_info and record.exc_info[0] is not None:
+        for key in ("request_id", "doc_id", "duration_ms", "error_code"):
+            if hasattr(record, key):
+                payload[key] = getattr(record, key)
+        if record.exc_info:
             payload["exc"] = self.formatException(record.exc_info)
         return json.dumps(payload, ensure_ascii=False)
 
-# 演示：用 StringIO 捕获，便于在 MyST 中断言
+
 buf = io.StringIO()
 handler = logging.StreamHandler(buf)
 handler.setFormatter(JsonFormatter())
-logger = logging.getLogger("m2t.ch10.logging-demo")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger("doc_search.search")
+logger.setLevel(logging.INFO)
 logger.handlers.clear()
 logger.addHandler(handler)
 logger.propagate = False
 
-# 1) 里程碑 INFO（带请求上下文）
-logger.info("任务已创建", extra={"request_id": "req-42", "task_id": "t10", "duration_ms": 12})
-# 2) 可恢复 WARNING
-logger.warning("ASR 重试中", extra={"request_id": "req-42", "task_id": "t10", "error_code": "ASR_TIMEOUT"})
-# 3) 失败 ERROR（带异常堆栈）
+logger.info("搜索完成", extra={"request_id": "req-42", "doc_id": "d1", "duration_ms": 128})
+logger.warning("搜索降级", extra={"request_id": "req-42", "error_code": "SEARCH_TIMEOUT"})
 try:
-    raise RuntimeError("SQLite busy")
+    raise RuntimeError("database is locked")
 except RuntimeError:
-    logger.error("任务写入失败", exc_info=True, extra={"request_id": "req-42", "task_id": "t10", "error_code": "DB_WRITE"})
+    logger.error("写入收藏失败", exc_info=True, extra={"request_id": "req-42", "error_code": "DB_LOCKED"})
 
-# 解析并断言：结构化字段可被机器检索
-lines = [json.loads(l) for l in buf.getvalue().strip().splitlines()]
+lines = [json.loads(line) for line in buf.getvalue().strip().splitlines()]
 for line in lines:
-    print(json.dumps(line, ensure_ascii=False))
-assert lines[0]["level"] == "INFO" and lines[0]["task_id"] == "t10"
-assert lines[2]["level"] == "ERROR" and "exc" in lines[2]
-# 预期输出:
-# {"timestamp": "2026-...Z", "level": "INFO", "logger": "m2t.ch10.logging-demo", "msg": "任务已创建", "request_id": "req-42", "task_id": "t10", "duration_ms": 12}
-# {"timestamp": "...", "level": "WARNING", ... "error_code": "ASR_TIMEOUT"}
-# {"timestamp": "...", "level": "ERROR", ... "exc": "Traceback ..."}
+    print(line["level"], line["msg"], line.get("error_code", "-"))
+print("首条字段齐全:", {"timestamp", "level", "logger", "msg"} <= set(lines[0]))
 ```
 
-## ELK 初探
+三条日志的 `request_id` 相同，一次请求的三个阶段就此串成一条链，检索时按这个字段取回全部相关记录即可。异常堆栈被塞进 `exc` 字段而不是直接拼接在消息里，既保留了排查信息，又不破坏结构。
 
-单机日志用文件即可，分布式场景需要集中检索。ELK（Elasticsearch / Logstash 或 Beats / Kibana）是典型方案：
+## 分级与采样
 
-- **采集（Beats/Logstash）**：从各实例的日志文件或标准输出收集，按 `JsonFormatter` 的字段做解析与脱敏。
-- **索引（Elasticsearch）**：按 `timestamp` 与 `level` 建索引，支持按 `request_id` / `task_id` / `error_code` 的精确检索与按 `duration_ms` 的聚合。
-- **呈现（Kibana）**：做仪表盘（错误率、P99 时延）与告警（`ERROR` 速率突增时通知）。
+级别的用途不只是分类，它同时是默认的过滤开关与告警的触发条件。选错级别，日志要么淹掉重要信息，要么在出事时一言不发。
 
-MeetingToText 的最小闭环可先不引入完整 ELK：在 `m2t.store` 的调用处埋点结构化日志，按 `task_id` 关联“上传-转写-摘要”三段，再用简单的 `grep` 或 SQLite 的日志表验证可检索性；待规模扩大再把 JSON 日志接入 Elasticsearch。
+| 级别 | 含义 | 是否告警 |
+| --- | --- | --- |
+| `DEBUG` | 开发排查用的细节，生产默认关闭 | 否 |
+| `INFO` | 关键路径的里程碑，如搜索完成 | 否 |
+| `WARNING` | 可恢复的异常，如降级、重试 | 否，但要看趋势 |
+| `ERROR` | 需要人工介入的失败 | 是 |
+| `CRITICAL` | 进程级不可用 | 是，通常还触发重启 |
 
-示例：日志检索与采样：
+`WARNING` 这一级最容易被当成"不重要"而忽略。上一节的降级事件正好属于它：单次降级不影响使用，但如果一天之内降级比例从百分之一涨到百分之三十，说明上游已经在恶化，趋势本身就是信号。
+
+量一大就有成本问题。全量 `INFO` 在高并发下会迅速吃掉存储与费用，于是需要采样：按比例丢弃一部分低级别的日志。难处在于不能随便丢，同一次请求的日志如果只留下后半段，线索就断了。
 
 ```{code-cell} ipython3
-import logging, json, io, hashlib
+import hashlib
+import io
+import logging
+
 
 class SamplingFilter(logging.Filter):
-    """对 INFO 按 request_id 哈希采样，ERROR 全量通过。"""
+    """ERROR 及以上全量保留，INFO 按 request_id 哈希采样。"""
+
     def __init__(self, sample_rate: float = 0.5):
         super().__init__()
         self.sample_rate = sample_rate
+
     def filter(self, record: logging.LogRecord) -> bool:
         if record.levelno >= logging.WARNING:
             return True
-        rid = getattr(record, "request_id", "")
-        # 用哈希决定是否采样，保证同一请求的多次日志一致去留
-        h = int(hashlib.sha256(rid.encode()).hexdigest(), 16) % 100
-        return h < int(self.sample_rate * 100)
+        request_id = getattr(record, "request_id", "")
+        bucket = int(hashlib.sha256(request_id.encode()).hexdigest(), 16) % 100
+        return bucket < int(self.sample_rate * 100)
 
-buf2 = io.StringIO()
-h2 = logging.StreamHandler(buf2)
-h2.setFormatter(logging.Formatter("%(levelname)s %(message)s [%(request_id)s]"))
-h2.addFilter(SamplingFilter(sample_rate=0.5))
-logger2 = logging.getLogger("m2t.ch10.sampling")
-logger2.setLevel(logging.INFO)
-logger2.handlers.clear()
-logger2.addHandler(h2)
-logger2.propagate = False
 
-# 模拟 4 个请求的 INFO 日志，约一半被采样丢弃；ERROR 全部保留
+buf = io.StringIO()
+handler = logging.StreamHandler(buf)
+handler.setFormatter(logging.Formatter("%(levelname)s %(message)s [%(request_id)s]"))
+handler.addFilter(SamplingFilter(sample_rate=0.5))
+logger = logging.getLogger("doc_search.sampling")
+logger.handlers.clear()
+logger.addHandler(handler)
+logger.propagate = False
+logger.setLevel(logging.INFO)
+
 for i in range(4):
-    logger2.info("处理中", extra={"request_id": f"req-{i}"})
-    logger2.error("关键失败", extra={"request_id": f"req-{i}"})
+    logger.info("搜索完成", extra={"request_id": f"req-{i}"})
+    logger.error("搜索失败", extra={"request_id": f"req-{i}"})
 
-kept = buf2.getvalue().strip().splitlines()
-print("\n".join(kept))
-# 统计：ERROR 应为 4 条，INFO 约 2 条（哈希决定，非随机）
-info_cnt = sum(1 for l in kept if l.startswith("INFO"))
-err_cnt = sum(1 for l in kept if l.startswith("ERROR"))
-print(f"INFO kept={info_cnt}, ERROR kept={err_cnt}")
-assert err_cnt == 4
-assert 0 <= info_cnt <= 4
-# 预期输出:
-# INFO/ERROR 交替，ERROR 4 条全保留，INFO 约 2 条被采样保留
-# INFO kept=2 ERROR kept=4（INFO 数量可能为 1-3，取决于哈希）
+kept = buf.getvalue().strip().splitlines()
+print("INFO 保留:", sum(1 for line in kept if line.startswith("INFO")))
+print("ERROR 保留:", sum(1 for line in kept if line.startswith("ERROR")))
 ```
+
+采样用 `request_id` 的哈希而不是随机数，同一请求的判定结果恒定，它的日志要么整体保留、要么整体丢弃，不会只留一半。`WARNING` 与 `ERROR` 直接放行，采样只削减流水账，不削减故障证据。
+
+## 脱敏红线
+
+日志是排查工具，也是泄露面。密钥、令牌原文、完整 Cookie、身份证号这类内容一旦写进日志，等于把它们复制到了另一个更难管控的地方。上一章反复强调 `key` 只放服务端（[大模型调用方法](../external_integration/llm_calling.md)），这条纪律要再加一句：它也不能出现在日志里。
+
+合理的做法是分级脱敏。密钥类字段整体替换成前缀加星号，只保留足够识别是哪一把的信息；手机号、邮箱保留必要的片段用于核对；确需原文的场景走受控访问，凭审批临时开启，而不是让所有人都能在日志里搜到。脱敏发生在写入端最省心，等到落盘后再清理，覆盖面和成本都不可控。
+
+## 从检索到告警
+
+单机日志用 `grep` 就能应付，多实例部署之后，日志散在各台机器上，需要集中起来。常见的方案是采集、存储与索引、呈现三步：
+
+| 环节 | 组件 | 职责 |
+| --- | --- | --- |
+| 采集 | Beats 或 Logstash | 从各实例收集，解析字段，按规则脱敏 |
+| 索引 | Elasticsearch | 按时间与字段建索引，支持精确检索与聚合 |
+| 呈现与告警 | Kibana | 仪表盘展示，按条件触发通知 |
 
 ```bash
-# 按 task_id 检索日志的示意
-grep '"task_id": "t10"' app.log | jq .
-Select-String -Pattern '"task_id": "t10"' app.log
+# 按 request_id 取回一次请求的全部日志
+grep '"request_id": "req-42"' /var/log/doc-search/app.log | jq .
 ```
 
-> **环境约定**：本书面向 Linux，日志文件路径在 Linux 上常为 `/var/log/app/app.log`；代码中用 `pathlib.Path("logs/app.log")` 可环境拼接，示例中统一用 `/` 书写。`logging` 的 `FileHandler` 在两类系统上行为一致，无需分支。
+规模不大时不必上完整的一套：把结构化 JSON 写进文件，用 `grep` 或一条 SQL 就能完成检索。等实例多起来、检索变慢，再把它接入集中式方案，字段格式不用改，这正是从头就结构化的好处。
 
-> **工程启示**：先让日志“可被机器读”，再谈“可被人阅读”。结构化字段 + 分级 + 采样 + 脱敏，是从 `print` 到可观测的最小跃迁；ELK 只是把这套结构搬到集中式的索引与检索层。
+有了可检索的字段，告警条件也从"服务挂了"升级为可量化的规则：`ERROR` 速率在一分钟内超过阈值，或降级事件的比例持续攀升，都可以直接触发通知。`request_id` 把一次请求的日志串成链，`error_code` 把同类故障聚成堆，从告警跳到定位只需要两次检索。到这里，本章的四条边界形成闭环：身份、数据、依赖各自守住分内的事，日志把它们的动作记录下来，交到下一章的部署环节（[部署、容器化与持续集成](../deploy_cicd/index.md)）。
+
+## 本节小结
+
+- `print` 缺时间、级别、上下文与结构，可观测的第一步是让每条日志成为带固定字段的 JSON 对象。
+- 级别既是过滤开关也是告警条件，`WARNING` 反映趋势，`ERROR` 与 `CRITICAL` 直接触发人工介入。
+- 采样按 `request_id` 哈希决定去留，保证同一请求同进同出，`WARNING` 及以上全量保留。
+- 密钥、令牌与完整 Cookie 不进日志，脱敏在写入端完成，确需原文走受控访问。
+- 字段结构先立住，规模小时用 `grep` 检索，规模大了再接入采集、索引与呈现的集中式方案。

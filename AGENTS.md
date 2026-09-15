@@ -5,7 +5,7 @@
 
 ## 环境与构建
 
-- 包管理用 **uv**（Python 3.12），依赖在 `pyproject.toml` 的 `book` / `dev` / `asr` extra 里（不再有 requirements.txt）。
+- 包管理用 **uv**（Python 3.12），依赖在 `pyproject.toml` 的 `book` / `dev` extra 里（不再有 requirements.txt，也不再有教学包）。
 - 安装：`uv sync --extra book --extra dev`，然后 `source .venv/bin/activate`。
 - **构建门禁（唯一验收）**：`myst build --html --execute --strict` 必须 EXIT=0 且零警告。当前 80 页，输出在 `_build/html/`。
 - 执行内核 `book-venv`（新环境需先注册）：
@@ -45,7 +45,7 @@
 - 硬性红线：无 emoji、无口语化表达、无破折号“——”、无感叹号堆砌、不用直角引号「」、小节标题不用“术语：一句话定义”的公式模板（如“Node.js：前端的运行时与工具宿主”）。
 - 每节骨架：`学完本节，你能回答`（3-4 问）→ 哲理引言（1 句，不出现比喻、不涉本节内容，不署名）→ 承上导言 → 概念分节（定义 + 对比表格 + 代码）→ 每 cell 做一件事（前置 1-2 句说明 + 后置观测小结）→ 小结 3-5 点。
 - 可执行代码用 `{code-cell} ipython3`；Shell 用 ````bash` 围栏（仅展示）。
-- 正文**不出现** `meetingtotext` / `m2t` / `TaskStore`（全书要剔除，第 1-6 章已清，第 7-12 章与实验仍有残留）。
+- 正文**不出现** `meetingtotext` / `m2t` / `TaskStore`（教学包已整体删除，正文、实验脚手架与文档均已清理）。
 - 图片文件名不能用空格（用连字符），.md 里引用不要写 `%20`。
 - **不要用 subagent 做创作型修改**（用户反复强调：subagent 不清楚上下文、创作型工作必须主代理亲自做）。
 
@@ -57,14 +57,12 @@
 
 ## 待办（tech debt / 下一步）
 
-1. **正文硬编码“第X章 / N.M 节”文字引用已错位**：综合实战插入成了第 7 章，前端 7→8、8→9，进阶 9→10、10→11、11→12。链接没断、是文字对不上，需清理改相对链接或交给自动编号。
-2. **移除 `m2t` / `MeetingToText`（渐进式，一边写书一边删，不做一次性大动）**：
-   - 正文残留：第 7~12 章与实验仍有 `m2t` / `MeetingToText` / `TaskStore` 文字与 `import m2t` 残留，需剔除（第 1-6 章已清）。
-   - 删除自定义包本体的最终形态：`m2t/`、`m2t_tests/`、`m2t.egg-info/` 目录整体移除；`pyproject.toml` 中 `[project] name = "m2t"`、`packages = ["m2t"]`、`asr` extra 以及 `m2t` 依赖同步改写（删包后需给书自用代码另立包名或内联）；CI（`.github/workflows/book.yml`）、`README.md`、`myst.yml` 中 `m2t` 排除项与 `import m2t` 验证命令同步清理。
-   - 注意：正文多处 `{code-cell}` 真实 `import m2t`，删包会破坏 `myst build --execute` 门禁，必须先改写这些 cell（内联或换命名）再删包，顺序不可反。
+1. **正文硬编码“第X章 / N.M 节”文字引用已错位**：综合实战插入成了第 7 章，前端 7→8、8→9，进阶 9→10、10→11、11→12。链接没断、是文字对不上，需清理改相对链接或交给自动编号。（第 11、12 章的引用与附录 B、前言已在本轮清理）
+2. **第 12 章骨架未升级**：该章四节仍是旧式开篇（单行 blockquote 设问）、无“本节小结”、code-cell 内仍带“预期输出”注释。第 11 章已按新骨架改完，第 12 章可照此再来一轮。
 3. 第三篇要补“前后端通信 / 联调”的一整章（已商定：讲 fetch/axios、异步状态、契约落地、CORS 与错误处理）。
 4. code-cell 标识不一致（第 3/4 章 `ipython3`，第 5/6 章 `python`），需统一到 STYLE.md 规范。
 5. `labs/lab0X_*` 目录命名与实验标题不一致（如 `lab02_unit_test_static_check` vs 实验二“成绩等级评定”），属学生脚手架目录，是否统一待定。
+6. 部分实验（lab03/lab07）主题仍为音频转写，与正文的文档查询案例不同源，是否统一待定。
 
 ## 安全/纪律提醒
 

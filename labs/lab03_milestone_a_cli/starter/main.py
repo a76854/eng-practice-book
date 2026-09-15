@@ -1,12 +1,12 @@
 """Lab03 starter: CLI 音频转写工具骨架。
 
-为什么是子命令：MeetingToText 后续会有 serve、transcribe 等多个入口，
+为什么是子命令：这类工具后续会有 serve、transcribe 等多个入口，
 子命令能让“转写”与“服务”在同一入口下共存，且各自的帮助信息独立清晰。
 
 设计约束：
   - 只依赖标准库 argparse + pathlib，不引入 Web 框架。
   - 业务逻辑抽成 transcribe_file 纯函数，便于被 import 复用。
-  - 可只读复用 m2t.audio / m2t.asr，starter 本身保持可运行占位。
+  - 内置占位实现，不依赖任何外部服务即可运行。
 
 Run:
   python main.py --help
@@ -29,7 +29,7 @@ def transcribe_file(audio_path: str | Path, *, language: str | None = None) -> s
     """转写核心函数，接收音频路径返回文本。
 
     当前为占位实现，保证骨架可运行。学生在实验中应在此替换为
-    只读复用 m2t.audio / m2t.asr 的真实逻辑。
+    真实的外部服务调用或本地推理逻辑，并把异常转成可读文案。
 
     参数:
         audio_path: 音频文件路径
@@ -49,18 +49,8 @@ def transcribe_file(audio_path: str | Path, *, language: str | None = None) -> s
     if p.suffix.lower() not in ALLOWED_EXTENSIONS:
         raise ValueError(f"unsupported audio format: {p.suffix} (allowed: {', '.join(ALLOWED_EXTENSIONS)})")
 
-    # 尝试只读复用 m2t，若不可用则回退到占位文本
-    try:
-        from m2t.audio import load_audio  # type: ignore[import-not-found]
-
-        samples, sr = load_audio(str(p))
-        # 占位：真实实验中在此做 resample 与 ASR 调用
-        return f"[placeholder] loaded {p.name}: {len(samples)} samples at {sr}Hz"
-    except ImportError:
-        return f"[placeholder] transcribe {p.name} (m2t not installed, skeleton output)"
-    except Exception as exc:
-        # 音频读取失败时给出可读回退，不直接抛堆栈
-        return f"[placeholder] transcribe {p.name} (load failed: {exc})"
+    # 占位实现：真实实验中在此读取音频并调用外部服务或本地推理
+    return f"[placeholder] transcribe {p.name}: {p.stat().st_size} bytes (skeleton output)"
 
 
 def format_transcript(text: str, fmt: str) -> str:
@@ -94,7 +84,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_trans.add_argument("--verbose", action="store_true", help="enable verbose output")
 
     # info 子命令
-    p_info = sub.add_parser("info", help="show environment and m2t availability")
+    p_info = sub.add_parser("info", help="show environment info")
     p_info.add_argument("--verbose", action="store_true", help="verbose output")
 
     return parser
@@ -142,12 +132,6 @@ def _handle_info(args: argparse.Namespace) -> int:
     print(f"prefix: {sys.prefix}")
     print(f"allowed formats: {', '.join(ALLOWED_FORMATS)}")
     print(f"allowed audio: {', '.join(ALLOWED_EXTENSIONS)}")
-    try:
-        import m2t  # type: ignore[import-not-found]
-
-        print(f"m2t: {m2t.__version__} ({m2t.__file__})")
-    except ImportError:
-        print("m2t: not installed (skeleton still runnable)")
     if args.verbose:
         print(f"argv: {sys.argv}")
     return 0

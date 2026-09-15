@@ -14,7 +14,7 @@ kernelspec:
 
 上线不是把代码拷到服务器就结束。真实的“可交付”需要同时满足三点：① **环境可复现**——任何机器拉取同一提交得到同一运行结果；② **资源可隔离**——A 服务的依赖、端口、文件不干扰 B 服务；③ **交付可回滚**——出问题能整体撤回而非人肉补丁。物理机与虚拟机分别在不同层级尝试满足这三点，容器则把“隔离”与“可复现”收敛到一次构建、处处运行的镜像上。
 
-MeetingToText 的演进是缩影：早期用裸 Python 脚本转写音频，只要本机装了 `ffmpeg` 就能跑；加入 FastAPI 后需要固定端口与依赖版本；再加入前端与模型权重后，单机已难以用“口头说明”保证一致——这正是容器要解决的痛点。
+文档查询应用的演进是缩影：早期是单文件脚本，只要本机装了 Python 就能跑；加入 FastAPI 后需要固定端口与依赖版本；再加入前端与外部搜索、缓存依赖后，单机已难以用“口头说明”保证一致，这正是容器要解决的痛点。
 
 ## 物理机
 
@@ -88,11 +88,11 @@ with tempfile.TemporaryDirectory() as tmp1, tempfile.TemporaryDirectory() as tmp
 
 # 3) 进程隔离思想：用环境变量作用域模拟“容器内环境不外泄”
 print("\n=== 环境变量隔离思想 ===")
-env_a = {"MTT_DATA_DIR": "/data/a", "PORT": "8000"}
-env_b = {"MTT_DATA_DIR": "/data/b", "PORT": "8001"}
+env_a = {"DOCSEARCH_DATA_DIR": "/data/a", "PORT": "8000"}
+env_b = {"DOCSEARCH_DATA_DIR": "/data/b", "PORT": "8001"}
 print("container-A env:", env_a)
 print("container-B env:", env_b)
-assert env_a["MTT_DATA_DIR"] != env_b["MTT_DATA_DIR"]
+assert env_a["DOCSEARCH_DATA_DIR"] != env_b["DOCSEARCH_DATA_DIR"]
 assert env_a["PORT"] != env_b["PORT"]
 print("环境隔离演示通过：同名变量在不同容器中互不干扰")
 
@@ -109,8 +109,8 @@ print("\n对照结论：venv 隔离 Python 依赖，容器隔离文件系统、�
 # container-B reads: container-B data
 # 文件系统隔离演示通过：两容器 /data 互不可见
 # === 环境变量隔离思想 ===
-# container-A env: {'MTT_DATA_DIR': '/data/a', 'PORT': '8000'}
-# container-B env: {'MTT_DATA_DIR': '/data/b', 'PORT': '8001'}
+# container-A env: {'DOCSEARCH_DATA_DIR': '/data/a', 'PORT': '8000'}
+# container-B env: {'DOCSEARCH_DATA_DIR': '/data/b', 'PORT': '8001'}
 # 环境隔离演示通过：同名变量在不同容器中互不干扰
 # 对照结论：venv 隔离 Python 依赖，容器隔离文件系统、环境与端口——后者是前者的超集
 ```
@@ -130,27 +130,27 @@ import hashlib
 # 用 Dockerfile 的文本可复现性对比“口头文档”的不可复现性
 # 思想：若部署说明是口头的，每次人肉执行都可能漏一步；若部署说明是 Dockerfile，则同一文件构建出同一镜像
 
-# 内联 Dockerfile 示例（与 11.2 节讲解一致，无需依赖仓库中的真实文件）
+# 内联 Dockerfile 示例（精简版，与 Dockerfile 最佳实践一节一致，无需依赖仓库中的真实文件）
 DOCKERFILE = """\
 FROM python:3.12-slim
-RUN apt-get update && apt-get install -y --no-install-recommends libsndfile1 && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY pyproject.toml ./
-RUN pip install --no-cache-dir -e ".[dev]"
-COPY m2t/ ./m2t/
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY src/ ./src/
+ENV PYTHONPATH=/app/src
 EXPOSE 8000
-CMD ["python", "-m", "m2t.cli", "serve", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "docsearch.main:app", "--host", "0.0.0.0", "--port", "8000"]
 """
 content = DOCKERFILE
 
 # 1) 校验 Dockerfile 固化了关键环境要素
 checks = {
     "base image 固化": "FROM python:3.12-slim" in content,
-    "系统库固化": "libsndfile1" in content,
-    "依赖清单固化": "pyproject.toml" in content,
+    "依赖清单固化": "requirements.txt" in content,
     "工作目录固化": "WORKDIR /app" in content,
+    "环境变量固化": "PYTHONPATH=/app/src" in content,
     "暴露端口固化": "EXPOSE 8000" in content,
-    "启动命令固化": 'CMD ["python"' in content,
+    "启动命令固化": 'CMD ["uvicorn"' in content,
 }
 for k, ok in checks.items():
     print(f"{k}: {'OK' if ok else 'MISSING'}")
@@ -161,26 +161,12 @@ digest = hashlib.sha256(content.encode()).hexdigest()
 print("Dockerfile sha256 前16位:", digest[:16])
 print("可复现性结论：同一文本的哈希必相同，口头文档无法给出这样的保证")
 
-# 3) 对比：虚拟环境仅固化 Python 依赖，不含系统库
+# 3) 对比：虚拟环境仅固化 Python 依赖，不含解释器与系统层
 print("\n虚拟环境固化的边界：")
-print("  - 固化：pyproject.toml / requirements.lock 中的 Python 包")
-print("  - 未固化：apt 的 libsndfile1、系统时区、端口占用、文件权限")
+print("  - 固化：requirements.txt 列出的 Python 包与版本")
+print("  - 未固化：Python 解释器本身、系统库、系统时区、端口占用、文件权限")
 print("容器固化的边界：Dockerfile 把上述未固化项一并纳入镜像分层")
 print("演进结论：物理机→虚拟机→容器，固化的边界逐步扩大，交付的可复现性随之提升")
-# 预期输出:
-# base image 固化: OK
-# 系统库固化: OK
-# 依赖清单固化: OK
-# 工作目录固化: OK
-# 暴露端口固化: OK
-# 启动命令固化: OK
-# Dockerfile sha256 前16位: <16位十六进制>
-# 可复现性结论：...
-# 虚拟环境固化的边界：
-#   - 固化：...
-#   - 未固化：...
-# 容器固化的边界：...
-# 演进结论：...
 ```
 
 > **工程启示**：部署演进的本质是把“隐式约定”变为“显式、可版本控制、可哈希校验”的构建输入。虚拟环境让 Python 依赖可复现，容器则把系统库、文件布局与启动命令一并纳入版本控制；二者叠加，才得到“在任何机器上可复现”的交付物。与 [第1章 依赖与虚拟环境](../../software_engineering/dev_meta_skills/dependencies_virtualenv.md) 的隔离原理相互印证——容器是虚拟环境思想在操作系统层的延伸。
@@ -188,5 +174,4 @@ print("演进结论：物理机→虚拟机→容器，固化的边界逐步扩�
 ```bash
 # 查看 Dockerfile 固化的环境
 cat labs/lab08_fullstack_container/starter/Dockerfile
-Get-Content labs/lab08_fullstack_container/starter/Dockerfile
 ```

@@ -1,5 +1,4 @@
 # Lab03 starter has no required third-party dependencies; stdlib only.
-# m2t teaching package is available in the book repo for read-only reuse.
+# Keep this file empty unless you add an external service client.
 # Optional for local verification:
-# soundfile>=0.12
-# numpy>=1.26
+# httpx>=0.27

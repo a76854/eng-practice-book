@@ -7,55 +7,20 @@ kernelspec:
 # 健壮性与安全底线
 
 > **本章学习目标**
-> - 能够用 HMAC-SHA256 自签与校验 JWT，解释头部 / 载荷 / 签名的分工，并设计短有效期访问令牌 + 长有效期刷新令牌的轮转与 RBAC 校验流程
-> - 能够用参数化查询阻断 SQL 注入，用转义与 CSP 思路缓解 XSS，并用同步随机令牌缓解 CSRF，区分“校验输入”与“转义输出”的职责边界
-> - 能够设计结构化、分级的日志方案，解释级别、上下文与采样，并用 ELK 的索引与检索思想完成从日志到可观测的闭环
-> - 能够用错误边界与优雅降级把局部故障隔离在可控范围，给出重试有界、超时明确、回退可预期的容错策略
+> - 能够用 PyJWT 签发与校验令牌，用依赖把校验点收敛在边界，并说清访问令牌与刷新令牌的分工
+> - 能够用慢哈希加盐存放密码，把密钥从代码挪进环境变量，并说清密钥泄露为什么是安全事故
+> - 能够区分输入校验与输出转义，说明 SQL 注入、XSS 与 CSRF 三类攻击面各自的防线
+> - 能够用错误边界隔离依赖故障，做出有界重试与带降级标记的可用回退
+> - 能够设计结构化分级日志，做采样与脱敏，并说清从日志检索到告警的路径
 
 > **为什么需要掌握本章**
-> 会跑的功能只是半成品，能在异常输入、恶意请求、依赖抖动与人为误操作下依然“可预期、可审计、可恢复”，才是可上线的系统。MeetingToText 从上传、转写到摘要与导出，每一步都暴露在不受信任的输入与不可靠的网络中；缺少认证与校验，接口就是敞开的门，缺少日志与降级，故障就是黑盒。本章把“安全与健壮性”收敛为四套可落地的工程手段，让系统在攻防与故障面前守住底线。
+> 前面讲后端职责时提到过四条边界，最后一条是安全防护：认证、授权、校验、限流与审计。当时只留了一句提醒，本章把它展开。功能在主路径上跑通，只说明正常情况成立；真实系统还要面对异常输入、恶意请求与依赖抖动。本章以文档查询应用为贯穿例子：收藏接口需要登录，搜索关键词与文档标题都来自外部，搜索与摘要服务随时可能超时。四节沿着一次请求经过的边界走一遍：身份怎么认、数据可不可信、依赖倒了怎么站住、出事怎么查。
 
 > **预计理论学时**：3学时
 
-本章是第四篇的收束，也是全书从“把功能做出来”到“让系统可信”的转折。我们延续“先动机、后定义、再可运行示例”的节奏：每一节先讲清真实故障或攻击如何发生，再给出最小可用模型，最后用一段可在本机复现的 `{code-cell}` 把概念固定下来。与第 9 章相同，所有示例均在书仓根目录的 `.venv` 环境中用标准库与 `m2t` 教学包本地验证，无需真实的网络、云端密钥或外部服务。
+上一章把四个外部帮手配齐，也把密钥与账单摆上了台面，只强调了一句"key 只放服务端"。本章接着往下走，回答同一个系统在坏的情况下如何保持可预期。全章的线索是信任边界，每节负责一段：谁进来了，进来的东西干不干净，依赖倒下了站不站得住，出事了看不看得见。动手练习交给实验指导书。章内结构如下：
 
-章内结构如下：
-
-- [认证与授权 JWT](auth_jwt.md) —— 无状态令牌的原理、签名与刷新、RBAC 的最小实现
-- [数据校验与防注入](data_validation_injection.md) —— SQL 注入、XSS、CSRF 的成因与防御分层
-- [日志系统设计](logging_design.md) —— 结构化日志、分级与采样、ELK 的检索思想
-- [错误边界与优雅降级](error_boundary_graceful_degradation.md) —— 边界隔离、重试与回退、面向用户的可预期失败
-
-此外，本章所有可执行示例均可在书仓 `.venv` 环境中复现；涉及 MeetingToText 的片段复用 `m2t` 教学包（见 [m2t 源码](../../../m2t/store.py) 的精简实现），无需启动真实的 ASR 模型或 LLM 服务。
-
-> **环境约定**：本书面向 Linux，本章命令均面向 Linux，路径与环境激活统一使用 `source .venv/bin/activate` 与 `/` 分隔符；正文跨章引用一律使用相对链接，如 [第1章 开发者的元技能](../../software_engineering/dev_meta_skills/index.md) 与 [第9章 与外部世界的集成](../external_integration/index.md)。
-
-示例（验证本章环境与教学包可用）：
-
-```{code-cell} ipython3
-import sys, pathlib, hashlib, hmac, json, base64
-
-import m2t
-from m2t.store import TaskStore
-
-print("m2t version:", m2t.__version__)
-print("python:", sys.version.split()[0])
-print("TaskStore:", TaskStore.__name__)
-# 快速验证标准库可完成 HMAC（后续 JWT 小节的基础）
-msg = b"chapter10-index-check"
-digest = hmac.new(b"demo-secret", msg, hashlib.sha256).hexdigest()
-print("hmac sha256 prefix:", digest[:16])
-assert len(digest) == 64
-print("prefix:", pathlib.Path(sys.prefix).name)
-# 预期输出:
-# m2t version: 0.1.0
-# python: 3.12.x
-# TaskStore: TaskStore
-# hmac sha256 prefix: <16 位十六进制>
-# prefix: .venv 或系统前缀
-```
-
-```bash
-# 本章所有 code-cell 均用 .venv 中的 Python 执行
-.venv/bin/python -c "import m2t; print(m2t.__version__)"
-```
+- [认证与授权](auth_jwt.md) —— 身份边界：会话与令牌、签发与验签、权限判断、密码与密钥的存放
+- [数据校验与防注入](data_validation_injection.md) —— 数据边界：校验与转义的分工、SQL 注入、XSS、CSRF
+- [错误边界与优雅降级](error_boundary_graceful_degradation.md) —— 依赖边界：捕获与分类、有界重试、降级与诚实标记
+- [日志与可观测](logging_design.md) —— 追溯边界：结构化、分级、采样、脱敏、从检索到告警

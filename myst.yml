@@ -6,8 +6,6 @@ project:
     headings: true
   exclude:
     - labs/**
-    - m2t/**
-    - m2t_tests/**
     - .venv/**
     - _build/**
     - node_modules/**
@@ -95,8 +93,8 @@ project:
       children:
         - file: book/advanced_engineering/robustness_security/auth_jwt.md
         - file: book/advanced_engineering/robustness_security/data_validation_injection.md
-        - file: book/advanced_engineering/robustness_security/logging_design.md
         - file: book/advanced_engineering/robustness_security/error_boundary_graceful_degradation.md
+        - file: book/advanced_engineering/robustness_security/logging_design.md
         - file: book/advanced_engineering/robustness_security/summary_and_questions.md
     - file: book/advanced_engineering/deploy_cicd/index.md
       children:
