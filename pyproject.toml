@@ -17,6 +17,7 @@ book = [
     "PyJWT==2.13.0",
     "sqlalchemy==2.0.52",
     "httpx>=0.27",
+    "httpx2",
     "requests>=2.32",
     "pytest>=9.0",
     "tavily-python>=0.6",

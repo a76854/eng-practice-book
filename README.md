@@ -89,7 +89,9 @@ myst clean --execute -y && myst build --html --execute --strict
 
 - 输出在 `_build/html/`，执行缓存由 `myst clean --execute -y` 清理；CI 每轮强制重跑。
 - 写作契约见 `book/STYLE.md`：章骨架 `index.md`、围栏仅 `{code-cell} ipython3` / `bash`、章末 `summary_and_questions.md`。
-- 部分 `code-cell` 需要外部服务的密钥（搜索、大模型），未配置时走优雅降级分支；密钥统一从环境变量读取，本地可放进 `.env`（已在 `.gitignore`），CI 由 `secrets` 注入。
+- 部分 `code-cell` 需要外部服务的密钥（搜索、大模型），未配置时走优雅降级分支；密钥统一从环境变量读取，本地放进 `.env`（已在 `.gitignore`），CI 由 `secrets` 注入。
+- 本地要跑真实调用：`set -a && source .env && set +a`，再 `myst clean --execute -y && myst build --html --execute --strict`。执行缓存按源码哈希复用，**改动环境变量后必须清缓存**，否则页面里仍是上一次的输出。
+- `.env` 里只填你要用的 key，其余留空；占位文本会被当成真值，导致真实调用报鉴权失败（留空则走降级分支）。
 
 ## 实验
 

@@ -11,6 +11,7 @@
 - 执行内核 `book-venv`（新环境需先注册）：
   `python -m ipykernel install --user --name book-venv --display-name "book-venv"`。
 - CI 在 `.github/workflows/book.yml`：`astral-sh/setup-uv` + `uv sync` + `echo "$PWD/.venv/bin" >> "$GITHUB_PATH"`（因为 myst 是 node CLI，靠 PATH 找 python/jupyter）。
+- 要跑真实外部调用（搜索/大模型）：`set -a && source .env && set +a`（`.env` 里只填要用的 key，**其余必须留空**，占位文本会被当真值导致鉴权失败），然后 **`myst clean --execute -y` 清执行缓存**再构建：环境变量变化不会使缓存失效，不清就还是旧输出。
 
 ## 目录结构与编号（已重构定稿）
 
