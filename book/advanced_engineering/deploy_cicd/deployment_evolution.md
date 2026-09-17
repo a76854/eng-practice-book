@@ -6,31 +6,44 @@ kernelspec:
 
 # 部署演进史
 
-> 学完本节，你能回答：物理机、虚拟机与容器分别把什么资源隔离了？为什么虚拟环境解决了 Python 依赖隔离，却解决不了系统库与端口冲突？容器如何在不启动虚拟机的前提下给出“可复现的机器”？
+学完本节，你能回答：
+
+- 一套代码要满足哪三个条件，才算“能交付”
+- 物理机、虚拟机与容器分别把什么资源隔离了
+- 为什么虚拟环境解决了 Python 依赖隔离，却解决不了系统库与端口冲突
+- 容器如何在不启动虚拟机的前提下给出“可复现的机器”
 
 > 同样的过程得出同样的结果，才值得托付。
 
+前面几章我们讲了代码质量控制，后端前端的职责和编码以及外部服务的集成，至此，我们似乎已经能按图索骥开发出一个项目并交付的。是的，我们已经完成了项目开发的绝大多数工作，假如项目不会出错的话，接下来要执行的环节就是交付，交付不只是把代码拷到服务器上，假如你有一台机器你可以这样做，多台机器怎么办，结果能不能复现，出了故障还能不能整体撤回。本章沿这条链条走四步，先看部署形态的演进，再学把一个应用装进镜像的写法，然后用编排把它与前端接到一起，最后用流水线守住每一次提交。本节是第一步，它要回答一个问题，环境对部署来说有多么重要。
+
 ## 部署的三条要求
 
-上线不是把代码拷到服务器就结束。真实的“可交付”需要同时满足三点：① **环境可复现**——任何机器拉取同一提交得到同一运行结果；② **资源可隔离**——A 服务的依赖、端口、文件不干扰 B 服务；③ **交付可回滚**——出问题能整体撤回而非人肉补丁。物理机与虚拟机分别在不同层级尝试满足这三点，容器则把“隔离”与“可复现”收敛到一次构建、处处运行的镜像上。
+上线不是把代码拷到服务器就结束。真实的“可交付”需要同时满足三点：
 
-文档查询应用的演进是缩影：早期是单文件脚本，只要本机装了 Python 就能跑；加入 FastAPI 后需要固定端口与依赖版本；再加入前端与外部搜索、缓存依赖后，单机已难以用“口头说明”保证一致，这正是容器要解决的痛点。
+1. **环境可复现**，任何机器拉取同一提交得到同一运行结果；
+2. **资源可隔离**，A 服务的依赖、端口、文件不干扰 B 服务；
+3. **交付可回滚**，出问题能整体撤回而非去现场一行行修复代码。
+
+物理机与虚拟机分别在不同层级尝试满足这三点，容器则把“隔离”与“可复现”收敛到一次构建、处处运行的镜像上。
+
+我们前面：早期是单文件脚本，只要本机装了 Python 就能跑；加入 FastAPI 后需要固定端口与依赖版本；再加入前端与外部搜索、缓存依赖后，单机已难以用“口头说明”保证一致，这正是容器要解决的痛点。
 
 ## 物理机
 
-一台物理机对应一套操作系统与硬件。优势是性能无损、独占资源；代价是：
+一台物理机对应一套操作系统与硬件。优势是性能无损、独占资源；代价也清楚：
 
-- 资源利用率低——一台机器只跑一个服务，空闲即浪费；
-- 环境漂移——不同机器的系统库、Python 版本、环境变量不一致，“在我机器上能跑”频发；
-- 交付靠文档——“先装 `libsndfile1` 再 `pip install`”的口头约定难以自动化校验。
+- 资源利用率低：一台机器只跑一个服务，空闲即浪费；
+- 环境漂移：不同机器的系统库、Python 版本、环境变量不一致，“在我机器上能跑”频发；
+- 交付靠文档：“先装某个系统库再 `pip install`”的口头约定难以自动化校验。
 
-类比：物理机像“独栋房子”，住得宽敞但每搬一次家都要重装修。
+类比：物理机像“独栋房子”，住得宽敞，但每搬一次家都要重装修。
 
 ## 虚拟机
 
 虚拟机（Virtual Machine）在物理机之上用 Hypervisor 虚拟出一整套硬件，再各跑一套完整操作系统。每个虚拟机拥有独立的内核、文件系统与网络栈，隔离彻底；代价是每个虚拟机都要携带一个 Guest OS，启动以分钟计，镜像以 GB 计。
 
-- 隔离层级：硬件 + 内核 + 文件系统全隔离。
+- 隔离层级：硬件、内核与文件系统全隔离。
 - 适用：需要强隔离、多租户或不同操作系统共存的场景。
 - 局限：重、慢、镜像臃肿，不适合“一次提交、秒级启动”的开发循环。
 
@@ -42,136 +55,19 @@ kernelspec:
 - 启动是进程级，秒级甚至毫秒级；
 - 隔离足够用于“依赖与端口”层面，又轻到适合本地开发与 CI。
 
-与虚拟环境的对照：`venv` 只隔离了 Python 的 `sys.path` 与 `site-packages`，不隔离系统库、端口与文件系统；容器则把“Python 依赖 + 系统库 + 启动命令 + 暴露端口”一并固化。下表对比三者的隔离边界：
+与虚拟环境的对照：`venv` 只隔离了 Python 的 `sys.path` 与 `site-packages`，不隔离系统库、端口与文件系统；容器则把“Python 依赖、系统库、启动命令、暴露端口”一并固化。下表对比几种隔离方式的边界：
 
 | 维度 | 物理机 | 虚拟机 | 容器 | Python 虚拟环境 |
 | --- | --- | --- | --- | --- |
 | 隔离对象 | 整机 | Guest OS + 硬件 | 进程 + 文件系统 + 网络命名空间 | `sys.path` / `site-packages` |
 | 启动时间 | — | 分钟级 | 秒级 | 毫秒级（激活） |
 | 镜像体积 | — | GB 级（含 OS） | MB 级（分层复用） | KB 级（仅路径） |
-| 可复现性 | 依赖文档 | 镜像可复现但重 | Dockerfile 可复现且轻 | `requirements.lock` 可复现但不含系统库 |
+| 可复现性 | 依赖文档 | 镜像可复现但重 | Dockerfile 可复现且轻 | 锁文件可复现但不含系统库 |
 
-> **中立性说明**：没有银弹。物理机适合对性能与硬件直通要求极高的场景；虚拟机适合强隔离与异构 OS；容器适合“微服务 + 快速交付”；虚拟环境适合单语言依赖隔离。四者常组合使用——容器内仍用虚拟环境或 `pip` 管理 Python 依赖，互为补充而非替代。
+## 本节小结
 
-## 用 Python 对照演示“进程/依赖隔离”的思想
-
-示例：进程与依赖隔离对照：
-
-```{code-cell} ipython3
-import sys, sysconfig, pathlib, tempfile, os
-
-# 1) 虚拟环境层的隔离：仅隔离 Python 导入路径
-print("=== venv 层隔离 ===")
-print("sys.prefix:", sys.prefix)
-print("sys.base_prefix:", sys.base_prefix)
-print("in venv:", sys.prefix != sys.base_prefix)
-print("purelib:", sysconfig.get_paths()["purelib"])
-# purelib 应指向 .venv 内部（若在虚拟环境中）
-assert "site-packages" in sysconfig.get_paths()["purelib"]
-print("venv 隔离通过：purelib 指向独立 site-packages")
-
-# 2) 容器层的隔离思想：用临时目录模拟“独立文件系统 + 独立数据卷”
-print("\n=== 容器层隔离思想（文件系统隔离模拟） ===")
-with tempfile.TemporaryDirectory() as tmp1, tempfile.TemporaryDirectory() as tmp2:
-    # 两个“容器”各自拥有独立的 /data
-    data1 = pathlib.Path(tmp1) / "data"
-    data2 = pathlib.Path(tmp2) / "data"
-    data1.mkdir()
-    data2.mkdir()
-    (data1 / "task.txt").write_text("container-A data", encoding="utf-8")
-    (data2 / "task.txt").write_text("container-B data", encoding="utf-8")
-    # 彼此不可见对方的文件——模拟挂载命名空间隔离
-    print("container-A reads:", (data1 / "task.txt").read_text(encoding="utf-8"))
-    print("container-B reads:", (data2 / "task.txt").read_text(encoding="utf-8"))
-    assert (data1 / "task.txt").read_text(encoding="utf-8") != (data2 / "task.txt").read_text(encoding="utf-8")
-    print("文件系统隔离演示通过：两容器 /data 互不可见")
-
-# 3) 进程隔离思想：用环境变量作用域模拟“容器内环境不外泄”
-print("\n=== 环境变量隔离思想 ===")
-env_a = {"DOCSEARCH_DATA_DIR": "/data/a", "PORT": "8000"}
-env_b = {"DOCSEARCH_DATA_DIR": "/data/b", "PORT": "8001"}
-print("container-A env:", env_a)
-print("container-B env:", env_b)
-assert env_a["DOCSEARCH_DATA_DIR"] != env_b["DOCSEARCH_DATA_DIR"]
-assert env_a["PORT"] != env_b["PORT"]
-print("环境隔离演示通过：同名变量在不同容器中互不干扰")
-
-print("\n对照结论：venv 隔离 Python 依赖，容器隔离文件系统、环境与端口——后者是前者的超集")
-# 预期输出:
-# === venv 层隔离 ===
-# sys.prefix: .../.venv 或系统前缀
-# sys.base_prefix: /usr 或 /opt/...
-# in venv: True 或 False（取决于是否激活虚拟环境）
-# purelib: .../site-packages
-# venv 隔离通过：purelib 指向独立 site-packages
-# === 容器层隔离思想（文件系统隔离模拟） ===
-# container-A reads: container-A data
-# container-B reads: container-B data
-# 文件系统隔离演示通过：两容器 /data 互不可见
-# === 环境变量隔离思想 ===
-# container-A env: {'DOCSEARCH_DATA_DIR': '/data/a', 'PORT': '8000'}
-# container-B env: {'DOCSEARCH_DATA_DIR': '/data/b', 'PORT': '8001'}
-# 环境隔离演示通过：同名变量在不同容器中互不干扰
-# 对照结论：venv 隔离 Python 依赖，容器隔离文件系统、环境与端口——后者是前者的超集
-```
-
-```bash
-# 验证虚拟环境隔离
-.venv/bin/python -c "import sys, sysconfig; print(sys.prefix != sys.base_prefix, sysconfig.get_paths()['purelib'])"
-```
-
-## 为何容器能终结“在我机器上能跑”
-
-示例：容器与环境可复现性：
-
-```{code-cell} ipython3
-import hashlib
-
-# 用 Dockerfile 的文本可复现性对比“口头文档”的不可复现性
-# 思想：若部署说明是口头的，每次人肉执行都可能漏一步；若部署说明是 Dockerfile，则同一文件构建出同一镜像
-
-# 内联 Dockerfile 示例（精简版，与 Dockerfile 最佳实践一节一致，无需依赖仓库中的真实文件）
-DOCKERFILE = """\
-FROM python:3.12-slim
-WORKDIR /app
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-COPY src/ ./src/
-ENV PYTHONPATH=/app/src
-EXPOSE 8000
-CMD ["uvicorn", "docsearch.main:app", "--host", "0.0.0.0", "--port", "8000"]
-"""
-content = DOCKERFILE
-
-# 1) 校验 Dockerfile 固化了关键环境要素
-checks = {
-    "base image 固化": "FROM python:3.12-slim" in content,
-    "依赖清单固化": "requirements.txt" in content,
-    "工作目录固化": "WORKDIR /app" in content,
-    "环境变量固化": "PYTHONPATH=/app/src" in content,
-    "暴露端口固化": "EXPOSE 8000" in content,
-    "启动命令固化": 'CMD ["uvicorn"' in content,
-}
-for k, ok in checks.items():
-    print(f"{k}: {'OK' if ok else 'MISSING'}")
-    assert ok, f"Dockerfile 缺少 {k}"
-
-# 2) 用哈希演示“同一 Dockerfile 文本 → 同一构建输入”的可复现思想
-digest = hashlib.sha256(content.encode()).hexdigest()
-print("Dockerfile sha256 前16位:", digest[:16])
-print("可复现性结论：同一文本的哈希必相同，口头文档无法给出这样的保证")
-
-# 3) 对比：虚拟环境仅固化 Python 依赖，不含解释器与系统层
-print("\n虚拟环境固化的边界：")
-print("  - 固化：requirements.txt 列出的 Python 包与版本")
-print("  - 未固化：Python 解释器本身、系统库、系统时区、端口占用、文件权限")
-print("容器固化的边界：Dockerfile 把上述未固化项一并纳入镜像分层")
-print("演进结论：物理机→虚拟机→容器，固化的边界逐步扩大，交付的可复现性随之提升")
-```
-
-> **工程启示**：部署演进的本质是把“隐式约定”变为“显式、可版本控制、可哈希校验”的构建输入。虚拟环境让 Python 依赖可复现，容器则把系统库、文件布局与启动命令一并纳入版本控制；二者叠加，才得到“在任何机器上可复现”的交付物。与 [第1章 依赖与虚拟环境](../../software_engineering/dev_meta_skills/dependencies_virtualenv.md) 的隔离原理相互印证——容器是虚拟环境思想在操作系统层的延伸。
-
-```bash
-# 查看 Dockerfile 固化的环境
-cat labs/lab08_fullstack_container/starter/Dockerfile
-```
+- 可交付要同时满足三条：环境可复现、资源可隔离、交付可回滚；缺一条，上线就得靠人盯。
+- 物理机、虚拟机、容器在三个层级上做隔离：整机、Guest OS 加硬件、进程加文件系统加网络命名空间，越往后越轻。
+- `venv` 只管 Python 的导入路径与依赖，系统库、端口、文件系统它都管不了，容器把这几样一起固化。
+- 镜像是一次构建、处处运行的产物，把系统库、文件布局与启动命令都写进版本控制的 Dockerfile，才谈得上可复现。
+- 演进的方向是固化的边界不断扩大：从依赖文档，到虚拟环境，再到镜像，最后到编排与流水线。

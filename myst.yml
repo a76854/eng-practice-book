@@ -121,3 +121,5 @@ project:
 site:
   title: 算法编程与工程实践
   template: book-theme
+  options:
+    favicon: favicon.ico

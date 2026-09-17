@@ -34,8 +34,8 @@ numbering: false
 
 1. 以 `starter/Dockerfile` 为起点，完善后端的容器化声明：
    - 基座选 `python:3.12-slim`，工作目录 `/app`，声明 `EXPOSE 8000` 与 `ENV DOCSEARCH_DATA_DIR=/data`。
-   - 先 `COPY requirements.txt` 再 `RUN pip install --no-cache-dir -r requirements.txt`，然后才 `COPY src/ ./src/`，让业务代码的频繁变动只使最后一层失效。
-   - 启动命令用 `CMD ["uvicorn", "docsearch.main:app", "--host", "0.0.0.0", "--port", "8000"]` 或等价的 FastAPI 启动，保持与 `starter/Dockerfile` 的意图对齐。
+   - 先 `COPY pyproject.toml uv.lock` 再 `RUN pip install --no-cache-dir uv && uv sync --frozen --no-dev --no-install-project`，然后才 `COPY src/ ./src/`，让业务代码的频繁变动只使最后一层失效。
+   - 启动命令用 `CMD ["uvicorn", "docsearch.main:app", "--host", "0.0.0.0", "--port", "8000"]`，并声明 `ENV PATH="/app/.venv/bin:$PATH"` 让容器用上 uv 建的环境，保持与 `starter/Dockerfile` 的意图对齐。
 2. 保持选择性 COPY，不 `COPY . .`，避免把 `labs/`、`book/`、`.venv`、数据文件误入镜像，产物可通过文本解析验证。
 3. 若后端依赖系统库，把安装与清理写在同一 `RUN`（`apt-get update && apt-get install -y --no-install-recommends ... && rm -rf /var/lib/apt/lists/*`），减少层数并控制体积。
 
@@ -56,7 +56,7 @@ numbering: false
 ### 步骤 6 整理答辩与自检清理
 
 1. 按 `starter/README.md` 的答辩要点整理陈述，主线覆盖“需求切片、架构选型、外部集成与流式、健壮性与脱敏、容器化与交付”，每节 2 到 3 分钟，配合演示与配置文本佐证。
-2. 准备提问清单，至少覆盖“为何先 COPY requirements.txt 再 COPY src/”“depends_on 与健康检查的区别”“COPY 不当如何导致缓存失效”“前端与后端如何跨域联调”。
+2. 准备提问清单，至少覆盖“为何先 COPY pyproject.toml 与 uv.lock 再 COPY src/”“depends_on 与健康检查的区别”“COPY 不当如何导致缓存失效”“前端与后端如何跨域联调”。
 3. 用 `git status` 确认无 `.venv`、`__pycache__`、`node_modules/`、`dist/`、镜像 tar 与云密钥等不应提交的内容，确认 `python -c "import yaml; yaml.safe_load(open('starter/docker-compose.yml'))"` 通过，`myst build --html --strict` 可构建，准备演示与答辩。
 
 ## 验收标准
@@ -64,7 +64,7 @@ numbering: false
 逐条自查，全部勾选即视为完成：
 
 - [ ] `starter/Dockerfile` 以 `python:3.12-slim` 为基座，含 `WORKDIR`、`COPY` 与 `pip install --no-cache-dir`、环境变量与 `EXPOSE` / `CMD`，且体现层缓存友好的 COPY 顺序。
-- [ ] `starter/Dockerfile` 为选择性 COPY，仅含 `requirements.txt` 与 `src/`，不含 `labs/`、`book/`、`.venv`、数据文件等无关上下文。
+- [ ] `starter/Dockerfile` 为选择性 COPY，仅含 `pyproject.toml`、`uv.lock` 与 `src/`，不含 `labs/`、`book/`、`.venv`、数据文件等无关上下文。
 - [ ] `starter/docker-compose.yml` 声明 `backend` 与 `frontend` 两服务，`backend` 含健康检查，`frontend` 含 `depends_on` 的 `service_healthy`，端口映射与环境变量可被 `yaml.safe_load` 解析。
 - [ ] Compose 配置可在无 Docker 时用 `python -c "import yaml; yaml.safe_load(open('docker-compose.yml'))"` 预演，在有 Docker 时用 `docker compose config -q` 通过。
 - [ ] 能说清从物理机到容器再到编排的演进动因，能解释多阶段构建对体积与缓存的影响，能解释为何 `EXPOSE` 仅声明而由 `ports` 发布。
