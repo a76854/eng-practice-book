@@ -6,30 +6,45 @@ kernelspec:
 
 # CI/CD 流水线
 
-> 学完本节，你能回答：CI 与 CD 各自在交付的哪一环起作用？GitHub Actions 的工作流、作业与步骤如何对应“校验—测试—编排预检”的门禁链路？为什么流水线要在 `push` 与 `pull_request` 两个事件上都触发？
+学完本节，你能回答：
+
+- 手动上线可能在哪些地方出错，CI 与 CD 是什么，如何自动化
+- GitHub Actions 是什么，为什么可以在别人的机器上替你跑命令
+- 发布与回滚为什么都要靠不可变的东西（标签或摘要）来固定
 
 > 把关越早，代价越小。
 
-## 从人肉上线到自动化门禁
+上一节让多个容器按依赖就绪地跑起来，可交付还差一步：怎么保证每一次改动都经过同样的检查，而不是靠人记得跑。第 2 章讲过“提交即校验”的 CI 概念与一份最小流水线，本节把它放进交付链条里。容器与编排就位之后，门禁要多守一道拓扑合法性，发布也要能从镜像回到具体的提交。本节先看人肉上线的三处漏，再给出这条门禁链路的完整写法，最后补上发布与回滚。
 
-手工上线常见三错：① 漏跑检查（lint 过了但类型检查没跑）；② 环境漂移（本地通过，CI 因依赖不同失败）；③ 回归靠记忆（改动后忘了验证编排）。CI（持续集成）把“每次提交必经的校验”自动化，CD（持续交付/部署）把“已验证的产物可一键发布”自动化，二者共同构成“提交即验证、验证即门禁”的交付流水线。
+## 从手动上线到自动化
 
-- **CI**：在代码合入前自动完成 Lint、类型检查、单元测试、编排校验等门禁，失败则阻断合入。
+手工上线常见三错：漏跑检查、环境漂移、回归测试。CI（持续集成）把“每次提交必经的校验”自动化，CD（持续交付/部署）把“已验证的产物可一键发布”自动化，二者共同构成“提交即验证、验证即门禁”的交付流水线。
+
+- **CI**：在代码合入前自动完成风格检查、类型检查、单元测试与编排校验，失败则阻断合入。
 - **CD**：在 CI 通过后自动完成构建、推送镜像、部署到预发或生产（本章聚焦 CI 与交付就绪，生产发布由运维策略决定是否自动）。
 
-文档查询后端的门禁链路与此一一对应：`ruff check` 守风格、`mypy` 守类型契约、`pytest` 守行为回归、`docker compose config -q` 守拓扑合法性；四者任一失败，提交即红灯。
+文档查询后端的门禁链路与此一一对应，四道关各守一端：
 
-## GitHub Actions 的三层模型
+| 门禁 | 守什么 | 不过会怎样 |
+| --- | --- | --- |
+| `uv run ruff check src/` | 风格与常见缺陷 | 命中就红灯，合入被拦 |
+| `uv run mypy src/` | 类型契约 | 同上 |
+| `uv run pytest -q` | 行为回归 | 同上 |
+| `docker compose config -q` | 拓扑合法性 | 同上 |
 
-GitHub Actions 用 `.github/workflows/*.yml` 声明流水线，核心三层：
+前三道守代码，第四道守配置。顺序也有讲究：从快到慢排，最便宜的检查先跑，失败早暴露，不浪费后面的时间。
 
-- **Workflow（工作流）**：由 `on` 事件触发（如 `push` / `pull_request`），包含一个或多个 `jobs`。
-- **Job（作业）**：运行在 `runs-on` 指定的执行器（如 `ubuntu-latest`）上，由多个 `steps` 串行组成；不同 `jobs` 可并行或按 `needs` 串行。
-- **Step（步骤）**：一个 `uses`（复用 Action）或 `run`（执行 Shell）。如 `actions/checkout@v4` 拉取代码，`actions/setup-python@v5` 安装 Python，`run: ruff check .` 执行校验。
+## 仓库自带的执行器
 
-触发事件的选择：`push` 保证“每次推送都验证”，`pull_request` 保证“合入前在目标分支上下文中再验证一次”，二者叠加可覆盖“分支推送”与“合入门禁”两类场景。本节给出的内联工作流示例正是此配置。
+GitHub Actions 可以理解成仓库自带的执行器：你在仓库里放一份 YAML，声明“什么时候跑、在哪台机器上跑、跑哪些命令”，GitHub 就会在满足条件时替你开一台临时机器，把命令跑一遍，并把结果与日志挂在这次提交或这次 PR 上。失败就是红灯，也可以把它设为合并的前置条件。
 
-## 内联工作流 `ci.yml` 的门禁链路
+它要解决的问题很朴素：人总会忘。忘跑测试、忘更新依赖、只在本机验证过。把这些命令从“口头约定”搬进仓库里的 YAML，检查就跟着提交走，谁来提交都一样。
+
+这份声明放在 `.github/workflows/` 目录下，需要交代清楚四件事：触发时机（推送或开 PR）、运行环境（用哪台临时机器）、执行步骤（按顺序跑哪些命令）、失败时的表现。本节的内联示例就是这四样的最小写法。
+
+> **中立性说明**：GitHub Actions 适合 GitHub 托管项目的开箱即用；GitLab CI、Jenkins、CircleCI 等在自托管与企业集成上各有优势，门禁链路的思想一致：把“本地可跑”的校验固化为“提交必跑”的自动化。
+
+## 工作流示例
 
 ```yaml
 name: CI
@@ -42,226 +57,80 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -r requirements.txt -r requirements-dev.txt
-      - run: ruff check .
-      - run: mypy src --ignore-missing-imports
-      - run: python -m pytest -q
+      - run: pip install uv
+      - run: uv sync --dev
+      - run: uv run ruff check src/
+      - run: uv run mypy src/
+      - run: uv run pytest -q
       - run: docker compose -f docker-compose.yml config -q
 ```
 
 逐项解读：
 
-- `actions/checkout@v4`——把提交的代码检出到执行器，否则后续步骤无代码可检。
-- `actions/setup-python@v5`——固定 `python-version: "3.12"`，与项目约定的 Python 版本对齐，避免“本地 3.12 通过、CI 3.11 失败”的漂移。
-- `pip install -r requirements.txt -r requirements-dev.txt`——前者是运行时依赖，后者是 `ruff` / `mypy` / `pytest` / `pyyaml` 等开发依赖；拆成两份，镜像与流水线各取所需。
-- `ruff check .` / `mypy src --ignore-missing-imports` / `pytest -q`——三道质量门禁分别守“风格与常见缺陷”“类型契约”“行为回归”，顺序上先快后慢，失败早暴露。
-- `docker compose config -q`——不启动容器，仅校验 Compose YAML 合法性与可渲染性，守“拓扑门禁”。`-q` 静默模式，合法则零退出码，非法则非零失败。
+- `on`：触发时机。`push` 保证每次推送都验证，`pull_request` 保证合入前在目标分支的上下文里再验证一次，两者叠加覆盖“分支推送”与“合入门禁”两类场景。
+- `runs-on`：运行环境，这里是一台临时的 Ubuntu 机器，用完即弃，所以每一步都要能从零装出环境。
+- `actions/checkout` 与 `actions/setup-python`：把代码检出到这台机器上，并固定 Python 版本，避免“本地 3.12 通过、CI 3.11 失败”。多版本矩阵的写法见 [CI/CD 与代码质量](../../software_engineering/code_quality/testing_coverage_and_ci.md)。
+- `pip install uv` 与 `uv sync --dev`：装上 `uv` 并按 `pyproject.toml` 与 `uv.lock` 复现依赖，与上一节镜像里的安装方式同源，本地和 CI 装出的是同一套依赖。
+- `uv run …`：在项目环境里依次执行风格、类型与行为三道关。
+- `docker compose … config -q`：不启动容器，只校验 Compose YAML 合法性与可渲染性，守拓扑这道关。
 
-> **中立性说明**：GitHub Actions 适合 GitHub 托管项目的开箱即用；GitLab CI、Jenkins、CircleCI 等在自托管与企业集成上各有优势，门禁链路的思想一致——把“本地可跑”的校验固化为“提交必跑”的自动化。
+> **环境约定**：本书面向 Linux，流水线默认在 `ubuntu-latest` 的 Linux 执行器上运行，本地开发均用 `.venv` 复现同一套命令，保证“本地绿、CI 亦绿”。
 
-> **环境约定**：本书面向 Linux，流水线中的 `run` 默认在 `ubuntu-latest` 的 Linux 执行器上，路径为 Linux 风格 `/home/runner/work/...`；本地开发均用 `.venv` 复现同一套 `ruff` / `mypy` / `pytest` 命令，保证“本地绿、CI 亦绿”。
+## 门禁的顺序与本地复现
 
-## 用 PyYAML 解析并校验内联工作流
+四道门禁的耗时差着量级，顺序因此有讲究：最便宜的检查先跑，失败早暴露，后面的时间就省下来了。
 
-示例：解析并校验内联工作流：
+| 顺序 | 门禁 | 大致耗时 | 守什么 |
+| --- | --- | --- | --- |
+| 1 | `uv run ruff check src/` | 秒级 | 风格与常见缺陷 |
+| 2 | `uv run mypy src/` | 秒级到十几秒 | 类型契约 |
+| 3 | `uv run pytest -q` | 十几秒到分钟级 | 行为回归 |
+| 4 | `docker compose config -q` | 秒级 | 拓扑合法性 |
 
-```{code-cell} ipython3
-import pathlib, yaml
+把这笔账算成数：假设风格检查 5 秒、类型检查 8 秒、测试 30 秒、编排校验 2 秒，合计 45 秒。若风格检查在第一道就失败，只付出 5 秒即可停下，比“全跑完再看结果”省下约九成时间。提交越频繁，这笔账越值得算。
 
-# 内联工作流示例（与正文 YAML 一致，无需依赖仓库中的真实文件）
-CI_YAML = """\
-name: CI
-on: { push: {}, pull_request: {} }
-jobs:
-  verify:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install -r requirements.txt -r requirements-dev.txt
-      - run: ruff check .
-      - run: mypy src --ignore-missing-imports
-      - run: python -m pytest -q
-      - run: docker compose -f docker-compose.yml config -q
-"""
-
-data = yaml.safe_load(CI_YAML)
-
-print("=== Workflow 顶层 ===")
-print("name:", data.get("name"))
-assert data.get("name") == "CI"
-# PyYAML 将裸 on 解析为 True（YAML 1.1 布尔），需兼容两种键
-on = data.get("on", data.get(True, {}))
-print("on:", on)
-# yaml.safe_load 对空值的 push/pull_request 会解析为 None，需兼容
-assert isinstance(on, dict) and "push" in on and "pull_request" in on
-print("触发事件 OK：push + pull_request（覆盖推送与合入两类场景）")
-
-print("\n=== Jobs ===")
-jobs = data.get("jobs", {})
-print("jobs:", list(jobs.keys()))
-assert "verify" in jobs
-verify = jobs["verify"]
-print("runs-on:", verify.get("runs-on"))
-assert verify.get("runs-on") == "ubuntu-latest"
-print("runs-on OK：ubuntu-latest（与本地 Linux 容器一致）")
-
-steps = verify.get("steps", [])
-print("\n=== Steps（", len(steps), "步） ===")
-for i, s in enumerate(steps, 1):
-    name = s.get("name", s.get("uses", s.get("run", ""))[:48])
-    print(f"  {i}. {name}")
-    if "uses" in s:
-        print(f"     uses: {s['uses']}")
-    if "run" in s:
-        print(f"     run: {s['run'][:72]}")
-
-# 校验门禁链路的完整性
-uses_list = [s.get("uses", "") for s in steps]
-runs = [s.get("run", "") for s in steps]
-assert any("actions/checkout" in u for u in uses_list), "缺少 checkout"
-assert any("actions/setup-python" in u for u in uses_list), "缺少 setup-python"
-print("\nActions 复用 OK：checkout + setup-python")
-
-# 校验四道门禁均在
-assert any("ruff check" in r for r in runs), "缺少 ruff"
-assert any("mypy" in r for r in runs), "缺少 mypy"
-assert any("pytest" in r for r in runs), "缺少 pytest"
-assert any("docker compose" in r and "config -q" in r for r in runs), "缺少 compose 校验"
-print("门禁链路 OK：ruff + mypy + pytest + docker compose config -q 四道门禁齐全")
-
-# 校验 Python 版本与安装步骤
-setup_step = next(s for s in steps if "setup-python" in s.get("uses", ""))
-py_ver = setup_step.get("with", {}).get("python-version", "")
-print("setup-python version:", py_ver)
-assert "3.12" in str(py_ver)
-install_runs = [r for r in runs if "pip install" in r]
-print("install step:", install_runs[0][:80] if install_runs else "MISSING")
-assert any("pip install -r requirements.txt" in r for r in runs)
-print("版本与安装 OK：python 3.12 + requirements.txt 与 requirements-dev.txt 分开安装")
-
-print("\n流水线结论：该 Workflow 在 push/pull_request 上触发，于 ubuntu-latest 上串行执行‘检出→装环境→装依赖→四道门禁’")
-```
+比顺序更重要的是可复现：流水线里跑的每一条命令，开发者都应该能在本机跑一遍，红灯不必等推送才发现。
 
 ```bash
-# 本地校验 CI YAML 合法性（无需 GitHub，纯 YAML 解析；此处以内联文本为例）
-.venv/bin/python - <<'PY'
-import yaml
-ci = """\
-name: CI
-on: { push: {}, pull_request: {} }
-jobs:
-  verify:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install -r requirements.txt -r requirements-dev.txt
-      - run: ruff check .
-      - run: mypy src --ignore-missing-imports
-      - run: python -m pytest -q
-      - run: docker compose -f docker-compose.yml config -q
-"""
-print(yaml.safe_load(ci)["jobs"]["verify"]["runs-on"])
-PY
-# 本地复刻流水线的四道门禁
-.venv/bin/python -m ruff check . 2>&1 | head -n 20
-.venv/bin/python -m mypy src --ignore-missing-imports 2>&1 | head -n 20
-.venv/bin/python -m pytest -q 2>&1 | tail -n 20
-.venv/bin/python -c "import yaml; yaml.safe_load('services: {web: {image: nginx}}'); print('compose yaml ok')"
+# 本地复刻流水线的四道门禁（都在 .venv 里有等价写法）
+.venv/bin/python -m ruff check src/
+.venv/bin/python -m mypy src/
+.venv/bin/python -m pytest -q
+.venv/bin/python -c "import yaml; yaml.safe_load(open('docker-compose.yml'))"
+
+# 有 Docker 时，编排校验用同一份声明
+docker compose -f docker-compose.yml config -q && echo "compose config ok"
 ```
 
-## 为何门禁要分层、按序执行
+## 发布与回滚
 
-示例：门禁分层与按序执行：
+CI 通过之后，产物才算“可交付”，接下来的问题是把它发出去，以及出错时怎么退回来。
 
-```{code-cell} ipython3
-import pathlib, yaml
+关键在一个约定：**发布的东西必须不可变**。镜像的两个常见标签风格，差别在回滚时最能体现：
 
-# 内联工作流示例（与正文 YAML 一致）
-CI_YAML = """\
-name: CI
-on: { push: {}, pull_request: {} }
-jobs:
-  verify:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install -r requirements.txt -r requirements-dev.txt
-      - run: ruff check .
-      - run: mypy src --ignore-missing-imports
-      - run: python -m pytest -q
-      - run: docker compose -f docker-compose.yml config -q
-"""
+| 标签风格 | 例子 | 回滚时的问题 |
+| --- | --- | --- |
+| 浮动标签 | `docsearch:latest` | 下次拉到的可能是更深的新版本，退不回指定那个 |
+| 不可变标签 | `docsearch:8f3c21a`（提交号） | 与提交一一对应，指回上一个标签即可复原 |
 
-# 1) 解析内联流水线的步骤顺序
-data = yaml.safe_load(CI_YAML)
-steps = data["jobs"]["verify"]["steps"]
-runs = [s.get("run", "") for s in steps]
-
-# 提取门禁步骤的顺序索引
-def idx_of(keyword: str) -> int:
-    for i, r in enumerate(runs):
-        if keyword in r:
-            return i
-    return 999
-
-order = {
-    "ruff": idx_of("ruff check"),
-    "mypy": idx_of("mypy"),
-    "pytest": idx_of("pytest"),
-    "compose": idx_of("docker compose"),
-}
-print("=== 门禁顺序（索引越小越先执行） ===")
-for k, v in sorted(order.items(), key=lambda kv: kv[1]):
-    print(f"  {k}: {v}")
-
-# 校验：先快后慢——lint/type 最快，test 次之，compose 校验最轻但依赖 YAML 合法
-assert order["ruff"] < order["mypy"] < order["pytest"]
-print("顺序 OK：ruff → mypy → pytest（先快后慢，失败早暴露）")
-
-# 2) 模拟“分层门禁”的价值：若 lint 失败，后续步骤可跳过以节省 CI 分钟
-print("\n=== 分层门禁的成本思想 ===")
-cost = {"ruff": 5, "mypy": 8, "pytest": 30, "compose": 2}  # 模拟秒级成本
-# 好流水线：ruff 失败即止，仅付 5s
-good_cost = cost["ruff"]
-# 差流水线：不分层，一次跑完所有再看结果，失败也付全量
-bad_cost = sum(cost.values())
-print(f"好：ruff 失败即止，成本 {good_cost}s；差：跑完全量才知失败，成本 {bad_cost}s")
-print(f"分层节省：{(1 - good_cost/bad_cost)*100:.1f}% 的 CI 时间（在高频提交下尤为显著）")
-
-# 3) 校验“本地可复现”——流水线的每一步在 .venv 中均可等价复刻
-print("\n=== 本地复现性 ===")
-print("  本地 ruff:  .venv/bin/python -m ruff check .")
-print("  本地 mypy:  .venv/bin/python -m mypy src --ignore-missing-imports")
-print("  本地 pytest:.venv/bin/python -m pytest -q")
-print("  本地 compose 校验: .venv/bin/python -c \"import yaml,pathlib; yaml.safe_load(...)\"")
-print("本地复现性 OK：CI 的每一步在开发者机器上均可等价执行，无黑盒")
-
-# 4) 触发事件的覆盖度
-on = data.get("on", data.get(True, {}))
-print("\n=== 触发事件覆盖 ===")
-print("on:", list(on.keys()) if isinstance(on, dict) else on)
-print("  push：覆盖‘分支推送即验证’，防止‘本地绿、远端红’滞后发现")
-print("  pull_request：覆盖‘合入前在目标分支上下文中再验证’，守合入前最后一道门")
-assert "push" in on and "pull_request" in on
-print("触发覆盖 OK：push + pull_request 双事件，无漏检窗口")
-
-print("\n流水线启示：CI 的价值不在‘多跑几个命令’，而在把‘本地可跑’固化为‘提交必跑、失败必拦’的门禁；与上一节的层缓存、编排小节的拓扑校验共同构成‘可复现的交付’")
-```
-
-> **工程启示**：流水线的四道门禁分别守“风格—类型—行为—拓扑”，与 [第2章 构筑代码质量的护城河](../../software_engineering/code_quality/index.md) 的质量护城河、[健壮性与安全底线](../robustness_security/index.md) 的可观测约定相互印证——没有门禁的交付如同没有护城河的代码库，迟早在回归中付出代价；而门禁的本地可复现性，则让“CI 红灯”在开发者本机即可预判与修复。
+用提交号打标签是最省事的做法：构建时取当前提交的短哈希作为标签，产物与代码一一对应，回滚就是把 Compose 里的 `image` 指回上一个标签再拉起，而不是登上服务器改文件。若要求更严格，可以按镜像摘要固定，因为标签可以被覆盖，摘要不会：
 
 ```bash
-# 查看 CI 流水线声明
-cat .github/workflows/ci.yml 2>/dev/null || echo "以正文内联工作流示例为准"
-# 本地等价复刻
-.venv/bin/python -m ruff check . && .venv/bin/python -m mypy src --ignore-missing-imports && .venv/bin/python -m pytest -q && echo "local gate green"
+# 构建时用提交号做标签，产物与提交一一对应
+docker build -f Dockerfile -t docsearch:$(git rev-parse --short HEAD) .
+docker push docsearch:$(git rev-parse --short HEAD)
+
+# 回滚 = 把配置指回上一个不可变标签，再按声明式拓扑重新拉起
+docker compose pull
+docker compose up -d
 ```
+
+前几节把“构建输入”固化成 Dockerfile 与锁文件，这一步把“发布的是哪个产物”也固定下来。两件事合起来，才谈得上“回滚到任意历史版本可复现”：同一份提交、同一套锁文件、同一个镜像标签，构建出的运行环境就是同一个。
+
+## 本节小结
+
+- 人肉上线常在三处出错：漏跑检查、环境漂移、回归靠记忆；CI 把提交必经的校验自动化，CD 把已验证产物的一键发布自动化。
+- GitHub Actions 是仓库自带的执行器：放一份 YAML 交代触发时机、运行环境、执行步骤与失败表现，推送或开 PR 时自动跑。
+- 交付门禁有四道：风格、类型、行为、拓扑；从快到慢排，最便宜的检查先跑，失败早暴露。
+- 门禁与本地命令必须一致，本地 `.venv` 能复现 CI 的每一步，红灯才能在提交前发现。
+- 发布用不可变标签或镜像摘要固定产物，回滚是把配置指回上一个标签再按拓扑拉起，而不是上服务器改文件。

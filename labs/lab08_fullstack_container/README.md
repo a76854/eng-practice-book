@@ -21,7 +21,7 @@
 
 ### 步骤 3 Dockerfile
 
-补齐基座、先拷 `requirements.txt` 再拷 `src/` 的顺序、`pip install --no-cache-dir` 与 `EXPOSE` / `CMD`。
+补齐基座、先拷 `pyproject.toml` 与 `uv.lock` 再拷 `src/` 的顺序、`uv sync --frozen --no-dev` 与 `EXPOSE` / `CMD`。
 
 ### 步骤 4 Compose 编排
 

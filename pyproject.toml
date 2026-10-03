@@ -1,7 +1,7 @@
 [project]
 name = "eng-practice-book"
 version = "0.1.0"
-description = "《算法编程与工程实践》教科书构建配置"
+description = "《python编程工程实践》教科书构建配置"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []

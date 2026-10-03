@@ -1,6 +1,6 @@
 version: 1
 project:
-  title: 算法编程与工程实践
+  title: python编程工程实践
   numbering:
     title: true
     headings: true
@@ -119,5 +119,7 @@ project:
         - file: book/appendix/appendix_b_references.md
         - file: book/appendix/appendix_c_usage_of__init__.py.md
 site:
-  title: 算法编程与工程实践
+  title: python编程工程实践
   template: book-theme
+  options:
+    favicon: favicon.ico
