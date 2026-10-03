@@ -6,15 +6,6 @@ kernelspec:
 
 # 接口测试
 
-学完本节，你能回答：
-
-- 第 3、4 章 code-cell 里那些 `assert` 为什么只是"顺手跑"，还不算测试套件？
-- 一个 pytest 测试文件长什么样？`def test_xxx` 与 `fixture` 各自承担什么职责？
-- `dependency_overrides` 解决什么问题？它如何让测试不连真实数据库、不发真实外部请求？
-- 测试之间为什么要隔离？替身之间互相污染会带来什么麻烦？
-
-> 偶然的正确，不值得信赖。
-
 前面的每一节，code-cell 末尾都跟着几句 `assert`。它们证明了"此刻这条链路是通的"，却证明不了"下次改动后它还是通的"：改一行 Service、加一个字段，没人会回头重跑那些散在正文里的 cell，回归全靠自觉。这一节把"顺手跑"升级成"可回归的接口测试"。
 
 第 2 章讲过 [pytest 与测试金字塔](../../software_engineering/code_quality/testing_coverage_and_ci.md)，第 3 章搭好了 [分层架构](fastapi_routing.md) 之外更早的 [DocumentRepository 抽象](../backend_essence/fastapi_and_layered_architecture.md)。这一节把两者接起来，讲接口测试的两件实事：怎么把断言组织成套件，怎么用依赖替换把搜索与数据库挡在测试之外。
