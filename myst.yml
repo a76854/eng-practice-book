@@ -107,12 +107,10 @@ project:
       children:
         - file: book/lab_guide/homework_organizer.md
         - file: book/lab_guide/grade_analysis.md
-        - file: book/lab_guide/cli.md
-        - file: book/lab_guide/restful_api_db_migration.md
-        - file: book/lab_guide/async_refactor_load_test.md
-        - file: book/lab_guide/frontend_routing_state.md
-        - file: book/lab_guide/fullstack_streaming.md
-        - file: book/lab_guide/container.md
+        - file: book/lab_guide/backend.md
+        - file: book/lab_guide/frontend.md
+        - file: book/lab_guide/external_services.md
+        - file: book/lab_guide/deployment.md
     - file: book/appendix/index.md
       children:
         - file: book/appendix/appendix_a_course_design.md
