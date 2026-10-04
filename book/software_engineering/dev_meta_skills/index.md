@@ -14,7 +14,7 @@ kernelspec:
 > - 能够用 `subprocess` / `shutil` / `argparse`（或 `click`）编写可复用、带参数校验的自动化脚本与命令行工具
 
 > **为什么需要掌握本章**
-> 算法与业务代码只占工程的一小部分，真正决定交付速度与协作质量的是“元技能”——能否把项目组织清楚、把环境隔离开、把重复操作自动化、把协作历史讲明白。没有这些能力，代码写得再巧，也会在“在我机器上能跑”“合并冲突”“环境不一致”中反复消耗团队。本章把环境、脚本与协作三件套一次讲透，为后续所有章节打下可复现的工程底座，所用示例均围绕一个通用的 Python 项目展开，无需任何特定领域背景即可跟随。
+> 算法与业务代码只占工程的一小部分，真正决定交付速度与协作质量的是“元技能”：能否把项目组织清楚、把环境隔离开、把重复操作自动化、把协作历史讲明白。没有这些能力，代码写得再巧，也会在“在我机器上能跑”“合并冲突”“环境不一致”中反复消耗团队。本章把环境、脚本与协作三件套一次讲透，为后续所有章节打下可复现的工程底座，所用示例均围绕一个通用的 Python 项目展开，无需任何特定领域背景即可跟随。
 
 > **预计理论学时**：3学时
 
@@ -22,10 +22,10 @@ kernelspec:
 
 章内结构如下：
 
-- [工程化项目结构](engineering_project_structure.md) —— 为什么 `src` 布局能避免导入陷阱，`pyproject.toml` 如何统一 PEP 517/518/621 的构建与元数据
- - [依赖与虚拟环境](dependencies_virtualenv.md) —— 虚拟环境工具 vs 项目管理工具的分工，以及 `pyproject.toml → 环境 → 安装` 的闭环
-- [Git 工作流](git_workflow.md) —— 用分支与 PR 完成协作
-- [Shell、文件系统、进程与管道](shell.md) —— 把 Shell 当作“可组合的文本流水线”来理解
- - [Python 自动化脚本](python_automation_scripts.md) —— `pathlib`/`shutil`/`subprocess`/`argparse` 的工程化脚本与可测试性（含 `--dry-run` 与配置外部化）
+- [工程化项目结构](engineering_project_structure.md)：为什么 `src` 布局能避免导入陷阱，`pyproject.toml` 如何统一 PEP 517/518/621 的构建与元数据
+ - [依赖与虚拟环境](dependencies_virtualenv.md)：虚拟环境工具 vs 项目管理工具的分工，以及 `pyproject.toml → 环境 → 安装` 的闭环
+- [Git 工作流](git_workflow.md)：用分支与 PR 完成协作
+- [Shell、文件系统、进程与管道](shell.md)：把 Shell 当作“可组合的文本流水线”来理解
+ - [Python 自动化脚本](python_automation_scripts.md)：`pathlib`/`shutil`/`subprocess`/`argparse` 的工程化脚本与可测试性（含 `--dry-run` 与配置外部化）
 
 本章所有示例均可在书仓根目录的 `.venv` 环境中复现。正文示例优先使用通用项目名 `myproject` / `mypackage` / `demo`。

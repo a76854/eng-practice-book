@@ -19,7 +19,7 @@ kernelspec:
 
 章内结构如下：
 
-- [HTTP 与 RESTful](http_and_restful.md) —— 方法、状态码、资源三条准则的用法与幂等性的意义
-- [FastAPI 路由](fastapi_routing.md) —— 方法、状态码、资源与三类参数在 FastAPI 里的落地
-- [统一响应与契约](error_and_contract.md) —— 信封、全局异常处理器与 OpenAPI 的协作闭环
-- [接口测试](api_testing.md) —— 把 TestClient 断言组织成可回归的套件，用依赖替换隔离外部依赖
+- [HTTP 与 RESTful](http_and_restful.md)：方法、状态码、资源三条准则的用法与幂等性的意义
+- [FastAPI 路由](fastapi_routing.md)：方法、状态码、资源与三类参数在 FastAPI 里的落地
+- [统一响应与契约](error_and_contract.md)：信封、全局异常处理器与 OpenAPI 的协作闭环
+- [接口测试](api_testing.md)：把 TestClient 断言组织成可回归的套件，用依赖替换隔离外部依赖

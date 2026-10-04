@@ -21,9 +21,9 @@ kernelspec:
 
 上一章守的是“系统在坏的情况下也可预期”，本章往前走一步，回答“怎么把它可重复地交出去”。全书正文到此收束，随后进入实验指导书。全章沿交付链条展开：先看部署方式的演进，再学把一个应用装进镜像的写法，然后用编排把它与前端接到一起，最后用流水线把校验固化成门禁。动手练习交给实验指导书。章内结构如下：
 
-- [部署演进史](deployment_evolution.md) —— 从物理机到虚拟机再到容器：隔离思想如何一步步收敛
-- [Dockerfile 最佳实践](dockerfile_best_practices.md) —— 层缓存、多阶段构建与 COPY 顺序对构建速度的决定性影响
-- [Docker Compose 编排](docker_compose_orchestration.md) —— 用声明式 YAML 让 Nginx、前后端与依赖服务按依赖有序联动
-- [CI/CD 流水线](cicd_pipeline.md) —— GitHub Actions 做什么、四道门禁与本地复现，以及发布与回滚
+- [部署演进史](deployment_evolution.md)：从物理机到虚拟机再到容器：隔离思想如何一步步收敛
+- [Dockerfile 最佳实践](dockerfile_best_practices.md)：层缓存、多阶段构建与 COPY 顺序对构建速度的决定性影响
+- [Docker Compose 编排](docker_compose_orchestration.md)：用声明式 YAML 让 Nginx、前后端与依赖服务按依赖有序联动
+- [CI/CD 流水线](cicd_pipeline.md)：GitHub Actions 做什么、四道门禁与本地复现，以及发布与回滚
 
 实验八（[全栈容器化](../../lab_guide/container.md)）提供可对照的 Dockerfile 与 Compose 脚手架；本章以声明与本地校验命令为主，不依赖容器运行时。

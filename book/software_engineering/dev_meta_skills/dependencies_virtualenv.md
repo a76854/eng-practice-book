@@ -10,12 +10,12 @@ kernelspec:
 
 ## 从 `pyproject.toml` 到可运行环境
 
-[工程化项目结构](./engineering_project_structure.md)我们写好了 `pyproject.toml`——这份文件定义了"项目是什么、依赖谁、怎么安装"。但它目前只是一份**声明**，就像一张写满食材的菜谱，还没真正下锅。
+[工程化项目结构](./engineering_project_structure.md)我们写好了 `pyproject.toml`，这份文件定义了"项目是什么、依赖谁、怎么安装"。但它目前只是一份**声明**，就像一张写满食材的菜谱，还没真正下锅。
 
 要把这份声明变成实际可运行的项目，还需要两步：
 
-1. **创建一个独立的厨房**——虚拟环境，让项目有自己的独立空间
-2. **按照菜谱采购食材**——用包管理工具安装 `pyproject.toml` 中声明的依赖
+1. **创建一个独立的厨房**：虚拟环境，让项目有自己的独立空间
+2. **按照菜谱采购食材**：用包管理工具安装 `pyproject.toml` 中声明的依赖
 
 本章先讲虚拟环境（为什么要隔离、怎么隔离），再讲如何用工具把声明变成现实。
 
@@ -181,7 +181,7 @@ python -c "import mypackage; print('导入成功')"
 python -c "import mypackage; print(mypackage.__version__)"
 ```
 
-如果这一步报 `ModuleNotFoundError`，说明 `pyproject.toml` 中的包配置有问题——最常见的原因是 `packages` 没有指向 `src/` 下的真实包路径。
+如果这一步报 `ModuleNotFoundError`，说明 `pyproject.toml` 中的包配置有问题，最常见的原因是 `packages` 没有指向 `src/` 下的真实包路径。
 
 ---
 
@@ -195,7 +195,7 @@ python -c "import mypackage; print(mypackage.__version__)"
 
 ![](./figs/1.2_5_sys.prefix-and-sys.base_prefix.png)
 
-未激活时，`sys.prefix` 与 `sys.base_prefix` 相等；激活后二者分离——这正是判断"是否在虚拟环境中"的可靠信号：
+未激活时，`sys.prefix` 与 `sys.base_prefix` 相等；激活后二者分离，这是判断"是否在虚拟环境中"的可靠信号：
 
 ```python
 import sys

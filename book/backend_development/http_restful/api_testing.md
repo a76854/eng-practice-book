@@ -95,7 +95,7 @@ assert len(r1.json()) == 1
 assert r1.json()[0]["title"] == "BaseModel"
 ```
 
-观测要点：`dependency_overrides` 一行把外部搜索换成返回固定结果的替身，三条断言跑通。测试里没有一次外部网络请求——替身是测试的临时脚手架，只活在测试里。
+观测要点：`dependency_overrides` 一行把外部搜索换成返回固定结果的替身，三条断言跑通。测试里没有一次外部网络请求：替身是测试的临时脚手架，只活在测试里。
 
 ## 组织成 pytest 套件
 

@@ -39,7 +39,7 @@ nvm use 20       # 切换版本，类似 pyenv local 3.12
 
 npm 是 Node.js 自带的包管理器，经历了三个重要版本，每次都在解决上一版本的痛点：
 
-- **npm v2**：嵌套安装。每个包的依赖都放在自己的 `node_modules` 里，形成一棵嵌套的目录树。优点是每个包独立、不互相干扰；代价是目录深度惊人——`node_modules` 路径能深到超过 Windows 的路径长度限制，重复依赖的同一版本会在磁盘上存十几份。
+- **npm v2**：嵌套安装。每个包的依赖都放在自己的 `node_modules` 里，形成一棵嵌套的目录树。优点是每个包独立、不互相干扰；代价是目录深度惊人：`node_modules` 路径能深到超过 Windows 的路径长度限制，重复依赖的同一版本会在磁盘上存十几份。
 
 - **npm v3**：扁平提升。尽量把依赖提升到顶层 `node_modules`，减少重复。多个版本冲突时，只有一个被提升，其他仍嵌套。目录变浅了，磁盘占用也小了，但引入了一个新问题：**幽灵依赖**。某个包并未在 `package.json` 中声明，却因为被提升到顶层，能被你的代码直接 `import` 到。这在后端世界相当于一个函数能直接调用 `requests`，但 `pyproject.toml` 里根本没写它。项目在本地能跑，换个环境就崩。
 
@@ -167,7 +167,7 @@ frontend/
 }
 ```
 
-**`src/` 目录**：前端的业务代码，对应后端的 `src/`。`main.ts` 是入口，`App.vue` 是根组件。`components/`、`views/`、`router/`、`stores/`、`api/`、`utils/` 的分层，对应后端的分层架构——数据层（`api/`）、业务层（`stores/`）、视图层（`components/` 和 `views/`）、路由层（`router/`）。
+**`src/` 目录**：前端的业务代码，对应后端的 `src/`。`main.ts` 是入口，`App.vue` 是根组件。`components/`、`views/`、`router/`、`stores/`、`api/`、`utils/` 的分层，对应后端的分层架构，即数据层（`api/`）、业务层（`stores/`）、视图层（`components/` 和 `views/`）、路由层（`router/`）。
 
 **`index.html`**：前端的“唯一真相来源”。浏览器首次加载的是这个文件，它引用 `main.ts`（通过 `<script type="module">`），Vite 在开发期从它开始构建依赖图。
 

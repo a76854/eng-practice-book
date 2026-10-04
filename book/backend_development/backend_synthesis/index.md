@@ -121,7 +121,7 @@ assert favorite_repo.list_all() == []
 
 ## Service 层
 
-这一层承载业务规则，不感知 HTTP。搜索时校验关键词、按 URL 去重；收藏时查重。它持有两个依赖——DocumentRepository 与 FavoriteRepository。
+这一层承载业务规则，不感知 HTTP。搜索时校验关键词、按 URL 去重；收藏时查重。它持有两个依赖：DocumentRepository 与 FavoriteRepository。
 
 ```{code-cell} ipython3
 class SearchService:
