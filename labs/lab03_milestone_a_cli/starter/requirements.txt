@@ -1,4 +1,0 @@
-# Lab03 starter has no required third-party dependencies; stdlib only.
-# Keep this file empty unless you add an external service client.
-# Optional for local verification:
-# httpx>=0.27

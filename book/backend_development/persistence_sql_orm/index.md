@@ -20,7 +20,7 @@ kernelspec:
 
 章内结构如下：
 
-- [数据建模：从一张大表到 ER 图](database_modeling_er.md) —— 为什么需要数据库、一张大表的困境、实体属性关系与范式化
-- [使用数据库：把 ER 落成表](building_database.md) —— DDL 建表、主键外键与约束
-- [SQL：访问数据库的语言](accessing_database.md) —— 连接游标、增删改查、参数化与事务，以及从单表筛选到聚合、JOIN、子查询与索引的查询全貌
-- [数据库访问的工程化：从手写 SQL 到 ORM](orm.md) —— 直接方式与连接池、ORM 与 Core、迁移脚本，以及 SQL 与 ORM 的对比择优
+- [数据建模：从一张大表到 ER 图](database_modeling_er.md)：为什么需要数据库、一张大表的困境、实体属性关系与范式化
+- [使用数据库：把 ER 落成表](building_database.md)：DDL 建表、主键外键与约束
+- [SQL：访问数据库的语言](accessing_database.md)：连接游标、增删改查、参数化与事务，以及从单表筛选到聚合、JOIN、子查询与索引的查询全貌
+- [数据库访问的工程化：从手写 SQL 到 ORM](orm.md)：直接方式与连接池、ORM 与 Core、迁移脚本，以及 SQL 与 ORM 的对比择优

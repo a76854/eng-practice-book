@@ -22,6 +22,6 @@ kernelspec:
 
 章内结构如下：
 
-- [类型系统](type_system.md) —— 类型标注的价值，`mypy` 严格模式如何把“约定”变成“检查”，防御性编程如何让错误尽早失败
-- [静态检查与代码风格](static_check_code_style.md) —— `Ruff` 如何一站式替代 `Flake8` / `Black` / `isort`，工程化配置与自动修复的落地路径
-- [测试、覆盖率和CI](./testing_coverage_and_ci.md) —— 测试金字塔、AAA 模式与边界条件，`pytest` 断言与最简可信用例
+- [类型系统](type_system.md)：类型标注的价值，`mypy` 严格模式如何把“约定”变成“检查”，防御性编程如何让错误尽早失败
+- [静态检查与代码风格](static_check_code_style.md)：`Ruff` 如何一站式替代 `Flake8` / `Black` / `isort`，工程化配置与自动修复的落地路径
+- [测试、覆盖率和CI](./testing_coverage_and_ci.md)：测试金字塔、AAA 模式与边界条件，`pytest` 断言与最简可信用例

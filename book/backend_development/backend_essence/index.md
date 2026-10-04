@@ -21,6 +21,6 @@ kernelspec:
 
 章内结构如下：
 
-- [后端的由来](what_is_backend.md) —— 服务端模板直出与 JSON API 的演进、前端后端存储的三层定位与后端的四条边界
-- [语言与框架生态](language_and_framework.md) —— 五种后端语言的横向对比与各自框架谱系，约束驱动的选型
-- [FastAPI 与分层架构](fastapi_and_layered_architecture.md) —— AI 时代为何选 Python、为何在 Python 生态中选 FastAPI，以及 Controller、Service、Repository 的分层落地
+- [后端的由来](what_is_backend.md)：服务端模板直出与 JSON API 的演进、前端后端存储的三层定位与后端的四条边界
+- [语言与框架生态](language_and_framework.md)：五种后端语言的横向对比与各自框架谱系，约束驱动的选型
+- [FastAPI 与分层架构](fastapi_and_layered_architecture.md)：AI 时代为何选 Python、为何在 Python 生态中选 FastAPI，以及 Controller、Service、Repository 的分层落地

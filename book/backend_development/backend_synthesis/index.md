@@ -6,15 +6,6 @@ kernelspec:
 
 # 综合实战
 
-学完本节，你能回答：
-
-- 一个搜索请求从进入到返回，依次穿过哪几层，每一层各自做什么？
-- 搜索走外部 API、收藏走本地数据库，这两种数据来源为什么要分别抽象？
-- 分层之后，Controller 如何把业务错误映射成正确的 HTTP 状态码？
-- 为什么收藏要落库持久化，而不是只活在进程内存里？
-
-> 顺畅，从来不是某一环的功劳。
-
 前几章各自交付了一件工具：第 3 章给了分层组织与可替换依赖，第 4 章给了 HTTP 的契约与状态码，第 5 章给了持久化与参数化 SQL，第 6 章给了性能优化视角。本节用一个文档查询应用，把"外部搜索、HTTP、持久化"串成一条完整链路：看一个 `GET /api/search` 如何穿过框架调用搜索服务，一条数据如何存入数据库。
 
 ```{mermaid}
@@ -130,7 +121,7 @@ assert favorite_repo.list_all() == []
 
 ## Service 层
 
-这一层承载业务规则，不感知 HTTP。搜索时校验关键词、按 URL 去重；收藏时查重。它持有两个依赖——DocumentRepository 与 FavoriteRepository。
+这一层承载业务规则，不感知 HTTP。搜索时校验关键词、按 URL 去重；收藏时查重。它持有两个依赖：DocumentRepository 与 FavoriteRepository。
 
 ```{code-cell} ipython3
 class SearchService:
@@ -262,5 +253,3 @@ print("收藏已持久化到 SQLite")
 | 第3章 分层 | Controller 薄、Service 厚、依赖抽象沿边界替换（DocumentRepository 与 FavoriteRepository）|
 | 第4章 HTTP | GET 查询、POST 创建，状态码表达责任（200 / 201 / 409）|
 | 第5章 持久化 | 参数化 SQL 防注入，`PRIMARY KEY` 约束在库层兜底收藏不重复 |
-
-> 分层定寿命，契约定协作，持久化定记忆，三者合起来才是一条能交付的完整链路。

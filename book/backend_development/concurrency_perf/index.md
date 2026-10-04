@@ -20,8 +20,8 @@ kernelspec:
 
 章内结构如下：
 
-- [并发、并行与异步](concurrency_parallel_async.md) —— 并发/并行/异步/阻塞/非阻塞辨析：从“同时做”与“交替做”的本质差异切入，落到线程/进程/协程的选型
-- [Python GIL](python_gil.md) —— GIL 的定义、保护对象与性能边界：用线程 vs 进程的对照实测看清边界
-- [异步编程核心](async_programming_core.md) —— 事件循环、Task、Future、`async`/`await`：`asyncio` 的协作式并发如何工作
-- [FastAPI 异步陷阱](fastapi_async_pitfalls.md) —— 异步路由 vs 同步路由：为什么在 `async def` 中调用阻塞代码会拖垮整个服务
-- [性能剖析方法论](performance_profiling.md) —— `cProfile`、`timeit`、行级剖析思路与数据库查询分析：先度量再优化
+- [并发、并行与异步](concurrency_parallel_async.md)：并发/并行/异步/阻塞/非阻塞辨析：从“同时做”与“交替做”的本质差异切入，落到线程/进程/协程的选型
+- [Python GIL](python_gil.md)：GIL 的定义、保护对象与性能边界：用线程 vs 进程的对照实测看清边界
+- [异步编程核心](async_programming_core.md)：事件循环、Task、Future、`async`/`await`：`asyncio` 的协作式并发如何工作
+- [FastAPI 异步陷阱](fastapi_async_pitfalls.md)：异步路由 vs 同步路由：为什么在 `async def` 中调用阻塞代码会拖垮整个服务
+- [性能剖析方法论](performance_profiling.md)：`cProfile`、`timeit`、行级剖析思路与数据库查询分析：先度量再优化
