@@ -69,7 +69,7 @@ describe('ResultCard', () => {
 
 `mount` 返回一个 `wrapper`，`wrapper.text()` 拿到渲染后的全部文本，`toContain` 断言它包含了该有的字段。这测的是"渲染"这一侧。
 
-另一端是"交互"。`SearchBar` 不自己改状态，而是发 `update:query` 事件通知父组件。测它交互后发出了什么：
+另一端是"交互"。`SearchBar` 自己不改状态，只发 `update:query` 事件通知父组件。测它交互后发出了什么：
 
 ```javascript
 // src/components/SearchBar.test.js
