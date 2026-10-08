@@ -16,13 +16,13 @@ Docker Compose 用一个 `docker-compose.yml` 声明整个拓扑，常用的原�
 
 | 原语 | 作用 | 本节示例 |
 | --- | --- | --- |
-| `services` | 声明每个容器如何构建与运行 | `backend` 与 `frontend` 两个服务 |
+| `services` | 声明每个容器如何构建与运行 | `backend` 与 `nginx` 两个服务 |
 | `build` | 指定构建上下文与 Dockerfile | `{ context: ., dockerfile: Dockerfile }` |
 | `image` | 直接使用现成镜像 | `nginx:alpine` |
-| `ports` | 宿主机与容器的端口映射 | `8000:8000`、`80:80` |
+| `ports` | 宿主机与容器的端口映射 | `80:80` |
 | `environment` | 向容器注入环境变量 | `DOCSEARCH_DATA_DIR=/data` |
 | `healthcheck` | 定义“怎样算就绪” | 探测 `/api/health` |
-| `depends_on` | 声明服务之间的依赖 | `frontend` 依赖 `backend` |
+| `depends_on` | 声明服务之间的依赖 | `nginx` 依赖 `backend` |
 
 `docker compose up` 按这份拓扑一键拉起，`docker compose config` 能在不启动守护进程的前提下校验 YAML 是否合法。
 
@@ -37,18 +37,25 @@ services:
   backend:
     build: { context: ., dockerfile: Dockerfile }
     environment: { DOCSEARCH_DATA_DIR: /data }
-    healthcheck: { test: ["CMD", "python", "-c", "import urllib.request..."], interval: 30s }
-    ports: ["8000:8000"]
-  frontend:
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    volumes: ["docdata:/data"]
+  nginx:
     image: nginx:alpine
     ports: ["80:80"]
+    volumes: ["./nginx.conf:/etc/nginx/conf.d/default.conf:ro"]
     depends_on: { backend: { condition: service_healthy } }
+volumes:
+  docdata:
 ```
 
 - `services.backend.build`：后端的镜像如何构建（上下文与 Dockerfile 路径），构建输入与上一节的层缓存直接相关。
 - `services.backend.healthcheck`：后端何时算“就绪”。用 `urllib.request` 探测 `http://127.0.0.1:8000/api/health`，`interval` / `timeout` / `retries` / `start_period` 共同定义“多久探一次、探多久算超时、重试几次、启动后宽限多久”。
-- `services.frontend.image`：前端用现成的 `nginx:alpine`，不需构建，拉取即可，体现“能用现成镜像就不自建”的最小可用原则。
-- `ports`：`宿主机:容器` 的端口映射。`8000:8000` 让宿主机直连后端便于调试，`80:80` 让浏览器直连 Nginx。生产可改为仅暴露 80，由 Nginx 反向代理到后端内网端口。
+- `services.nginx.image`：Nginx 使用现成镜像，通过挂载 `nginx.conf` 托管前端并把 `/api` 转发到后端。
+- `ports`：`宿主机:容器` 的端口映射。示例只开放 Nginx 的 80 端口；后端通过容器网络供 Nginx 访问。
 - `restart: "no"`：教学演示选择不自动重启，便于观察失败；生产可按需改为 `unless-stopped`。
 
 ## 启动依赖与就绪依赖
@@ -64,19 +71,19 @@ services:
 
 ## 拓扑的校验方式
 
-配置文件的好处是可以脱离运行时校验。有 Docker 时，`docker compose config -q` 会把整份声明解析一遍，检查语法、变量替换与可渲染性，合法就零退出码；没有 Docker 时，用 YAML 解析确认服务、依赖、端口与环境变量是否写对，也能拦下绝大多数笔误。两种校验都在本机与 CI 里可跑，拓扑因此不必等真正拉起容器才验证。
+配置文件的好处是可以脱离运行时校验。有 Docker 时，`docker compose config -q` 会把整份声明解析一遍，检查语法、变量替换与可渲染性，合法就零退出码；没有 Docker 时，用 YAML 解析确认服务、依赖、端口与环境变量是否写对，也能拦下绝大多数笔误。将实验六的配置保存在项目根目录的 `docker-compose.yml` 后，可以运行以下命令。
 
 ```bash
 # 有 Docker：完整校验声明合法性（-q 静默，合法即零退出）
-docker compose -f labs/lab08_fullstack_container/starter/docker-compose.yml config -q && echo "compose config ok"
+docker compose -f docker-compose.yml config -q && echo "compose config ok"
 
 # 无 Docker：用 YAML 解析核对关键字段
 .venv/bin/python - <<'PY'
 import yaml
-compose = yaml.safe_load(open('labs/lab08_fullstack_container/starter/docker-compose.yml', encoding='utf-8'))
+compose = yaml.safe_load(open('docker-compose.yml', encoding='utf-8'))
 services = compose['services']
-assert 'backend' in services and 'frontend' in services
-assert services['frontend']['depends_on']['backend']['condition'] == 'service_healthy'
+assert 'backend' in services and 'nginx' in services
+assert services['nginx']['depends_on']['backend']['condition'] == 'service_healthy'
 assert 'api/health' in str(services['backend']['healthcheck']['test'])
 print('services:', list(services), '| 就绪依赖 OK')
 PY
@@ -92,7 +99,7 @@ PY
 | --- | --- | --- |
 | `db` | 无 | 1 |
 | `backend` | `db` 健康 | 2 |
-| `frontend` | `backend` 健康 | 3 |
+| `nginx` | `backend` 健康 | 3 |
 
 三段连成一条链，任何一环没就绪，后面的都不会被拉起。这套写法的成本也很直白：每个被依赖的服务都得提供一个能反映“我能不能干活”的探针，探针写得太宽松等于没写，写得太严格会让上游一直等。
 
