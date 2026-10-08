@@ -10,10 +10,18 @@ kernelspec:
 
 ```{mermaid}
 flowchart LR
-    A["HTTP 请求<br/>POST /users/register"] --> C["路由层 Controller<br/>解析参数、映射状态码"]
-    C --> S["服务层 Service<br/>校验、查重、密码哈希"]
-    S --> R["存储层 Repository<br/>参数化写库"]
-    R --> E["HTTP 响应<br/>201+搜索结果"]
+    A["GET /api/search?q=..."] --> C["路由层 Controller<br/>读取查询参数并返回响应"]
+    C --> S["服务层 Service<br/>组织搜索结果"]
+    S --> R["DocumentRepository<br/>调用外部搜索服务"]
+    R --> S
+    S --> C
+    C --> E["200 + 文档列表"]
+    F["POST /api/favorites"] --> G["路由层 Controller<br/>解析 doc_id 与映射状态码"]
+    G --> H["服务层 Service<br/>检查重复收藏"]
+    H --> I["FavoriteRepository<br/>参数化写入 SQLite"]
+    I --> H
+    H --> G
+    G --> J["201 或 409"]
 ```
 
 ## 定义数据模型与接口

@@ -1,13 +1,13 @@
 # AGENTS.md — 《python编程工程实践》教科书
 
 面向"从算法与课程作业走向真实软件交付"的工程实践教材，MyST（mystmd v1）构建。
-全书 = 前言 + 12 章正文 + 实验指导书（8 实验）+ 附录。
+全书 = 前言 + 13 章正文 + 实验指导书（6 实验）+ 附录。
 
 ## 环境与构建
 
 - 包管理用 **uv**（Python 3.12），依赖在 `pyproject.toml` 的 `book` / `dev` extra 里（不再有 requirements.txt，也不再有教学包）。
 - 安装：`uv sync --extra book --extra dev`，然后 `source .venv/bin/activate`。
-- **构建门禁（唯一验收）**：`myst build --html --execute --strict` 必须 EXIT=0 且零警告。当前 80 页，输出在 `_build/html/`。
+- **构建门禁（唯一验收）**：`myst build --html --execute --strict` 必须 EXIT=0 且零警告。当前 90 页，输出在 `_build/html/`。
 - 执行内核 `book-venv`（新环境需先注册）：
   `python -m ipykernel install --user --name book-venv --display-name "book-venv"`。
 - CI 在 `.github/workflows/book.yml`：`astral-sh/setup-uv` + `uv sync` + `echo "$PWD/.venv/bin" >> "$GITHUB_PATH"`（因为 myst 是 node CLI，靠 PATH 找 python/jupyter）。
@@ -16,11 +16,11 @@
 ## 目录结构与编号（已重构定稿）
 
 - 编号由 `myst.yml` 里 `numbering: { title: true, headings: true }` **自动生成**，不在文件名或正文里手写编号。
-- **已去掉“篇”层级**：章直接挂在 toc 顶层，全局编号 1~12；节 = `X.Y`，小节 = `X.Y.Z`（三级，不再有四级）。
+- **已去掉“篇”层级**：章直接挂在 toc 顶层，全局编号 1~13；节 = `X.Y`，小节 = `X.Y.Z`（三级，不再有四级）。
 - 章文件夹仍在 part 目录下（`software_engineering / backend_development / frontend_collaboration / advanced_engineering`），但**只为文件管理，不进 toc**。
 - 文件名、章文件夹名、篇文件夹名均无编号前缀（例：`backend_development/persistence_sql_orm/database_modeling_er.md`）。
 
-12 章 → 文件夹映射：
+13 章 → 文件夹映射：
 
 | 章 | 目录路径 |
 |---|---|
@@ -30,14 +30,15 @@
 | 4 HTTP 与 RESTful 架构 | `book/backend_development/http_restful/` |
 | 5 数据持久化 | `book/backend_development/persistence_sql_orm/` |
 | 6 并发模型与性能工程 | `book/backend_development/concurrency_perf/` |
-| 7 综合实战（注册接口贯穿三层） | `book/backend_development/backend_synthesis/` |
+| 7 综合实战（文档查询的分层实现） | `book/backend_development/backend_synthesis/` |
 | 8 前端开发概况与工程化演进 | `book/frontend_collaboration/frontend_overview/` |
 | 9 Vue3 核心机制与状态设计 | `book/frontend_collaboration/vue3_core/` |
-| 10 与外部世界的集成 | `book/advanced_engineering/external_integration/` |
-| 11 健壮性与安全底线 | `book/advanced_engineering/robustness_security/` |
-| 12 部署、容器化与持续集成 | `book/advanced_engineering/deploy_cicd/` |
+| 10 前后端通信与联调 | `book/frontend_collaboration/communication_debugging/` |
+| 11 与外部世界的集成 | `book/advanced_engineering/external_integration/` |
+| 12 健壮性与安全底线 | `book/advanced_engineering/robustness_security/` |
+| 13 部署、容器化与持续集成 | `book/advanced_engineering/deploy_cicd/` |
 
-- 实验在 `book/lab_guide/` 下：“实验指导书”分组 index（`numbering: false`）+ 8 个实验文件（文件名无 `experiment0X_` 前缀），实验页 `numbering: false`，标题为“实验一 / 实验二 …”。
+- 实验在 `book/lab_guide/` 下：“实验指导书”分组 index（`numbering: false`）+ 6 个实验文件，实验页 `numbering: false`，标题为“实验一 / 实验二 …”。
 - 附录在 `book/appendix/`（“附录”分组，`numbering: false`，手动“附录A/B/C”标题）。
 
 ## 写作规范
@@ -45,7 +46,7 @@
 - 全书写作契约见 `book/STYLE.md`（章骨架、围栏规范、构建校验清单），改书前先读它。
 - 硬性红线：无 emoji、无口语化表达、无破折号“——”、无感叹号堆砌、不用直角引号「」、小节标题不用“术语：一句话定义”的公式模板（如“Node.js：前端的运行时与工具宿主”）。另有 AI 味禁例：不用“第 A 章讲 X、第 B 章讲 Y、本章讲 Z”的章节预告公式，不用“本节在整章的位置是 X”这类 meta 模板，不用“翻车/玄学/人肉/帮手/才是真正的交付”等口语化表达与比喻（这些在 2026 年的一轮排查中已清）。
 - 每节骨架：承上导言（标题后一段，点明本节在整章中的位置）→ 概念分节（定义 + 对比表格 + 代码）→ 每 cell 做一件事（前置 1-2 句说明 + 后置观测小结）→ 小结 3-5 点。**已取消“学完本节，你能回答”开篇设问与哲理引言/金句**，正文不得再出现这两种。
-- 可执行代码用 `{code-cell} ipython3`；Shell 用 ````bash` 围栏（仅展示）；配置文件用 ````dockerfile` / ````yaml` / ````json` 围栏（仅展示）。以声明式配置为主的小节（如第 12 章）不强制 code-cell，示例用展示围栏 + 本地校验命令。
+- 可执行代码用 `{code-cell} ipython3`；Shell 用 ````bash` 围栏（仅展示）；配置文件用 ````dockerfile` / ````yaml` / ````json` 围栏（仅展示）。以声明式配置为主的小节（如第 13 章）不强制 code-cell，示例用展示围栏 + 本地校验命令。
 - 正文**不出现** `meetingtotext` / `m2t` / `TaskStore`（教学包已整体删除，正文、实验脚手架与文档均已清理）。
 - 图片文件名不能用空格（用连字符），.md 里引用不要写 `%20`。
 - **不要用 subagent 做创作型修改**（用户反复强调：subagent 不清楚上下文、创作型工作必须主代理亲自做）。
