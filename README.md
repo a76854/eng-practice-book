@@ -1,6 +1,6 @@
 # 《python编程工程实践》
 
-本仓库是《python编程工程实践》教科书的源文件，以文档查询案例串联工程实践，基于 MyST (`mystmd` v1) 构建。全书正文 12 章 + 实验指导书 8 个实验 + 附录，配套 8 个 `labs/` 动手实验（README + starter 脚手架，无标准答案、无自动判分）。
+本仓库是《python编程工程实践》教科书的源文件，以文档查询案例串联工程实践，基于 MyST (`mystmd` v1) 构建。全书包含前言、正文 13 章、实验指导书 6 个实验与附录。实验任务写在 `book/lab_guide/`，`labs/` 仅保留实验一、二的数据生成脚本。
 
 ## 目录结构
 
@@ -9,7 +9,6 @@ eng-practice-book/
 ├── book/                                    # 教材正文（MyST Markdown + {code-cell}）
 │   ├── preface.md                           # 前言
 │   ├── STYLE.md                             # 全书写作契约（章骨架、围栏规范、构建校验）
-│   ├── ai_policy.md                         # AI 工具使用政策
 │   ├── software_engineering/                # 第 1 至 2 章：开发者元技能 + 代码质量护城河
 │   │   ├── dev_meta_skills/
 │   │   └── code_quality/
@@ -19,28 +18,23 @@ eng-practice-book/
 │   │   ├── persistence_sql_orm/
 │   │   ├── concurrency_perf/
 │   │   └── backend_synthesis/
-│   ├── frontend_collaboration/              # 第 8 至 9 章：前端协作、Vue 3 核心
+│   ├── frontend_collaboration/              # 第 8 至 10 章：前端工程化、Vue 3、通信联调
 │   │   ├── frontend_overview/
-│   │   └── vue3_core/
-│   ├── advanced_engineering/                # 第 10 至 12 章：外部集成、健壮性安全、部署 CI/CD
+│   │   ├── vue3_core/
+│   │   └── communication_debugging/
+│   ├── advanced_engineering/                # 第 11 至 13 章：外部集成、健壮性安全、部署 CI/CD
 │   │   ├── external_integration/
 │   │   ├── robustness_security/
 │   │   └── deploy_cicd/
-│   ├── lab_guide/                           # 实验指导书（index.md + 8 个实验 .md）
+│   ├── lab_guide/                           # 实验指导书（index.md + 6 个实验 .md）
 │   ├── appendix/                            # 附录
 │   │   ├── appendix_a_course_design.md
-│   │   └── appendix_b_references.md
-│   └── samples/                             # 最小可运行样例（按需放置）
-├── labs/                                    # 实验脚手架（README + starter，无参考解/测试/判分）
+│   │   ├── appendix_b_references.md
+│   │   └── appendix_c_usage_of__init__.py.md
+├── labs/                                    # 实验一、二的数据生成脚本
 │   ├── lab01/generate_roster.py
-│   ├── lab02/generate_grades.py
-│   ├── lab03_milestone_a_cli/starter/
-│   ├── lab04_restful_api_db/starter/
-│   ├── lab05_async_refactor_load_test/starter/
-│   ├── lab06_frontend_routing_state/starter/
-│   ├── lab07_fullstack_streaming/starter/
-│   └── lab08_fullstack_container/starter/
-├── myst.yml                                 # MyST 项目配置（toc 列前言 + 12 章 + 实验指导书 + 附录）
+│   └── lab02/generate_grades.py
+├── myst.yml                                 # MyST 项目配置（toc 列前言 + 13 章 + 实验指导书 + 附录）
 └── pyproject.toml                           # [book] 构建执行依赖 + [dev] 开发依赖
 ```
 
@@ -73,7 +67,7 @@ pytest --version && ruff --version && mypy --version
 ```bash
 # 1) 安装 MyST CLI
 npm i -g mystmd
-myst --version  # 期望 v1.10.1
+myst --version  # 本次验证使用 v1.11.0
 
 # 2) 注册执行内核（让 myst 找到已激活环境中的 fastapi 等依赖）
 python -m ipykernel install --user --name python3 --display-name "Python 3 (book)"
@@ -95,20 +89,18 @@ myst clean --execute -y && myst build --html --execute --strict
 
 ## 实验
 
-实验指导书在 `book/lab_guide/`，`labs/` 为配套动手脚手架。实验三至实验八采用 `README.md`（任务说明）+ `starter/`（起始代码）的形式，不含参考解、测试或自动判分；实验一与实验二的辅助脚本（`generate_roster.py`、`generate_grades.py`）由教师提供，直接运行即可。验收以课堂讲解与动手完成度为准。
+实验指导书在 `book/lab_guide/`，包含 6 个按领域组织的实验。实验三至六由读者自行创建项目和代码；实验一、二可使用 `labs/` 中的数据生成脚本。实验不提供起始代码、参考解或自动判分，验收以课堂演示和任务要求为准。
 
 ```bash
-# 查看实验说明
-cat book/lab_guide/homework_organizer.md
-
-# starter 为空脚手架，按实验 README 自行实现
-ls labs/lab03_milestone_a_cli/starter/
+# 查看实验说明与数据生成脚本
+cat book/lab_guide/index.md
+ls labs/lab01/ labs/lab02/
 ```
 
 ## 可复用资产
 
 - `pyproject.toml` 的 `[book]` extra：MyST 执行链依赖（`nbclient`/`ipykernel`/`jupyter-server`/`fastapi`/`PyJWT`/`sqlalchemy`/`httpx` 等）与示例所需的第三方客户端（`tavily-python`/`boto3`/`moto`/`fakeredis`）。
-- `labs/`：8 个实验的 README 与 starter 脚手架，供课堂动手使用。
+- `labs/`：实验一、二的数据生成脚本。
 - `myst.yml` 的 `project.exclude` 已排除 `labs/**`、`evidence/**` 等非正文路径。
 
 ## 常见命令速查
@@ -123,4 +115,4 @@ ls labs/lab03_milestone_a_cli/starter/
 
 ---
 
-*构建在 Python 3.12 + Node 24 + mystmd v1.10.1 下验证；写作规范见 `book/STYLE.md`。*
+*构建在 Python 3.12 + Node 24 + mystmd v1.11.0 下验证；写作规范见 `book/STYLE.md`。*

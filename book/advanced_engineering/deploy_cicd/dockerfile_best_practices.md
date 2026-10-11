@@ -46,7 +46,7 @@ Docker 构建时会为每条指令计算缓存键：指令文本 + 被 `COPY` �
 - `builder` 阶段用 `python:3.12`，装好依赖并执行前端打包（若含前端）；
 - `runtime` 阶段用 `python:3.12-slim`，仅拷入已安装的 `site-packages`、`src/` 与前端静态产物。
 
-实验八的 `labs/lab08_fullstack_container/starter/Dockerfile` 为保持“最小可运行”未显式分段，但已体现多阶段的核心思想：只拷入需要的 `pyproject.toml`、`uv.lock` 与 `src/`，避免把 `labs/`、`book/` 等无关上下文送入镜像；若需前端，可在同仓增加 `FROM node:20 AS frontend-builder` 再 `COPY --from=frontend-builder /app/dist`。
+下面的单阶段示例只拷入需要的 `pyproject.toml`、`uv.lock` 与 `src/`，避免把无关文件带入镜像。这是选择性 `COPY`，并非多阶段构建。实验六要求自行编写 Dockerfile；如果前端也需要构建镜像，可增加独立的前端构建阶段，再将构建产物复制到 Nginx 运行镜像。
 
 ## 最小可用原则与安全细节
 
@@ -86,10 +86,10 @@ CMD ["uvicorn", "docsearch.main:app", "--host", "0.0.0.0", "--port", "8000"]
 `uv sync` 的三个参数各管一件事：`--frozen` 完全按 `uv.lock` 安装，不在镜像里重新求解依赖，保证构建可复现；`--no-dev` 不装 `ruff`、`pytest` 这类只在开发时用的包；`--no-install-project` 表示此刻只装第三方依赖，不装项目自己，因为 `src/` 还没拷进来。
 
 ```bash
-# 本地查看实验八脚手架里的 Dockerfile
-cat labs/lab08_fullstack_container/starter/Dockerfile
-# 若已安装 Docker，可查看构建上下文与解析结果（本章不要求守护进程）
-docker build -f labs/lab08_fullstack_container/starter/Dockerfile --dry-run 2>&1 | head -n 20
+# 在实验六项目根目录，核对自己编写的 Dockerfile 中关键指令的顺序
+grep -nE '^(FROM|COPY|RUN|CMD)' Dockerfile
+# 已安装并启动 Docker 时，验证镜像能否构建
+docker build -f Dockerfile -t docsearch-backend:local .
 ```
 
 ## COPY 顺序与构建速度
