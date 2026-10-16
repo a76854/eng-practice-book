@@ -6,7 +6,7 @@ numbering: false
 
 本实验对应理论 [第 13 章 部署、容器化与持续集成](../advanced_engineering/deploy_cicd/index.md)。建议先通读 [部署演进](../advanced_engineering/deploy_cicd/deployment_evolution.md)、[Dockerfile 最佳实践](../advanced_engineering/deploy_cicd/dockerfile_best_practices.md)、[Compose 编排](../advanced_engineering/deploy_cicd/docker_compose_orchestration.md) 与 [CI/CD 流水线](../advanced_engineering/deploy_cicd/cicd_pipeline.md)，再动手。
 
-本实验**基于实验三至五的成果**，把后端与前端打包成可一键启动、可持续集成的交付形态。你要写的是声明式配置，不提供起始代码。
+本实验**基于实验三至五的成果**，把后端与前端打包成支持一键启动与持续集成的交付形态。你要写的是声明式配置，不提供起始代码。
 
 ## 实验目标
 
