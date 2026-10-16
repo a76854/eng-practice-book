@@ -24,4 +24,3 @@ kernelspec:
 - [框架三驾马车](framework_troika.md)：React / Vue / Angular 设计哲学对比：声明式、响应式与企业级约束的 trade-off
 - [前端工程化基石](frontend_engineering_foundation.md)：Node.js、npm/pnpm、ES Module：前端如何拥有自己的运行时 + 包管理 + 模块系统
 
-

@@ -8,7 +8,7 @@ kernelspec:
 
 > **本章学习目标**
 > - 能够说清部署从物理机到虚拟机再到容器的演进动因，并用隔离层级解释“在我机器上能跑”为何在容器化后才可复现
-> - 能够编写层缓存友好的 Dockerfile，解释 COPY 顺序与多阶段构建对镜像体积与构建速度的影响，并读懂实验八脚手架里的层缓存设计
+> - 能够编写层缓存友好的 Dockerfile，解释 COPY 顺序与多阶段构建对镜像体积与构建速度的影响，并在实验六中验证自己的构建配置
 > - 能够用 `docker-compose.yml` 描述 Nginx 前端、后端与持久化服务的联动关系，并用 `depends_on` 与健康检查表达启动依赖
 > - 能够说清 GitHub Actions 在交付里承担什么，并写出一条含风格、类型、行为与拓扑四道门禁的流水线
 > - 能够用不可变标签固定发布产物，说清回滚为什么是指回标签而不是改服务器文件
@@ -26,4 +26,4 @@ kernelspec:
 - [Docker Compose 编排](docker_compose_orchestration.md)：用声明式 YAML 让 Nginx、前后端与依赖服务按依赖有序联动
 - [CI/CD 流水线](cicd_pipeline.md)：GitHub Actions 做什么、四道门禁与本地复现，以及发布与回滚
 
-实验八（[全栈容器化](../../lab_guide/container.md)）提供可对照的 Dockerfile 与 Compose 脚手架；本章以声明与本地校验命令为主，不依赖容器运行时。
+[实验六：容器化部署与持续交付](../../lab_guide/deployment.md)要求读者为自己的文档查询应用编写 Dockerfile、Compose 配置与流水线。本章提供配置示例及本地校验方法。
